@@ -12,7 +12,7 @@ export default async function Interviews() {
   ]);
   return <LearnerShell active="/interviews" admin={isAdmin(user)} instructor={isInstructor(user)}>
     <div className="portal-page">
-      <header className="portal-heading"><div><span className="eyebrow">PRIVATE LIVE TEXT PRACTICE</span><h1>Interview practice</h1><p>One question at a time. Formative feedback, not a hiring decision.</p></div></header>
+      <header className="portal-heading"><div><span className="eyebrow">PRIVATE PROGRAMMER INTERVIEW</span><h1>Interview simulator</h1><p>One question at a time. Formative feedback after eight answers, not a hiring decision. Optional browser dictation; text answers remain editable.</p></div></header>
       <InterviewHistory initialRows={history?.rows ?? []} initialCursor={history?.cursor ?? null} aiAvailable={aiAvailable} unavailable={!history} />
     </div>
   </LearnerShell>;

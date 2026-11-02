@@ -60,9 +60,10 @@ export function InterviewHistory({ initialRows, initialCursor, aiAvailable, unav
       } catch { setNotice({ code: "connection" }); setUncertain(true); }
       finally { inFlight.current = false; setBusy(false); }
     }}>
-      <h2>New practice interview</h2>
-      <label htmlFor="interview-topic">Topic</label><select id="interview-topic" name="topic" disabled={busy}>{Object.entries(interviewTopics).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
-      <label htmlFor="interview-level">Chosen level</label><select id="interview-level" name="level" defaultValue="foundation" disabled={busy}>{["new", "foundation", "intermediate", "advanced"].map(level => <option key={level} value={level}>{level}</option>)}</select>
+      <h2>New interview simulator</h2>
+      <p>Choose a focus and difficulty. Answer one original question at a time; formative feedback follows only the eighth answer. Coursework and hypothetical experience are welcome. Avoid personal or confidential details.</p>
+      <label htmlFor="interview-topic">Focus</label><select id="interview-topic" name="topic" disabled={busy}>{Object.entries(interviewTopics).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+      <label htmlFor="interview-level">Difficulty</label><select id="interview-level" name="level" defaultValue="foundation" disabled={busy}>{["new", "foundation", "intermediate", "advanced"].map(level => <option key={level} value={level}>{level}</option>)}</select>
       <button className="primary-button" disabled={!aiAvailable || busy || uncertain}>Create private interview</button>
     </form>
     <p ref={status} tabIndex={-1} role="status" className={styles.notice}>{notice ? notice.message ?? interviewNotices[notice.code] : "Create an empty interview, then open it to request the first question."}</p>

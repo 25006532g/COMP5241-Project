@@ -107,6 +107,8 @@ test("network-blocked mounted interview UI and mobile keyboard flows", async con
       if (name === "@/app/interviews/actions") return actions;
       if (name === "@/app/auth/actions") return { logOut: async () => {} };
       if (name === "./interviews.module.css") return { __esModule: true, default: new Proxy({}, { get: (_, key) => key }) };
+      // Dictation is exercised with the real library/native-event mock in interview-dictation.test.mjs.
+      if (name === "next/dynamic") return { __esModule: true, default: () => () => null };
       if (name === "next/link") return { __esModule: true, default: ({ children, onClick, href, ...props }) =>
         load("react").createElement("a", { ...props, href, onClick(event) { event.preventDefault(); onClick?.(event); navigate(href); } }, children) };
       if (!modules[name]) {
@@ -185,7 +187,7 @@ test("network-blocked mounted interview UI and mobile keyboard flows", async con
     await page.setViewportSize({ width: 390, height: 844 });
   }
   await context.test("create empty private history, mobile navigation focus and open saved interview", async () => {
-    await page.getByLabel("Topic", { exact: true }).selectOption("verification");
+    await page.getByLabel("Focus", { exact: true }).selectOption("verification");
     await click("Create private interview");
     assert.match(await page.getByRole("status").innerText(), /Saved privately/);
     assert.equal(await page.getByRole("status").evaluate(el => el === document.activeElement), true);
@@ -265,7 +267,7 @@ test("network-blocked mounted interview UI and mobile keyboard flows", async con
     await page.getByRole("textbox").fill("A second saved answer");
     await click("Send answer");
     await keyboardButton("Finish interview");
-    assert.match(await page.locator("body").innerText(), /Practice finished/);
+    assert.match(await page.locator("body").innerText(), /Interview simulator finished/);
     await settle("ok", "Late text must not appear");
     assert.equal(await page.getByText("Late text must not appear", { exact: true }).count(), 0);
     assert.equal(await page.getByRole("textbox").count(), 0);

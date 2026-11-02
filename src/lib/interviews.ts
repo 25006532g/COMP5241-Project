@@ -1,6 +1,9 @@
 import { z } from "zod";
 
 export const interviewTopics = {
+  technical: "Technical / problem-solving",
+  projects: "Project discussion",
+  teamwork: "Teamwork / behavioural",
   planning: "SDLC: planning",
   requirements: "SDLC: requirements",
   design: "SDLC: design",

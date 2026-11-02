@@ -16,7 +16,7 @@ export default async function InterviewPage({ params }: { params: Promise<{ id: 
   ]);
   return <LearnerShell active="/interviews" admin={isAdmin(user)} instructor={isInstructor(user)}>
     <div className="portal-page">
-      <header className="portal-heading"><div><span className="eyebrow">PRIVATE LIVE TEXT PRACTICE</span><h1>Your interview</h1></div></header>
+      <header className="portal-heading"><div><span className="eyebrow">PRIVATE PROGRAMMER INTERVIEW</span><h1>Interview simulator</h1><p>One question at a time; feedback after answer eight. Finish early without requesting feedback.</p></div></header>
       {result.interview ? <InterviewPractice key={result.interview.id} initial={result.interview} aiAvailable={aiAvailable} /> :
         <><p role="alert">{result.unavailable ? interviewNotices.unavailable : interviewNotices.missing}</p><Link href="/interviews">Return to private history</Link></>}
     </div>

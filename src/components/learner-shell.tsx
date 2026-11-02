@@ -9,7 +9,7 @@ const links = [
   ["Dashboard", "/dashboard", LayoutDashboard],
   ["Course catalog", "/catalog", Library],
   ["Learning paths", "/paths", Route],
-  ["Interview practice", "/interviews", MessageSquare],
+  ["Interview simulator", "/interviews", MessageSquare],
   ["Daily 4D reflections", "/reflections", BookOpen],
   ["Create lesson", "/studio", BookOpen],
   ["Progress", "/progress", Award],

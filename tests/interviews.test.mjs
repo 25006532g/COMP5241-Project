@@ -124,6 +124,16 @@ test("interviews: actual actions, eligibility, projection and transactional migr
     await db.query("insert into auth.users(id,raw_user_meta_data) values($1,'{\"age\":22,\"age_range\":\"18-24\"}')", [owner]);
     return harness(db, owner);
   }
+  await context.test("new focus keys and legacy topics remain aligned with the additive constraint", async () => {
+    const h = await fresh();
+    for (const topic of Object.keys(schemas.interviewTopics)) {
+      const result = await h.actions.createInterview({ id: randomUUID(), topic, level: "foundation" });
+      assert.equal(result.code, "ok", topic);
+      assert.equal(schemas.interviewSchema.parse(result.interview).topic, topic);
+    }
+    await assert.rejects(db.query("insert into forge_interviews(id,owner_id,topic,level) values($1,$2,'salary','new')",
+      [randomUUID(), h.state.user.id]), /violates check constraint/);
+  });
   await context.test("create, opening, answer, exact replay and changed duplicate input", async () => {
     const h = await fresh();
     const ready = await create(h);
@@ -151,7 +161,11 @@ test("interviews: actual actions, eligibility, projection and transactional migr
     for (const excluded of [ready.id, ready.owner_id, ar.requestId, ar.turnId, "owner_id", "app_metadata", "profile", "answer_key"]) assert.ok(!wire.includes(excluded));
     assert.match(wire, /permission|verification/);
     assert.match(wire, /not instructions/);
-    assert.match(wire, /exactly one follow-up/);
+    assert.match(wire, /exactly one next question/);
+    assert.match(wire, /Do not coach, correct, grade, evaluate or give feedback/);
+    for (const pattern of [/ORIGINAL questions/, /coursework or hypothetical/, /Never request names, salary, school\/employer/,
+      /arbitrary tree height needs traversal/, /explicit edge\/node convention/, /overflow handling/,
+      /traversal versus update costs/, /stability/, /No numeric scores/]) assert.match(messages[0].content, pattern);
   });
   await context.test("strict client envelope rejects raw history, forged owner, invalid topic, IDs, text and revisions", async () => {
     const h = await fresh();
@@ -323,12 +337,24 @@ test("interviews: actual actions, eligibility, projection and transactional migr
     for (let i = 0; i < 8; i++) {
       row = (await h.actions.requestInterviewTurn(answer(row, `Answer ${i} ` + "a".repeat(1190)))).interview;
       assert.ok(row);
+      const prompt = h.payloads.at(-1)[0][0].content;
+      if (i < 7) {
+        assert.match(prompt, /Ask exactly one next question/);
+        assert.match(prompt, /defer all formative feedback until answer eight/);
+        assert.doesNotMatch(prompt, /Give concise final formative feedback/);
+      } else {
+        for (const field of ["strengths", "improvement areas", "technical reasoning", "problem solving", "communication", "next practice step"]) assert.ok(prompt.includes(field));
+        assert.match(prompt, /Do not ask another question/);
+      }
     }
     assert.equal(row.state, "completed");
     assert.equal(row.turns.length, 9);
     const last = h.payloads.at(-1)[0];
     assert.match(last[0].content, /final formative feedback/);
     assert.ok(last.reduce((n, m) => n + m.content.length, 0) <= 12000);
+    for (const turn of row.turns.filter(t => t.kind === "answer")) {
+      assert.ok(last.some(message => message.content.includes(turn.learner)), "Final feedback includes every complete learner answer");
+    }
     assert.deepEqual(copy(h.ai.interviewMessages({ ...row, turns: row.turns.map((t, i) => i === 8 ? { ...t, status: "pending" } : t) })), last);
     assert.equal((await h.actions.requestInterviewTurn(answer(row))).code, "conflict");
   });

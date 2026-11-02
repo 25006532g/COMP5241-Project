@@ -17,6 +17,8 @@
 .transcript p { white-space: pre-wrap; }
 .reply { border-top: 1px solid #d5d8ce; padding-top: 12px; }
 .confirm { padding: 16px; border: 2px solid #b14529; }
+.dictation { border: 1px solid #d5d8ce; border-radius: 6px; padding: 16px; min-width: 0; }
+.dictation input { margin-right: 8px; }
 @media (max-width: 600px) {
   .toolbar { align-items: stretch; }
   .toolbar button { flex: 1 1 180px; }
