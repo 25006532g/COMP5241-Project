@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+export const dailyReflectionsEnabled = false;
 export const reflectionLimit = 2000;
 export const reflectionFields = [
   { key: "delegation", label: "Delegation", prompt: "What did you choose to do yourself, or delegate? Why?", example: "I kept the final decision and asked a tool to suggest test cases. Or: not used today." },

@@ -2,9 +2,10 @@
 
 import { currentUser } from "@/lib/learning-server";
 import { ownedReflection, reflectionHistory, removeReflection, writeReflection } from "@/lib/reflections-server";
-import { reflectionCreateSchema, reflectionCursorSchema, reflectionReadSchema, reflectionUpdateSchema, reflectionVersionSchema, type ReflectionListResult, type ReflectionResult } from "@/lib/reflections";
+import { dailyReflectionsEnabled, reflectionCreateSchema, reflectionCursorSchema, reflectionReadSchema, reflectionUpdateSchema, reflectionVersionSchema, type ReflectionListResult, type ReflectionResult } from "@/lib/reflections";
 
 export async function listReflections(cursor: unknown = null): Promise<ReflectionListResult> {
+  if (!dailyReflectionsEnabled) return { code: "unavailable" };
   const parsed = reflectionCursorSchema.safeParse(cursor);
   if (!parsed.success) return { code: "invalid" };
   const user = await currentUser().catch(() => null);
@@ -13,6 +14,7 @@ export async function listReflections(cursor: unknown = null): Promise<Reflectio
   catch { return { code: "unavailable" }; }
 }
 export async function readReflection(input: unknown): Promise<ReflectionResult> {
+  if (!dailyReflectionsEnabled) return { code: "unavailable" };
   const parsed = reflectionReadSchema.safeParse(input);
   if (!parsed.success) return { code: "invalid" };
   const user = await currentUser().catch(() => null);
@@ -21,6 +23,7 @@ export async function readReflection(input: unknown): Promise<ReflectionResult> 
   catch { return { code: "unavailable" }; }
 }
 export async function createReflection(input: unknown): Promise<ReflectionResult> {
+  if (!dailyReflectionsEnabled) return { code: "unavailable" };
   const parsed = reflectionCreateSchema.safeParse(input);
   if (!parsed.success) return { code: "invalid" };
   const user = await currentUser().catch(() => null);
@@ -29,6 +32,7 @@ export async function createReflection(input: unknown): Promise<ReflectionResult
   catch { return { code: "unconfirmed" }; }
 }
 export async function updateReflection(input: unknown): Promise<ReflectionResult> {
+  if (!dailyReflectionsEnabled) return { code: "unavailable" };
   const parsed = reflectionUpdateSchema.safeParse(input);
   if (!parsed.success) return { code: "invalid" };
   const user = await currentUser().catch(() => null);
@@ -37,6 +41,7 @@ export async function updateReflection(input: unknown): Promise<ReflectionResult
   catch { return { code: "unconfirmed" }; }
 }
 export async function deleteReflection(input: unknown): Promise<ReflectionResult> {
+  if (!dailyReflectionsEnabled) return { code: "unavailable" };
   const parsed = reflectionVersionSchema.safeParse(input);
   if (!parsed.success) return { code: "invalid" };
   const user = await currentUser().catch(() => null);

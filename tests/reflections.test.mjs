@@ -22,7 +22,7 @@ sources["@/app/reflections/page"] = ts.transpileModule(await readFile(new URL(".
 }).outputText;
 const copy = value => JSON.parse(JSON.stringify(value));
 export const sample = (date = "2026-10-22") => ({ date, delegation: "I kept the decision.", description: "I described a bounded change.", discernment: "I checked the requirements.", diligence: "I tested an edge case." });
-export async function reflectionHarness() {
+export async function reflectionHarness({ enabled = schemas.dailyReflectionsEnabled } = {}) {
   const db = new PGlite();
   await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
     create schema auth; create table auth.users(id uuid primary key);`);
@@ -90,11 +90,14 @@ export async function reflectionHarness() {
     },
   };
   const mocks = {
-    "server-only": {}, zod: { z }, "@/lib/reflections": schemas, "@/lib/learning": {}, "@/lib/permissions": permissions,
+    "server-only": {}, zod: { z }, "@/lib/reflections": { ...schemas, dailyReflectionsEnabled: enabled }, "@/lib/learning": {}, "@/lib/permissions": permissions,
     "react/jsx-runtime": createRequire(import.meta.url)("react/jsx-runtime"),
     "@/components/learner-shell": { LearnerShell: "synthetic-shell" },
     "@/components/daily-reflections": { DailyReflections: "synthetic-reflections" },
-    "next/navigation": { redirect() { throw new Error("Unexpected redirect"); } },
+    "next/navigation": {
+      redirect() { throw new Error("Unexpected redirect"); },
+      notFound() { throw new Error("NEXT_HTTP_ERROR_FALLBACK;404"); },
+    },
     "@/lib/supabase/server": { createClient: async () => client },
     "@supabase/supabase-js": { createClient() { calls.push(["service"]); return client; } },
   };
@@ -114,6 +117,28 @@ export async function reflectionHarness() {
 
 // Shared offline boundary adapter is imported by the UI test without registering this file's tests twice.
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  test("daily reflections are disabled for every role before auth or data access, preserving saved data", async t => {
+    assert.equal(schemas.dailyReflectionsEnabled, false);
+    const h = await reflectionHarness(); t.after(h.close);
+    await h.db.query(`insert into forge_reflections(owner_id,date,delegation,description,discernment,diligence)
+      values($1,'2026-10-22','saved delegation','saved description','saved discernment','saved diligence')`, [h.owner]);
+    const saved = await h.db.query("select * from forge_reflections");
+    const version = { id: saved.rows[0].id, date: "2026-10-22", revision: 1 };
+    for (const role of [null, "learner", "instructor", "admin"]) {
+      h.state.user = role ? { id: h.owner, app_metadata: { role } } : null;
+      await assert.rejects(h.page(), /NEXT_HTTP_ERROR_FALLBACK;404/);
+      for (const [action, input] of [
+        ["listReflections", null], ["readReflection", { date: version.date }],
+        ["createReflection", sample()], ["updateReflection", { ...sample(), ...version }],
+        ["deleteReflection", version],
+      ]) {
+        assert.equal((await h.actions[action](input)).code, "unavailable", `${role}: ${action}`);
+        assert.equal((await h.actions[action]({ forged: true })).code, "unavailable");
+      }
+      assert.deepEqual(h.calls, [], `${role}: no auth, service client or reflection query`);
+    }
+    assert.deepEqual(await h.db.query("select * from forge_reflections"), saved);
+  });
   test("reflection dates: Gregorian leap days, no age cutoff and Hong Kong midnight", () => {
     for (const date of ["0001-01-01", "1900-02-28", "2000-02-29", "2024-02-29", "9999-12-31"]) assert.ok(schemas.reflectionDateSchema.safeParse(date).success, date);
     for (const date of ["0000-01-01", "1900-02-29", "2026-02-29", "2026-04-31", "2026-13-01", "2026-1-01", "2026-10-22,owner_id.eq.x"]) assert.equal(schemas.reflectionDateSchema.safeParse(date).success, false, date);
@@ -127,7 +152,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     assert.equal(schemas.reflectionCursorSchema.safeParse({ date: "2026-10-22", id: "x),owner_id.eq.other" }).success, false);
   });
   test("actual reflection actions and currentUser reject unauthenticated/auth-error and forged-owner requests before service access", async t => {
-    const h = await reflectionHarness(); t.after(h.close);
+    const h = await reflectionHarness({ enabled: true }); t.after(h.close);
     for (const state of [{ user: null }, { authError: { message: "private" } }, { authThrows: true }]) {
       Object.assign(h.state, { user: { id: h.owner, app_metadata: { role: "admin" } }, authError: null, authThrows: false }, state);
       h.calls.length = 0;
@@ -145,7 +170,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     assert.equal(h.calls.length, 0);
   });
   test("actual reflection page rejects auth-error-with-user visibly and loads defaults/history without any write", async t => {
-    const h = await reflectionHarness(); t.after(h.close);
+    const h = await reflectionHarness({ enabled: true }); t.after(h.close);
     h.state.authError = { message: "private auth detail" };
     let output = await h.page();
     assert.equal(output.type, "main");
@@ -162,7 +187,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     assert.ok(h.calls.filter(([op]) => !["auth", "service"].includes(op)).every(([op]) => op === "select"));
   });
   test("actual CRUD: daily uniqueness, owner/admin isolation, CAS update/delete and plain text roundtrip", async t => {
-    const h = await reflectionHarness(); t.after(h.close);
+    const h = await reflectionHarness({ enabled: true }); t.after(h.close);
     const created = await h.actions.createReflection({ ...sample(), description: "<img src=x onerror=alert(1)>" });
     assert.equal(created.code, "ok"); const row = created.row;
     assert.equal(row.owner_id, h.owner); assert.equal(row.revision, 1);
@@ -188,7 +213,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     }
   });
   test("history returns bounded stable metadata pages, no text or foreign records, rejects failures distinctly", async t => {
-    const h = await reflectionHarness(); t.after(h.close);
+    const h = await reflectionHarness({ enabled: true }); t.after(h.close);
     await h.db.query(`insert into forge_reflections(owner_id,date,delegation,description,discernment,diligence)
       select $1, date '2026-01-01'+g, 'private','private','private','private' from generate_series(0,44) g`, [h.owner]);
     await h.db.query(`insert into forge_reflections(owner_id,date,delegation,description,discernment,diligence) values($1,'2026-10-22','foreign','foreign','foreign','foreign')`, [h.other]);
@@ -210,7 +235,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     assert.equal((await h.actions.listReflections()).code, "unavailable");
   });
   test("actual writes never report success on returned/thrown/malformed/lost acknowledgements", async t => {
-    const h = await reflectionHarness(); t.after(h.close);
+    const h = await reflectionHarness({ enabled: true }); t.after(h.close);
     for (const [index, failure] of ["returned", "throw", "malformed", "undefined", "lost", "foreign"].entries()) {
       h.state.failure = failure; h.state.failOp = "insert";
       const date = `2026-10-${String(index + 1).padStart(2, "0")}`;

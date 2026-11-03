@@ -34,8 +34,66 @@ const moduleCss = readFileSync(new URL("../src/components/reflections.module.css
 const classes = Object.fromEntries([...moduleCss.matchAll(/\.([a-zA-Z][\w-]*)/g)].map(match => [match[1], match[1]]));
 const css = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8").replace('@import "tailwindcss";', "") + moduleCss;
 
+test("daily reflections navigation is hidden for all roles on desktop and mobile", async t => {
+  const browser = await chromium.launch();
+  const context = await browser.newContext({ offline: true, serviceWorkers: "block" });
+  t.after(async () => { await context.close(); await browser.close(); });
+  const requests = [], errors = [];
+  await context.route("**/*", route => { requests.push(route.request().url()); return route.abort(); });
+  const page = await context.newPage(); page.setDefaultTimeout(5000);
+  page.on("pageerror", error => errors.push(error.message));
+  const screenshots = await mkdtemp(join(tmpdir(), "forge-hidden-reflections-"));
+  t.diagnostic(`Synthetic navigation screenshots: ${screenshots}; Chromium ${browser.version()}`);
+  for (const role of ["learner", "instructor", "admin"]) {
+    for (const width of [320, 1440]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await page.setContent(`<style>${css}</style><div id="root"></div>`);
+      await page.evaluate(({ sources, role }) => {
+        const cache = {};
+        function load(name) {
+          if (name === "@/app/auth/actions") return { logOut: async () => {} };
+          if (name === "next/link") return { __esModule: true, default: ({ children, ...props }) => load("react").createElement("a", props, children) };
+          if (!cache[name]) {
+            if (!sources[name]) throw new Error(`Unexpected browser module ${name}`);
+            const mod = { exports: {} }; cache[name] = mod;
+            new Function("require", "module", "exports", "process", sources[name])(load, mod, mod.exports, { env: { NODE_ENV: "development" } });
+          }
+          return cache[name].exports;
+        }
+        const React = load("react"), root = load("react-dom/client").createRoot(document.getElementById("root"));
+        root.render(React.createElement(load("shell").LearnerShell, {
+          active: "/dashboard", admin: role === "admin", instructor: role === "instructor",
+        }, React.createElement("h1", {}, "Dashboard")));
+      }, { sources, role });
+      await page.getByRole("heading", { name: "Dashboard" }).waitFor();
+      if (width === 320) {
+        await page.getByRole("button", { name: "Open navigation", exact: true }).focus();
+        await page.keyboard.press("Enter");
+        await page.getByRole("link", { name: "Dashboard", exact: true }).waitFor();
+        await page.waitForFunction(() => document.getElementById("learner-navigation").getBoundingClientRect().left === 0);
+        assert.equal(await page.getByRole("button", { name: "Close navigation", exact: true }).evaluate(el => el === document.activeElement), true);
+        await page.keyboard.press("Tab");
+        assert.equal(await page.locator(".portal-profile").evaluate(el => el === document.activeElement), true);
+      }
+      assert.equal(await page.locator('a[href="/reflections"]').count(), 0);
+      assert.equal(await page.getByRole("link", { name: "Daily 4D reflections", exact: true }).count(), 0);
+      assert.equal(await page.getByRole("link", { name: "Create lesson", exact: true }).isVisible(), true);
+      assert.equal(await page.getByRole("link", { name: "Quiz reports", exact: true }).isVisible(), true);
+      assert.equal(await page.getByRole("link", { name: "Teaching", exact: true }).count(), role === "learner" ? 0 : 1);
+      assert.equal(await page.getByRole("link", { name: "Account maintenance", exact: true }).count(), role === "admin" ? 1 : 0);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+      if (role === "admin") await page.screenshot({ path: join(screenshots, `navigation-${width}.png`), fullPage: true });
+      if (width === 320) {
+        await page.keyboard.press("Escape");
+        assert.equal(await page.getByRole("button", { name: "Open navigation", exact: true }).evaluate(el => el === document.activeElement), true);
+      }
+    }
+  }
+  assert.deepEqual(errors, []); assert.deepEqual(requests, []);
+});
+
 test("actual reflection UI/actions/database: drafts, failure reconciliation, CAS, history, keyboard and responsive layout offline", async t => {
-  const h = await reflectionHarness(); t.after(h.close);
+  const h = await reflectionHarness({ enabled: true }); t.after(h.close);
   t.mock.method(globalThis, "fetch", () => { throw new Error("Network forbidden"); });
   const browser = await chromium.launch();
   const context = await browser.newContext({ offline: true, serviceWorkers: "block" });

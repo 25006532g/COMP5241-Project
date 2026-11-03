@@ -1,6 +1,42 @@
 # Implementation Tracker
 
-Last reviewed: 2026-10-22
+Last reviewed: 2026-11-03
+
+## 3 November 2026 - Hide Daily 4D reflections for all users (LOCAL PASS)
+
+**Owner/request:** assistant implementation of the owner's explicit request to hide
+Daily 4D reflections from all users. This supersedes historical reflection-demo
+requirements; unrelated lesson content, approval gates and deferred scope are unchanged.
+Local source/test/documentation edits only; no deployment, environment-file reads,
+remote database changes, migrations, provider calls or data deletion.
+
+**Dependencies/deliverable:** traced the shared learner shell, reflection page, all
+five server actions, existing offline harness and account export. Removed the shared
+navigation item, set `dailyReflectionsEnabled = false`, return not found at the page,
+and return the existing explicit `unavailable` result at every action before auth or
+data access. Existing owner-scoped export and account deletion remain unchanged.
+
+**Acceptance/hypothesis:** the hidden feature cannot be reached through desktop/mobile
+navigation or the actual page/action entry points by learners, instructors or admins.
+Offline actual-route/action tests also cover anonymous users, forged inputs, zero
+auth/service/query calls and an unchanged seeded reflection row. Existing enabled-mode
+CRUD/page/UI tests opt in only inside the synthetic harness to preserve regression
+coverage of retained implementation. No production opt-in was added.
+
+**Fresh verification:** Windows, existing Node/dependencies, offline Chromium
+153.0.8010.12 and in-memory PGlite; no app server or connected service:
+
+| Command | Actual result |
+| --- | --- |
+| `node --experimental-strip-types --test --test-concurrency=1 --test-name-pattern="daily reflections" tests\reflections.test.mjs tests\reflections-ui.test.mjs` | **2/2 passed** after correcting the new test's profile-link selector; mobile keyboard open/Tab/Escape, role-specific remaining links and 320/1440 layouts covered |
+| `node --experimental-strip-types --test --test-concurrency=1 tests\reflections.test.mjs tests\reflections-ui.test.mjs tests\account.test.mjs tests\reports-ui.test.mjs tests\interviews-ui.test.mjs` | **83/83 passed**, exit 0; retained reflection CRUD/UI, account export/deletion and shared-shell reports/interviews regressions |
+| `node node_modules\eslint\bin\eslint.js src\components\learner-shell.tsx src\lib\reflections.ts src\app\reflections\page.tsx src\app\reflections\actions.ts tests\reflections.test.mjs tests\reflections-ui.test.mjs` | Exit 0 |
+| `node node_modules\typescript\bin\tsc --noEmit --incremental false` | Exit 0 |
+
+Navigation screenshots are synthetic, not connected acceptance. The initial mobile
+capture occurred mid-transition; the new test now waits for the drawer's left edge
+to reach zero before assertions/capture. No full-suite or Next build claim.
+Independent QA and deployment verification are requested; this is not release approval.
 
 ## 22 October 2026 — signup production diagnostics (LOCAL PASS; production cause unverified)
 

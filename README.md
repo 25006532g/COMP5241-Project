@@ -6,6 +6,19 @@ For a presentation-ready overview of features, design choices and prototype scre
 
 Track remaining work, blockers, acceptance criteria and verification updates in [IMPLEMENTATION_TRACKER.md](IMPLEMENTATION_TRACKER.md).
 
+## 3 November 2026 - Daily 4D reflections hidden for everyone
+
+Per the latest owner request, Daily 4D reflections is removed from desktop/mobile
+navigation for learners, instructors and administrators. The `/reflections` page
+returns not found, and all five reflection server actions return `unavailable`
+before authentication or reflection-data access. The global
+`dailyReflectionsEnabled` switch in `src/lib/reflections.ts` is `false`.
+
+Existing records are retained; account data export and account-deletion behavior
+are unchanged. Lesson content about the 4D framework is not affected. This decision
+supersedes the daily-reflection demo-flow requirement in the dated checkpoints below.
+Local regression checks passed; deployment and independent QA are not claimed.
+
 ## 22 October 2026 — independent paths + fresh integration checkpoint: LOCAL PASS
 
 The frozen optional-path repair passed independent functional/privacy/reliability checks.

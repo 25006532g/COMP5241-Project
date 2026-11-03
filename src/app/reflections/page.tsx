@@ -1,10 +1,12 @@
+import { notFound } from "next/navigation";
 import { LearnerShell } from "@/components/learner-shell";
 import { DailyReflections } from "@/components/daily-reflections";
 import { currentUser, isAdmin, isInstructor } from "@/lib/learning-server";
-import { hongKongDate } from "@/lib/reflections";
+import { dailyReflectionsEnabled, hongKongDate } from "@/lib/reflections";
 import { listReflections, readReflection } from "./actions";
 
 export default async function Reflections() {
+  if (!dailyReflectionsEnabled) notFound();
   const user = await currentUser().catch(() => null);
   if (!user) return <main className="portal-page">
     <h1>Reflections need a confirmed sign-in</h1>
