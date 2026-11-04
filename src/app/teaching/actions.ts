@@ -42,6 +42,19 @@ export async function enrollSelected(_previous: ActionState, form: FormData): Pr
   } catch { return { error: "Choose between 1 and 50 learners and try again." }; }
 }
 
+export async function extractLessonUpload(form: FormData): Promise<{ text?: string; name?: string; error?: string }> {
+  try {
+    await currentUser();
+    const file = form.get("material");
+    if (!(file instanceof File)) return { error: "Choose a file to upload." };
+    const text = await extractTeachingMaterial(file);
+    const name = file.name.replace(/\.[^.]+$/, "").trim().slice(0, 120);
+    return { text: text.slice(0, 20_000), name: name || "Uploaded lesson" };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Could not read that file. Try again." };
+  }
+}
+
 export async function importTeachingMaterial(_previous: ActionState, form: FormData): Promise<ActionState> {
   try {
     const user = await currentUser();

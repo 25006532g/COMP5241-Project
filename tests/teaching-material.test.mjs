@@ -117,6 +117,15 @@ function pdf(texts = ["Teaching content"], extraCatalog = "", password) {
 }
 
 const extractPptx = (parts) => extractTeachingMaterial(new File([zip(parts)], "teaching.pptx"));
+const wordNs = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+
+test("extracts DOCX paragraph text", async () => {
+  const bytes = zip([
+    ["[Content_Types].xml", '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>'],
+    ["word/document.xml", `<w:document xmlns:w="${wordNs}"><w:body><w:p><w:r><w:t>First paragraph</w:t></w:r></w:p><w:p><w:r><w:t>Second paragraph</w:t></w:r></w:p></w:body></w:document>`],
+  ]);
+  assert.equal(await extractTeachingMaterial(new File([bytes], "notes.docx")), "First paragraph\nSecond paragraph");
+});
 
 test("extracts PDF text in page order without executing document JavaScript", async () => {
   const bytes = pdf(["First page", "Second page"], "/OpenAction << /S /JavaScript /JS (throw new Error) >>");
@@ -143,7 +152,8 @@ test("rejects missing, empty, oversized and unsupported uploads before reading c
   oversized.arrayBuffer = () => { throw new Error("must not read"); };
   oversized.slice = () => { throw new Error("must not read"); };
   await assert.rejects(extractTeachingMaterial(oversized), /at most 4 MiB/);
-  await assert.rejects(extractTeachingMaterial(new File(["text"], "file.docx")), /Other formats/);
+  await assert.rejects(extractTeachingMaterial(new File(["text"], "file.docx")), /does not match/);
+  await assert.rejects(extractTeachingMaterial(new File(["text"], "notes.txt")), /Choose a PDF, PPT, PPTX, DOC, or DOCX/);
 });
 
 test("requires matching signatures and rejects legacy PPT honestly", async () => {
@@ -152,6 +162,7 @@ test("requires matching signatures and rejects legacy PPT honestly", async () =>
   }
   const compound = Buffer.from("d0cf11e0a1b11ae1", "hex");
   await assert.rejects(extractTeachingMaterial(new File([compound], "legacy.ppt")), /Legacy binary PPT.*Export it as PPTX/);
+  await assert.rejects(extractTeachingMaterial(new File([compound], "legacy.doc")), /Legacy binary DOC.*Export it as DOCX/);
   await assert.rejects(extractTeachingMaterial(new File([compound], "protected.pptx")), /Encrypted.*Remove the password/);
 });
 

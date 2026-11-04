@@ -1,15 +1,24 @@
 import { z } from "zod";
 
+export const slideStyleSchema = z.object({
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  size: z.union([z.literal(18), z.literal(24), z.literal(32), z.literal(40)]),
+  align: z.enum(["left", "center", "right"]),
+  background: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+}).strict();
+
 export const lessonSchema = z.object({
   title: z.string().trim().min(3).max(120),
   subject: z.string().trim().min(2).max(60),
   summary: z.string().trim().min(10).max(300),
   metadata: z.unknown().optional(),
+  template: z.literal("slides").optional(),
   slides: z.array(z.object({
     title: z.string().min(1).max(100),
     body: z.string().min(1).max(400),
     example: z.string().min(1).max(240),
-  })).min(4).max(6),
+    style: slideStyleSchema.optional(),
+  })).min(3).max(6),
   activity: z.object({
     prompt: z.string().min(1).max(240),
     steps: z.array(z.string().min(1).max(120)).min(3).max(6),
@@ -19,7 +28,7 @@ export const lessonSchema = z.object({
     options: z.array(z.string().min(1).max(200)).length(4),
     correct: z.number().int().min(0).max(3),
     explanation: z.string().min(1).max(400),
-  })).length(10),
+  })).max(10),
 });
 
 export type LessonContent = z.infer<typeof lessonSchema>;
@@ -59,10 +68,12 @@ export async function collectRows<Row>(readPage: (start: number, end: number) =>
 }
 
 export function gradeQuiz(questions: LessonContent["questions"], answers: unknown) {
-  const validated = z.array(z.number().int().min(0).max(3)).length(10).parse(answers);
-  if (questions.length !== 10) throw new Error("A quiz must contain exactly ten questions.");
-  const score = questions.reduce((total, question, index) => total + Number(question.correct === validated[index]), 0);
-  return { score, total: 10, passed: score >= 6, answers: validated };
+  const total = questions.length;
+  if (total !== 10 && (total < 3 || total > 10)) throw new Error("A quiz must contain 3 to 10 questions, or the standard 10.");
+  const validated = z.array(z.number().int().min(0).max(3)).length(total).parse(answers);
+  const passMark = total === 10 ? 6 : Math.ceil(total * 0.6);
+  const score = questions.reduce((totalScore, question, index) => totalScore + Number(question.correct === validated[index]), 0);
+  return { score, total, passed: score >= passMark, answers: validated };
 }
 
 export function safeDestination(value: string | null, origin: string) {

@@ -9,6 +9,7 @@ import { gradeQuiz, lessonSchema, versionEvidence, type VersionEvidence } from "
 import { resumeSchema, type ResumeState } from "@/lib/resume";
 import { requireAiAccess } from "@/lib/ai-eligibility-server";
 import { FAMILIES, readMetadata, selectionFromForm, subjectSelection, validateCurriculumContent } from "@/lib/curriculum";
+import { authorLessonSchema, toStoredLesson } from "@/lib/slide-lesson";
 
 export type ActionState = { error?: string; progress?: VersionEvidence; saveUncertain?: true; generationId?: string; success?: string; lessonId?: string; version?: number; attemptId?: string; score?: number; feedback?: { prompt: string; correct: string; explanation: string }[] };
 
@@ -132,15 +133,21 @@ export async function updateLesson(_previous: ActionState, form: FormData): Prom
     const id = z.uuid().parse(form.get("lessonId"));
     const lesson = await accessibleLesson(id, user, true);
     if (!lesson || !canEditLesson(user, lesson)) throw new Error("You cannot edit this lesson.");
-    const content = validateCurriculumContent(lessonSchema.parse(JSON.parse(String(form.get("content")))));
+    const slideDraft = form.get("template") === "slides";
+    const content = validateCurriculumContent(slideDraft ? toStoredLesson(authorLessonSchema.parse(JSON.parse(String(form.get("content"))))) : lessonSchema.parse(JSON.parse(String(form.get("content")))));
     const expectedVersion = z.coerce.number().int().positive().parse(form.get("version"));
     const publish = form.get("publish") === "on";
+    const requestPublication = slideDraft && form.get("intent") === "publish";
     if (publish && !canPublishLessons(user)) throw new Error("Instructor access is required to publish lessons.");
-    const { data, error } = await database().from("forge_lessons").update({ title: content.title, subject: content.subject, summary: content.summary, content, version: expectedVersion + 1, visibility: publish ? "public" : lesson.visibility, ...(publish ? { published_at: new Date().toISOString() } : {}) }).eq("id", id).eq("version", expectedVersion).select("id").maybeSingle();
+    const { data, error } = await database().from("forge_lessons").update({
+      title: content.title, subject: content.subject, summary: content.summary, content, version: expectedVersion + 1,
+      visibility: publish ? "public" : slideDraft ? "private" : lesson.visibility, ...(publish ? { published_at: new Date().toISOString() } : {}),
+      ...(requestPublication ? { review_requested: true } : {}),
+    }).eq("id", id).eq("version", expectedVersion).select("id").maybeSingle();
     if (error) throw new Error("Could not save this lesson.");
     if (!data) throw new Error("This lesson changed in another session. Reload before editing.");
     revalidatePath("/catalog"); revalidatePath(`/courses/${id}`); revalidatePath("/admin"); revalidatePath("/studio");
-    return { success: publish ? "Reviewed lesson published." : "Lesson saved.", lessonId: id, version: expectedVersion + 1 };
+    return { success: requestPublication ? "Saved and sent to an administrator for approval." : publish ? "Reviewed lesson published." : "Lesson saved.", lessonId: id, version: expectedVersion + 1 };
   } catch (error) { return failure(error); }
 }
 
@@ -188,16 +195,18 @@ export async function createManualLesson(_previous: ActionState, form: FormData)
   let insertAttempted = false;
   try {
     const user = await currentUser();
-    const content = validateCurriculumContent(lessonSchema.parse(JSON.parse(String(form.get("content")))));
+    const slideDraft = form.get("template") === "slides";
+    const content = validateCurriculumContent(slideDraft ? toStoredLesson(authorLessonSchema.parse(JSON.parse(String(form.get("content"))))) : lessonSchema.parse(JSON.parse(String(form.get("content")))));
     const publish = form.get("publish") === "on";
+    const requestPublication = slideDraft && form.get("intent") === "publish";
     if (publish && !canPublishLessons(user)) throw new Error("Instructor access required to publish.");
     const client = database();
     insertAttempted = true;
-    const { data, error } = await client.from("forge_lessons").insert({ owner_id: user.id, title: content.title, subject: content.subject, summary: content.summary, content, visibility: publish ? "public" : "private", published_at: publish ? new Date().toISOString() : null }).select("id").single();
+    const { data, error } = await client.from("forge_lessons").insert({ owner_id: user.id, title: content.title, subject: content.subject, summary: content.summary, content, visibility: publish ? "public" : "private", review_requested: requestPublication, published_at: publish ? new Date().toISOString() : null }).select("id").single();
     const rejected = creationAcknowledgement(data, error);
     if (rejected) return rejected;
     revalidatePath("/catalog"); revalidatePath("/dashboard");
-    return { success: "Lesson created.", lessonId: data!.id, version: 1 };
+    return { success: requestPublication ? "Saved and sent to an administrator for approval." : "Lesson saved.", lessonId: data!.id, version: 1 };
   } catch (error) {
     // Even a thrown database error may arrive after commit. Also covers a failure after
     // insertion but before the server can finish acknowledging the action.

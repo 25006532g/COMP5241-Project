@@ -127,29 +127,45 @@ function attribute(tag: QualifiedTag, name: string): string {
   return tag.attributes[name]?.value ?? "";
 }
 
-async function extractPptx(buffer: Buffer, deadline: number): Promise<string> {
+const WORD_NS = new Set([
+  "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
+  "http://purl.oclc.org/ooxml/wordprocessingml/main",
+]);
+const DOCX_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml";
+
+async function openOfficeZip(buffer: Buffer, deadline: number, kind: "PPTX" | "DOCX") {
   const zip = await fromBufferPromise(buffer, { strictFileNames: true, validateEntrySizes: true, autoClose: false });
   try {
-    if (zip.entryCount > MAX_ENTRIES) throw new MaterialError("Too many PPTX archive entries (maximum 1,024). Split the file.");
+    if (zip.entryCount > MAX_ENTRIES) throw new MaterialError(`Too many ${kind} archive entries (maximum 1,024). Split the file.`);
     const entries = new Map<string, Entry>();
     let expanded = 0;
     for await (const entry of zip.eachEntry()) {
       checkDeadline(deadline);
       const name = entry.fileName;
       if (entries.size >= MAX_ENTRIES || entries.has(name.toLowerCase()) || name.length > 240 || /[\\:%\x00-\x1f]/.test(name) || name.split("/").some((part) => part === ".")) {
-        throw new MaterialError("Unsafe or duplicate PPTX archive path. Re-export the presentation.");
+        throw new MaterialError(`Unsafe or duplicate ${kind} archive path. Re-export the file.`);
       }
-      if (entry.isEncrypted()) throw new MaterialError("Encrypted PPTX files are not supported. Remove the password first.");
+      if (entry.isEncrypted()) throw new MaterialError(`Encrypted ${kind} files are not supported. Remove the password first.`);
       if (![0, 8].includes(entry.compressionMethod) || ((entry.externalFileAttributes >>> 16) & 0xf000) === 0xa000) {
-        throw new MaterialError("Unsupported PPTX archive entry. Re-export the presentation.");
+        throw new MaterialError(`Unsupported ${kind} archive entry. Re-export the file.`);
       }
       expanded += entry.uncompressedSize;
       if (expanded > MAX_EXPANDED_BYTES || entry.uncompressedSize > 8 * 1024 * 1024 || entry.uncompressedSize > Math.max(1, entry.compressedSize) * 100) {
-        throw new MaterialError("PPTX expansion limit exceeded (24 MiB total, 8 MiB per entry, 100:1 ratio). Split the file.");
+        throw new MaterialError(`${kind} expansion limit exceeded (24 MiB total, 8 MiB per entry, 100:1 ratio). Split the file.`);
       }
-      if (/vbaProject|\/activeX\//i.test(name)) throw new MaterialError("Macro or ActiveX content is not supported. Export a macro-free PPTX.");
+      if (/vbaProject|\/activeX\//i.test(name)) throw new MaterialError(`Macro or ActiveX content is not supported. Export a macro-free ${kind}.`);
       entries.set(name.toLowerCase(), entry);
     }
+    return { zip, entries };
+  } catch (error) {
+    zip.close();
+    throw error;
+  }
+}
+
+async function extractPptx(buffer: Buffer, deadline: number): Promise<string> {
+  const { zip, entries } = await openOfficeZip(buffer, deadline, "PPTX");
+  try {
     const getPart = (name: string) => readXml(zip, entries.get(name.toLowerCase()), deadline);
     let isPresentation = false;
     parseXml(await getPart("[Content_Types].xml"), "Types", new Set([CONTENT_NS]), {
@@ -205,6 +221,36 @@ async function extractPptx(buffer: Buffer, deadline: number): Promise<string> {
         },
       }, deadline);
     }
+    return output.finish();
+  } finally {
+    zip.close();
+  }
+}
+
+async function extractDocx(buffer: Buffer, deadline: number): Promise<string> {
+  const { zip, entries } = await openOfficeZip(buffer, deadline, "DOCX");
+  try {
+    const getPart = (name: string) => readXml(zip, entries.get(name.toLowerCase()), deadline);
+    let isDocument = false;
+    parseXml(await getPart("[Content_Types].xml"), "Types", new Set([CONTENT_NS]), {
+      open(tag) {
+        if (tag.uri === CONTENT_NS && tag.local === "Override" && attribute(tag, "PartName") === "/word/document.xml") {
+          if (isDocument || attribute(tag, "ContentType") !== DOCX_CONTENT_TYPE) throw new MaterialError("Not a macro-free DOCX document. Export as DOCX.");
+          isDocument = true;
+        }
+      },
+    }, deadline);
+    if (!isDocument) throw new MaterialError("Not a DOCX document. Export the original as DOCX.");
+    const output = textCollector();
+    output.next();
+    parseXml(await getPart("word/document.xml"), "document", WORD_NS, {
+      text(value, parent) {
+        if (parent?.local === "t" && WORD_NS.has(parent.uri)) output.append(value);
+      },
+      close(tag) {
+        if (WORD_NS.has(tag.uri) && ["p", "br"].includes(tag.local)) output.append("\n");
+      },
+    }, deadline);
     return output.finish();
   } finally {
     zip.close();
@@ -278,34 +324,34 @@ async function extractPdf(buffer: Buffer, deadline: number): Promise<string> {
 
 export async function extractTeachingMaterial(file: File): Promise<string> {
   if (!(file instanceof File) || !file.size) {
-    throw new MaterialError("Choose a non-empty PDF or PPTX file.");
+    throw new MaterialError("Choose a non-empty PDF, PPTX, or DOCX file.");
   }
   if (file.size > MAX_MATERIAL_BYTES) {
     throw new MaterialError("Teaching files must be at most 4 MiB. Split or reduce the file.");
   }
   const extension = /\.([a-z0-9]+)$/i.exec(file.name)?.[1].toLowerCase();
-  if (!["pdf", "pptx", "ppt"].includes(extension ?? "")) {
-    throw new MaterialError("Choose a PDF or PPTX file. Other formats are not supported.");
+  if (!["pdf", "pptx", "ppt", "docx", "doc"].includes(extension ?? "")) {
+    throw new MaterialError("Choose a PDF, PPT, PPTX, DOC, or DOCX file.");
   }
   const header = Buffer.from(await file.slice(0, 8).arrayBuffer());
   const compound = header.equals(Buffer.from("d0cf11e0a1b11ae1", "hex"));
-  if (extension === "ppt") {
-    if (!compound) throw new MaterialError("The PPT extension does not match a binary PowerPoint file.");
-    throw new MaterialError("Legacy binary PPT cannot be safely extracted here. Export it as PPTX or a text-based PDF and upload that copy.");
+  if (extension === "ppt" || extension === "doc") {
+    if (!compound) throw new MaterialError(`The ${extension.toUpperCase()} extension does not match a legacy Office file.`);
+    throw new MaterialError(`Legacy binary ${extension.toUpperCase()} cannot be safely extracted here. Export it as ${extension === "ppt" ? "PPTX" : "DOCX"} or a text-based PDF and upload that copy.`);
   }
-  if (extension === "pptx" && compound) {
-    throw new MaterialError("Encrypted PowerPoint files are not supported. Remove the password and save as PPTX.");
+  if ((extension === "pptx" || extension === "docx") && compound) {
+    throw new MaterialError("Encrypted Office files are not supported. Remove the password and save as PPTX or DOCX.");
   }
   if (extension === "pdf" ? !/^%PDF-[12]\.\d/.test(header.toString("ascii")) : !header.subarray(0, 4).equals(Buffer.from("504b0304", "hex"))) {
-    throw new MaterialError("The file extension does not match its contents. Export a valid PDF or PPTX.");
+    throw new MaterialError("The file extension does not match its contents. Export a valid PDF, PPTX, or DOCX.");
   }
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
     if (buffer.length !== file.size || buffer.length > MAX_MATERIAL_BYTES) throw new MaterialError("Invalid upload size. Upload the file again.");
     const deadline = Date.now() + MAX_PARSE_MS;
-    return await (extension === "pdf" ? extractPdf(buffer, deadline) : extractPptx(buffer, deadline));
+    return await (extension === "pdf" ? extractPdf(buffer, deadline) : extension === "docx" ? extractDocx(buffer, deadline) : extractPptx(buffer, deadline));
   } catch (error) {
     if (error instanceof MaterialError) throw error;
-    throw new MaterialError("Could not read this teaching file. It may be corrupt, encrypted or unsupported. Export a new unencrypted PDF or PPTX and try again.");
+    throw new MaterialError("Could not read this file. It may be corrupt, encrypted or unsupported. Export a new unencrypted PDF, PPTX, or DOCX and try again.");
   }
 }
