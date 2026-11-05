@@ -93,7 +93,7 @@ async function fixture(context) {
   });
   const actions = load("src/app/learning/actions.ts", {
     "next/cache": { revalidatePath() {} }, zod: { z }, "@/lib/learning-server": server,
-    "@/lib/learning": learning, "@/lib/resume": resume, "@/lib/curriculum": {},
+    "@/lib/learning": learning, "@/lib/resume": resume, "@/lib/curriculum": {}, "@/lib/slide-lesson": {},
     "@/lib/openrouter": {}, "@/lib/lesson-generation-server": {}, "@/lib/ai-eligibility-server": {},
   });
   const enrollment = async () => (await db.query("select * from forge_enrollments where user_id=$1 and lesson_id=$2", [owner, lesson])).rows[0];
@@ -336,7 +336,7 @@ test("real progress actions and helpers with additive migration (offline PGlite)
       await page.getByRole("button", { name: "Submit quiz", exact: true }).focus(); await page.keyboard.press("Enter");
       await page.getByRole("heading", { name: "10 / 10 (100%)", exact: true }).waitFor();
       assert.equal(await page.locator(":focus").innerText(), "10 / 10 (100%)");
-      assert.match(await evidenceText(), /PASSED — Saved quiz score ≥ 6\/10/);
+      assert.match(await evidenceText(), /PASSED — Saved passing quiz result \(at least 60%\)/);
       assert.match(await evidenceText(), /REVIEWED — No acknowledgement/);
       await screenshot("quiz-passed", 320);
       await page.getByRole("button", { name: "Retry quiz", exact: true }).click();
@@ -410,7 +410,7 @@ test("real progress actions and helpers with additive migration (offline PGlite)
         [legacy, h.owner, canonical.subject, canonical.summary, JSON.stringify(canonical)]);
       await h.db.query("insert into forge_enrollments(user_id,lesson_id,attended_at) values($1,$2,'2026-09-01T00:00:00Z')", [h.owner, legacy]);
       const overview = renderToStaticMarkup(await overviewRoute({ params: Promise.resolve({ slug: h.lesson }) }));
-      assert.match(overview, /Version 2 evidence/); assert.match(overview, /Acknowledgement saved/); assert.match(overview, /Saved quiz score/);
+      assert.match(overview, /Version 2 evidence/); assert.match(overview, /Acknowledgement saved/); assert.match(overview, /Saved passing quiz result/);
       const history = renderToStaticMarkup(await historyRoute());
       assert.match(history, /Version 1 evidence/); assert.match(history, /Version 2 evidence/);
       assert.match(history, /Historical review is unknown/); assert.match(history, /No acknowledgement recorded/);

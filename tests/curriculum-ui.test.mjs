@@ -23,10 +23,10 @@ function add(name, file) {
     compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
   }).outputText;
 }
-for (const name of ["learning", "curriculum", "demo-lessons", "recommendations", "resume", "lesson-generation"]) add(`@/lib/${name}`, `lib/${name}.ts`);
+for (const name of ["learning", "curriculum", "slide-lesson", "demo-lessons", "recommendations", "resume", "lesson-generation"]) add(`@/lib/${name}`, `lib/${name}.ts`);
 sources["./learning"] = sources["@/lib/learning"];
 sources["./curriculum"] = sources["@/lib/curriculum"];
-for (const name of ["learning-controls", "lesson-metadata", "lesson-preview", "catalog-search", "learning-path", "lesson-generation"]) {
+for (const name of ["create-lesson", "learning-controls", "lesson-metadata", "lesson-preview", "catalog-search", "learning-path", "lesson-generation"]) {
   add(`@/components/${name}`, `components/${name}.tsx`);
   sources[`./${name}`] = sources[`@/components/${name}`];
 }
@@ -114,7 +114,7 @@ test("real curriculum routes and components: combined filters, legacy, player, p
       if (name === "@/components/learner-import" || name === "@/components/lesson-coach") return new Proxy({}, { get: () => () => null });
       if (name === "@/app/learning/generation-actions") return generationActions;
       if (name.endsWith("/actions") || name === "./actions") return actions;
-      if (name === "next/navigation") return { notFound() { throw new Error("Not found"); }, redirect(path) { throw new Error(`Redirect ${path}`); } };
+      if (name === "next/navigation") return { useRouter: () => ({refresh(){}}), notFound() { throw new Error("Not found"); }, redirect(path) { throw new Error(`Redirect ${path}`); } };
       if (name === "next/image") return { __esModule: true, default: () => null };
       if (name === "next/link") return { __esModule: true, default: ({ children, href, ...props }) => load("react").createElement("a", { ...props, href, onClick(event) { event.preventDefault(); if (href === "/catalog") void renderRoute("catalog"); } }, children) };
       if (name === "lucide-react") return new Proxy({}, { get: () => () => null });
@@ -213,7 +213,14 @@ test("real curriculum routes and components: combined filters, legacy, player, p
   await page.getByText("administrator-approved AI access", { exact: false }).waitFor();
   assert.equal(await page.locator('a[href="/courses/00000000-0000-4000-8000-000000000001"]').count(), 0);
   assert.equal(await page.getByRole("button", { name: "Generate AI path" }).isDisabled(), true);
-  for (const route of ["studio", "teaching"]) {
+  await page.evaluate(() => curriculumUi.renderRoute("studio"));
+  await page.getByRole("heading",{name:"How to create a lesson"}).waitFor();
+  assert.equal(await page.locator('select[name="subject"]').count(),0,"main Create is simple steps, not an AI draft");
+  await page.evaluate(() => curriculumUi.renderRoute("studio",{manual:"1",starter:"sdlc-small-change"}));
+  await page.getByRole("textbox",{name:"Lesson title",exact:true}).waitFor();
+  assert.equal(await page.getByRole("textbox",{name:"Lesson title",exact:true}).inputValue(),"","manual always starts blank");
+  assert.equal(await page.getByRole("heading",{name:"Your lessons",exact:true}).count(),0);
+  for (const route of ["teaching"]) {
     await page.evaluate(route => curriculumUi.renderRoute(route), route);
     await page.locator('select[name="subject"]').waitFor();
     assert.equal(await page.locator('select[name="subject"] option').count(), 4);

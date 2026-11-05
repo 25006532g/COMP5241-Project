@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { FAMILIES } from "./curriculum";
-import { lessonSchema, slideStyleSchema, type LessonContent } from "./learning";
+import { slideLessonSchema, slideStyleSchema, type LessonContent } from "./learning";
 
 export const defaultSlideStyle = { color: "#17201d", size: 24 as const, align: "left" as const, background: "#fffefa" };
 
@@ -33,6 +33,26 @@ export function emptyAuthorLesson(): AuthorLesson {
   return { title: "", audience: "learners", difficulty: "foundation", slides: [slide(), slide(), slide()], quiz: [] };
 }
 
+// Template limits are deliberate. Never clip source text or silently discard a
+// seventh slide. PPTX units come from presentation relationships, not paragraphs.
+export function slidesFromMaterial(material: { text: string; slides?: string[] }, mode: "text" | "powerpoint"): AuthorLesson["slides"] {
+  let units: string[];
+  if (mode === "powerpoint") {
+    if (!material.slides) throw new Error("Slide import requires a PPTX presentation. Choose Copy text only for PDF or DOCX.");
+    units = material.slides;
+    if (units.length < 3 || units.length > 6) throw new Error("Slide import requires 3–6 source slides. Split or extend the PPTX; nothing was saved.");
+    if (units.some(text => !text.trim() || text.length > 400)) throw new Error("Each imported slide needs text and at most 400 characters. Image-only or longer slides cannot be imported. Split or edit the PPTX; nothing was saved.");
+  } else {
+    const text = material.text.trim();
+    if (!text || text.length > 2400) throw new Error("Text import supports at most 2,400 characters across six slides. Split the source file; nothing was saved.");
+    units = [];
+    for (let offset = 0; offset < text.length; offset += 400) units.push(text.slice(offset, offset + 400));
+  }
+  const result = units.map((body, index) => ({ title: `Slide ${index + 1}`, body, style: { ...defaultSlideStyle } }));
+  while (result.length < 3) result.push({ title: "", body: "", style: { ...defaultSlideStyle } });
+  return result;
+}
+
 function clip(value: string, max: number) {
   const text = value.replace(/\s+/g, " ").trim();
   return text.length > max ? text.slice(0, max) : text;
@@ -40,7 +60,7 @@ function clip(value: string, max: number) {
 
 export function toStoredLesson(draft: AuthorLesson): LessonContent {
   const summary = clip(draft.slides.map(slide => slide.body).join(" "), 300);
-  return lessonSchema.parse({
+  return slideLessonSchema.parse({
     title: draft.title,
     subject: FAMILIES["soft-product"],
     summary: summary.length >= 10 ? summary : "Slides written by the lesson author.",

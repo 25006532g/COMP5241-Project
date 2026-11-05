@@ -18,6 +18,7 @@ export function load(path, dependencies) {
 }
 export const learning = load("../src/lib/learning.ts", { zod: { z } });
 export const curriculum = load("../src/lib/curriculum.ts", { zod: { z } });
+const slides = load("../src/lib/slide-lesson.ts", { zod: { z }, "./learning": learning, "./curriculum": curriculum });
 export const generation = load("../src/lib/lesson-generation.ts", { zod: { z }, "./learning": learning, "./curriculum": curriculum });
 const eligibility = load("../src/lib/eligibility.ts", {});
 const permissions = load("../src/lib/permissions.ts", {});
@@ -102,6 +103,7 @@ export async function harness() {
   const common = {
     "next/cache": { revalidatePath() {} }, zod: { z }, "@/lib/learning-server": server,
     "@/lib/lesson-generation-server": store, "@/lib/ai-eligibility-server": guard, "@/lib/curriculum": curriculum,
+    "@/lib/slide-lesson": slides,
   };
   const learningActions = load("../src/app/learning/actions.ts", {
     ...common, "@/lib/learning": learning, "@/lib/resume": {}, "@/lib/openrouter": { coachReply() { throw new Error("Not a staged call"); } },

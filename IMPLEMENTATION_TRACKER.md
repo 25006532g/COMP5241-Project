@@ -1,6 +1,267 @@
 # Implementation Tracker
 
-Last reviewed: 2026-11-03
+Last reviewed: 2026-11-05
+
+## 5 November 2026 — independent bounded lesson-authoring acceptance (LOCAL)
+
+**Owner/scope:** independent QA, no delegation. Read the current implementation
+entry, README, migration and focused action/component/test logic; sibling skills
+were absent, so loaded all three repository `.github\skills\forge-*` equivalents.
+The implementer's **378/378**, TypeScript/lint/build results below are prior
+implementation evidence, not independent reruns. This is bounded acceptance, not
+another full audit/build or overall feature-complete/release approval.
+
+**Safety established before execution:** existing Windows Node25.2.1, installed
+PGlite and Chromium153.0.8010.12 only; no install. Inspected/reused
+`tests\offline-run.mjs` and `tests\offline-network.mjs`: OS-only child environment,
+fixed Node/Windows PATH and network denial, no actual dotenv/Next setup loader.
+Separate stdin probe confirmed absent application configuration and denied fetch/net
+connections. Browser contexts are offline, service workers blocked, all routes
+aborted; mounted components use synthetic action bridges, not a server.
+In-memory PGlite only, synthetic users/content, all instances/contexts closed in
+`finally`. The real access-helper probe supplies synthetic configuration to a stub
+client factory and deletes it in `finally`; it never contacts Supabase.
+No `.env*` read, remote service, provider/quota, connected test:e2e/test:instructors,
+target migration, server startup, commit or deployment.
+
+**QA-owned exact inventory:** new `tests\slide-acceptance.test.mjs`; additive
+assertions in `tests\slide-authoring.test.mjs` and
+`tests\slide-authoring-ui.test.mjs`; this entry and the README verification entry.
+No application, SQL, CSS, harness/runner, dependency or configuration modification.
+The existing **19 application files + one new migration + 13 test/harness files +
+README/tracker** implementation inventory is unchanged, with the one new QA test
+bringing test/harness inventory to14. Full application paths remain in the
+implementation entry immediately below.
+
+**Commands and actual results** (repository cwd; each Node command prefixed with
+`node tests\offline-run.mjs`):
+
+| Command after offline-run prefix | Independent result |
+| --- | --- |
+| `--experimental-strip-types --test --test-concurrency=1 tests\slide-acceptance.test.mjs tests\slide-authoring.test.mjs tests\slide-authoring-ui.test.mjs tests\teaching-material.test.mjs tests\learning.test.mjs` | **28/29**, 55.20s; only failure was QA-added exact-label Audience selector at UI test102 (option text participates in its label), not application failure |
+| `--experimental-strip-types --test --test-concurrency=1 tests\slide-authoring-ui.test.mjs` | **1/1**, 12.64s after using actual accessible combobox role; all browser assertions passed, zero page errors/network requests |
+| `node_modules\eslint\bin\eslint.js tests\slide-acceptance.test.mjs tests\slide-authoring.test.mjs tests\slide-authoring-ui.test.mjs` | Exit0 after final test changes |
+| `-` with stdin `assert` probe for absent Supabase config and denied fetch/net | Pass; first `-e` version failed PowerShell argument quoting, replaced by stdin; no product failure |
+| Explicit installed `git.exe --no-pager diff --check` | Exit0 |
+
+Thus **29 distinct focused tests now pass across these commands**, not a claimed
+single29/29 run. No failures/skips/cancellations remain in the final browser rerun;
+the other28 were not needlessly rerun. No full suite, direct TS or build rerun was
+needed for JS-test/document-only edits.
+
+**Verified passes / concrete coverage:**
+
+* Old unchanged `20260923_learning_ran.sql` reproduces **23514 /
+  `forge_lessons_content_check`** on synthetic three-slide/no-quiz insert.
+  New migration in local PGlite accepts slide quiz0/3 and standard10; direct SQL
+  rejects slide1/2, standard9, missing/NULL/wrong-type JSON, invalid slide arrays,
+  mismatched answer/question counts and scores above totals. SQL NULL also denied.
+  Reapplication preserves complete lesson/attempt/resume snapshots, including the
+  original migration's malformed historical lesson; standard snapshot defaults10
+  remain intact. anon/authenticated table reads denied. NOT VALID is deliberate.
+* Actual create/update actions keep every author role private with review requested,
+  even instructor/admin `publish=on`; plain Save clears review/published timestamp.
+  Nonadmin approval, stale-version approval, foreign edits and template bypass denied.
+  Added probe runs **real `learning-server.ts`** access/current-user checks with
+  actual actions: private foreign draft denied even to admin before review,
+  trusted versus forged role, explicit review-only access, revoked session/user plus
+  auth error, and unauthenticated writes denied. `/studio` and `/admin` revalidated.
+* Actual action/DB and mounted player show **2/3 (67%) pass**, **1/3 (33%) fail**,
+  saved answer totals/resume3, reports/progress/dashboard/certificate totals, failing
+  and foreign certificate denial. Independent standard actions persist **5/10 fail,
+  6/10 pass**. No-quiz player has no practice/quiz/certificate and rejects quiz saves.
+* Real mounted author at320/1440: blank fields, Audience/Difficulty persistence,
+  preview computed color/size/alignment/background, keyboard Previous/Next and
+  optional quiz toggle (three fields); incomplete quiz/blank save focus errors with
+  no writes. Same-tick guard, same-route confirmed versions1–5, retained input and
+  uncertain-save lock/focus pass. Unknown-create actual-action replay adds no write.
+* Real mounted upload: file replacement, extraction failure/retry and mode switch
+  remove old preview; keyboard Save and publish persists private review. Parser/
+  actual extraction-action tests separately verify real PPTX relationship order,
+  slide boundaries, no silent seventh/overlong/blank-slide discard, text2401
+  rejection and1201-character long-token preservation, signatures and archive limits.
+  Mounted upload extraction is stubbed; this is **not deployed multipart acceptance**.
+* Actual route renderers: owner-filtered history above steps on main Create only;
+  no history on blank/manual/upload or dashboard; no URL-selected ready-made draft.
+  Teaching keeps published roster/enrollment controls rather than private history.
+
+**Visual evidence actually opened:** all under
+`C:\Users\SOLUSER\AppData\Local\Temp\forge-slide-authoring-AwlPYg\`:
+`manual320.png`, `manual1440.png`, `player1440.png`, `upload320.png`,
+`upload-review320.png`. UI harness now explicitly sets1440 (previous filename alone
+did not establish that width). Images are synthetic and retained outside Git.
+Forms/text wrap without horizontal overflow at320; keyboard focus/error/success
+spot-checks passed. Existing global CSS with Tailwind import removed and adapters
+is used; these are component checks, not full routed-browser or accessibility approval.
+
+**Product defects:** none reproduced in this bounded scope. The selector and shell
+quoting failures above were QA test/probe failures, not weakened product assertions.
+
+**Preservation/cleanup:** initial status had27 modified tracked files and8 untracked
+implementation files; all preserved, only the QA test added. Baseline protected
+176-file aggregate (src/supabase/tests/scripts/.github + manifest/config/type files)
+was `8345d3c49e5472e80cdbd1d8781c8685171eef9b541eb6c25478f5f5bbed8519`;
+final aggregate matches when excluding the new test and normalizing the two
+intentionally strengthened test hashes to baseline. Thus all174 other protected
+files, including all application/migration/harness/runner work, are byte-identical.
+Historical `_ran`, manifests/config/type files have no Git diff; Next dependency
+still exists. Owned command sessions completed; browser/PGlite finally cleanup
+reported no error and process check found no Playwright Chromium helper.
+No server/build snapshot was created; existing `.next`/dependencies untouched.
+
+**Open, NOT passes / coordinator handover:**
+
+1. Exact additive migration:
+   `supabase\migrations\20261105093000_slide_authoring.sql`.
+   **Target Supabase application NOT RUN.** After separate target approval, confirm
+   prerequisites/current schema, back up schema/data/grants, apply through authorized
+   migration workflow without editing `_ran`, refresh PostgREST schema cache, and
+   deploy matching application code. Then verify target grants/cache and connected
+   create/update/review/resume/report flows. File existence/local PGlite is not
+   target application. Historical malformed-row audit/constraint VALIDATE needs
+   separate authorization.
+2. Migration has a transaction for application failure, but post-commit rollback
+   is **NOT tested**. Restoring old10 checks over new short attempts/lessons can
+   fail; use coordinated forward repair or a reviewed application/data restore.
+   Do not blindly drop new snapshot columns or tighten historical data checks.
+3. Deployed action/multipart transport, races, admin approval integration and PDF
+   worker packaging remain **UNVERIFIED**; prior linked-dependency packaging probe
+   was inconclusive. No local server/build/remote operation was authorized here.
+4. Binary **PPT/DOC**, original layout/fonts/images/full-format fidelity and original
+   file retention remain **UNFULFILLED**. Ordered PPTX/text-only import does not
+   satisfy them. Current explicit limits are4MiB/text2400/PPTX3–6 ×400 characters.
+   Full accessibility, content-owner approval and overall feature completion are
+   not claimed.
+
+## 5 November 2026 — single Create lesson/manual/upload trace (local implementation; QA requested)
+
+**Owner/scope:** local application/schema/tests by the assigned implementation owner;
+Coordinator retains acceptance/handover. Baseline Git status was clean (Git required
+its explicit installed executable; bare `git` was not on PATH). Existing work,
+all prior `_ran` migration names and unrelated account/reflection/OpenRouter code
+are unchanged. No dependency/manifest change, install, environment-file read, actual
+dotenv/setup loader, connected service/test, provider call, remote migration, commit
+or deployment. Existing Node25.2.1, installed dependencies, Chromium153.0.8010.12 and
+in-memory PGlite only. Sibling skills were absent; repository equivalents were read.
+
+**Falsifiable hypothesis / root cause:** the application admitted slides with zero
+or three questions, but the original SQL CHECK required exactly ten. PGlite reproduced
+code **23514 / constraint `forge_lessons_content_check`** from the unchanged
+`20260923_learning_ran.sql`. The initial strict AI schema test also failed (`3 !== 4`).
+Separating stored slide validation from the plain `.shape`/JSON-schema AI object,
+plus an additive migration, repairs those mismatches. Standard AI remains 4–6 slides,
+exactly ten questions. Slides remain bounded at 3–6 slides, quiz absent or 3–10.
+
+**Delivered boundaries:** owner-only history queries/rendering only on main Create;
+blank manual and separate upload; no ready-made starter selected by URL. Dashboard
+creation history removed; teaching becomes a published roster selector while keeping
+enrollment management and existing AI teaching import. Four styles persist and render
+in preview/player. Slides skip manufactured practice. No-quiz lessons have no quiz
+or certificate; 2/3 passes and 1/3 fails across saved attempts, resume, reports, progress,
+dashboard and owner-only certificate download. Answer keys remain server-side until
+the learner submits. All slide authors, including trusted instructors/admins, save
+privately or request review; forged publish/template flags cannot publish. A separate
+admin-only approval action checks the saved version/request. Plain Save clears review
+and publication timestamp. Studio/admin caches are revalidated on creation.
+
+Same-tick/ref guards block duplicate saves. Acknowledged IDs/versions survive repeated
+saves and actual Studio refreshes, with focused success feedback; ambiguous creation
+or update acknowledgements lock replay and retain input. Upload file/mode changes,
+failed extraction and transport errors cannot leave an old preview saveable.
+PPTX units now come from the existing safe parser's real presentation relationships,
+not blank paragraphs. Text cannot silently disappear through regex splitting,
+six-block slicing, 100/400-character clipping or the old 20k extraction truncation.
+
+**Migration:** new `supabase\migrations\20261105093000_slide_authoring.sql` only.
+Keeps standard ten-answer snapshots, adds explicit snapshot template/count fields for
+slide attempts/resume, bounds scores by saved totals, and rejects NULL/wrong-type/count
+loopholes. `NOT VALID` preserves historical rows (including old malformed rows) while
+enforcing future writes/updates; no rows/policies/table grants are deleted or replaced.
+PGlite checks existing lesson/attempt/resume retention, repeated migration execution,
+browser-role denial, malformed JSON structures/answer arrays and actual action inserts.
+Remote application is **NOT RUN**; historical cleanup/constraint validation needs
+separate authorization. Action CHECK failures return static, actionable migration/cache
+guidance, never raw database diagnostics.
+
+**Exact application inventory (relative Windows paths):**
+
+* `src\app\studio\page.tsx`, `src\app\learning\actions.ts`,
+  `src\app\teaching\actions.ts`, `src\app\teaching\page.tsx`,
+  `src\app\dashboard\page.tsx`, `src\app\progress\page.tsx`,
+  `src\app\reports\page.tsx`, `src\app\courses\[slug]\page.tsx`,
+  `src\app\courses\[slug]\lessons\[lesson]\page.tsx`,
+  `src\app\api\certificates\[id]\route.ts`.
+* `src\components\create-lesson.tsx`, `src\components\learning-controls.tsx`,
+  `src\components\lesson-preview.tsx`.
+* `src\lib\learning.ts`, `src\lib\slide-lesson.ts`, `src\lib\resume.ts`,
+  `src\lib\reporting.ts`, `src\lib\learning-server.ts`,
+  `src\lib\teaching-material.ts`.
+* New tests/harnesses: `tests\slide-authoring.test.mjs`,
+  `tests\slide-authoring-ui.test.mjs`, `tests\slide-authoring-harness.mjs`,
+  `tests\offline-run.mjs`, `tests\offline-network.mjs`,
+  `tests\offline-build.mjs`, `tests\offline-build-guard.mjs`.
+  Adapted focused regressions: `tests\manual-authoring.test.mjs`,
+  `tests\curriculum-ui.test.mjs`, `tests\lesson-generation-harness.mjs`,
+  `tests\progress.test.mjs`, `tests\resume.test.mjs`,
+  `tests\teaching-material.test.mjs`. Retained legacy fixture/editor coverage;
+  obsolete starter-default route assertions now test the current blank Create contract.
+* This tracker, README and the one new migration above; no CSS/config/dependency edits.
+
+**Commands and actual results:** all Node commands below use the `tests\offline-run.mjs`
+prefix (OS-only allowlist, fixed Windows/Node PATH, inherited network denial).
+The runner suppresses only Node's deferred MODULE_TYPELESS_PACKAGE_JSON warning,
+which otherwise collides with an existing test's JSON-only diagnostic interception.
+
+| Command after `node tests\offline-run.mjs` | Actual evidence |
+| --- | --- |
+| `--experimental-strip-types --test --test-concurrency=1 tests\learning.test.mjs tests\slide-authoring.test.mjs` | Baseline **7/8**, AI schema red; old SQL failure reproduced. After split, **8/8** |
+| `--experimental-strip-types --test --test-concurrency=1 tests\slide-authoring.test.mjs` | Final **3/3**: actual actions, old/new SQL, owner/history/report/certificate renderers |
+| `--experimental-strip-types --test --test-concurrency=1 tests\slide-authoring.test.mjs tests\slide-authoring-ui.test.mjs` | Expanded **4/4**: malformed SQL attempts/resume, no-quiz and 3-question saves; actual Studio refresh/current versions; duplicate/uncertain saves; four styles/player; 2/3 pass, 1/3 fail; upload stale/error recovery and 320px wrapping |
+| `--experimental-strip-types --test --test-concurrency=1 tests\teaching-material.test.mjs tests\slide-authoring.test.mjs` | **19/19**, including real ordered PPTX boundaries, mode tampering, explicit bounds, long-token preservation and retained parser security/signature limits |
+| `--experimental-strip-types --test --test-concurrency=1 "tests/*.test.mjs"` | First expanded gate **377/379**: outdated curriculum harness import + deferred Node warning interception. Repaired harness/runner; full serial **378/378** (324.18s), then strengthened final rerun **378/378** (342.54s), zero failures/skips/cancellations |
+| `node_modules\typescript\bin\tsc --noEmit --incremental false` | Exit0, no Next env loader/typegen in repository |
+| `node_modules\eslint\bin\eslint.js` plus the owned application/test paths above | Exit0; unused imports found in first pass were removed |
+| `tests\offline-build.mjs` | Final allowlisted env-file-free snapshot: sequential `next typegen` → direct TypeScript → `next build --webpack` passed, exit0. No app server. `forge-slide-build-Ag2VIS` snapshot/junction removed in `finally` |
+| Explicit installed `git.exe --no-pager diff --check` | Exit0 |
+
+Other intermediate reds were local implementation/test corrections, not hidden passes:
+the runner's first Windows absolute `--import` path needed a `file://` URI;
+stacked Zod minimum initially retained four slides; one misplaced parser export failed
+syntax/TypeScript; mounted selectors needed accessible roles for populated textareas
+and a CSS-module adapter; PGlite timestamps needed PostgREST-shaped serialization and
+resume fixtures needed isolation. Legacy success wording was retained; a known-rejection
+fixture now uses definite23514 rather than an ambiguous error object. All were rerun.
+
+**Build-probe limitation:** an additional worker-file trace assertion failed after a
+successful build in the linked-dependency snapshot. A speculative explicit import of
+the existing PDF worker did not resolve it; it and that assertion were removed.
+Dependencies live outside that snapshot's tracing root, so this is not reliable proof
+of a deployment defect or of correct worker packaging. No production config was changed.
+Target `/studio` PDF worker packaging remains an independent QA check, not a local
+release claim.
+
+**Visual/cleanup evidence:** synthetic manual320 and player1440 images were actually
+opened at `C:\Users\SOLUSER\AppData\Local\Temp\forge-slide-authoring-4Hi9js`;
+the later strengthened run's upload320 was also opened at
+`C:\Users\SOLUSER\AppData\Local\Temp\forge-slide-authoring-YIYX8x`.
+Final manual320/player1440/upload320 images were also opened at
+`C:\Users\SOLUSER\AppData\Local\Temp\forge-slide-authoring-KkNIrd`.
+Browser contexts/processes and PGlite instances close in `finally`; all owned build
+snapshots unlink their dependency junction before recursive deletion. Screenshot
+artifacts are retained in Temp for QA, not checked into Git. Repository dependencies
+and existing `.next` artifacts are not rebuilt/removed. No detached helper/server.
+Final filesystem checks confirm `forge-slide-build-Ag2VIS` absent and installed
+`node_modules\next\package.json` intact; protected `_ran`/manifest/config/type files
+have no Git diff, and final whitespace check exits0.
+
+**Outstanding / acceptance:** binary PPT/DOC and original-layout/full-format import
+remain unsupported, explicitly shown before upload. No OCR, original-file persistence,
+external converter or AI fallback was added. Technical limits:4MiB files, text≤2,400
+characters; PPTX slide mode3–6 slides with1–400 text characters per slide. Blank padded
+text slides must be authored before saving. Coordinator should request independent QA
+of the frozen local trace, then separately authorize target migration/cache/transport,
+admin approval, deployed PDF packaging and accessibility/owner content review.
+This is not connected acceptance, deployment or release certification.
 
 ## 3 November 2026 - Hide Daily 4D reflections for all users (LOCAL PASS)
 

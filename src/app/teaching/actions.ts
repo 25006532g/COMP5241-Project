@@ -6,7 +6,8 @@ import { accessibleLesson, canManageEnrollment, canPublishLessons, currentUser, 
 import { findAccounts, type DirectoryState } from "@/lib/account-directory";
 import { requireAiAccess } from "@/lib/ai-eligibility-server";
 import { startGeneration } from "@/lib/lesson-generation-server";
-import { extractTeachingMaterial } from "@/lib/teaching-material";
+import { extractTeachingMaterial, extractStructuredTeachingMaterial } from "@/lib/teaching-material";
+import { slidesFromMaterial, type AuthorLesson } from "@/lib/slide-lesson";
 import type { ActionState } from "@/app/learning/actions";
 import { selectionFromForm } from "@/lib/curriculum";
 
@@ -42,14 +43,16 @@ export async function enrollSelected(_previous: ActionState, form: FormData): Pr
   } catch { return { error: "Choose between 1 and 50 learners and try again." }; }
 }
 
-export async function extractLessonUpload(form: FormData): Promise<{ text?: string; name?: string; error?: string }> {
+export async function extractLessonUpload(form: FormData): Promise<{ slides?: AuthorLesson["slides"]; name?: string; error?: string }> {
   try {
     await currentUser();
     const file = form.get("material");
+    const mode = z.enum(["text", "powerpoint"]).parse(form.get("mode"));
     if (!(file instanceof File)) return { error: "Choose a file to upload." };
-    const text = await extractTeachingMaterial(file);
+    if (mode === "powerpoint" && !/\.pptx$/i.test(file.name)) return { error: "PowerPoint slide import requires PPTX. Export binary PPT as PPTX first." };
+    const material = await extractStructuredTeachingMaterial(file);
     const name = file.name.replace(/\.[^.]+$/, "").trim().slice(0, 120);
-    return { text: text.slice(0, 20_000), name: name || "Uploaded lesson" };
+    return { slides: slidesFromMaterial(material, mode), name: name || "Uploaded lesson" };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Could not read that file. Try again." };
   }

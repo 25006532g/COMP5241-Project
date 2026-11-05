@@ -21,7 +21,7 @@ export default async function Lesson({ params }: { params: Promise<{ slug: strin
   if (!data) redirect(`/courses/${lesson.id}`);
   const { data: saved, error: resumeError } = await database().from("forge_resume").select("lesson_version,revision,stage,slide,ordering,answers").eq("user_id", user.id).eq("lesson_id", lesson.id).maybeSingle();
   const restored = !resumeError && saved?.lesson_version === lesson.version ? resumeSchema.safeParse(saved) : null;
-  const attempts = await collectRows((start, end) => database().from("forge_attempts").select("original_lesson_id,lesson_version,score")
+  const attempts = await collectRows((start, end) => database().from("forge_attempts").select("original_lesson_id,lesson_version,score,questions,answers")
     .eq("user_id", user.id).eq("original_lesson_id", lesson.id).eq("lesson_version", lesson.version).order("id").range(start, end));
   const evidence = lessonProgress(data, attempts, lesson.id, lesson.version);
   const content = { ...lesson.content, questions: lesson.content.questions.map(question => ({ prompt: question.prompt, options: question.options })) };

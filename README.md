@@ -6,6 +6,78 @@ For a presentation-ready overview of features, design choices and prototype scre
 
 Track remaining work, blockers, acceptance criteria and verification updates in [IMPLEMENTATION_TRACKER.md](IMPLEMENTATION_TRACKER.md).
 
+## 5 November 2026 — independent bounded LOCAL acceptance
+
+**29 distinct focused tests passed across the bounded runs**, not a new full-suite
+or build result. Initial matrix: **28/29**; the only failure was a QA-added exact
+Audience selector, corrected to its accessible combobox role. Browser-only rerun:
+**1/1**. Scoped three-test-file ESLint and an OS-only/network-denial probe passed.
+Actual PGlite SQL/actions/access helpers and mounted Chromium at **320/1440px**
+confirmed the legacy23514 reproduction, new slide0/3 versus1/2 boundaries, strict
+standard10, retained historical snapshots, private/review publication, owner denial,
+repeat/uncertain saves, variable quiz results and keyboard/upload recovery.
+
+QA changed only `tests\slide-acceptance.test.mjs` (new), strengthened the two
+`tests\slide-authoring*.test.mjs` files, and added README/tracker verification entries.
+The existing application/migration/dependency work is preserved. Five screenshots
+were actually opened under
+`C:\Users\SOLUSER\AppData\Local\Temp\forge-slide-authoring-AwlPYg`.
+Exact commands, results, cleanup and fingerprints are in the tracker entry below.
+
+**No product defect reproduced in this scope; not overall feature completion.**
+`supabase\migrations\20261105093000_slide_authoring.sql` exists but is **NOT applied
+to target Supabase**. After separate target authorization: back up, apply that
+additive migration after existing prerequisites, refresh the PostgREST schema cache,
+deploy matching application code, then perform connected author/review/learner checks.
+Do not restore the old ten-question constraint over new short-quiz data; rollback
+needs a coordinated data/application plan and was not tested. Target grants/cache,
+real deployed action transport/races and PDF worker packaging remain **UNVERIFIED**.
+Binary PPT/DOC and original-layout/full-format fidelity remain **UNFULFILLED**,
+not accepted by text-only/ordered-PPTX checks. No remote service, server startup,
+provider/quota use, connected suite, commit or deployment was performed.
+
+## 5 November 2026 — Create lesson repair (local implementation; independent QA requested)
+
+Create lesson now has owner-only history at the top of `/studio`, simple steps,
+a **blank** manual editor and a separate upload page. Earlier dated starter-default
+instructions below are superseded. Catalog learning and the teaching roster remain.
+Slide lessons support 3–6 Title/Body slides, four persisted style controls, and
+either no quiz or 3–10 questions. Save is private; Save and publish requests ADMIN
+review for **every** author role. Administrator approval is a separate saved-version
+action. Repeated saves retain the confirmed ID/version; uncertain saves block replay.
+
+The reported Supabase error is reproducible: **23514,
+`forge_lessons_content_check`** in `20260923_learning_ran.sql` requires ten questions.
+The new **`supabase\migrations\20261105093000_slide_authoring.sql`** updates lesson,
+attempt and resume checks without modifying any `_ran` file, existing rows or grants.
+New checks reject missing/null/wrong-type structures instead of passing SQL NULL.
+They are `NOT VALID` to retain historical rows admitted by the old checks; they
+still enforce new writes/updates. Historical malformed rows require a separate
+authorized audit before validating the constraints. Standard/AI lessons retain
+4–6 slides and exactly ten questions; shorter quizzes use a 60% rounded-up pass mark
+consistently in learning, reports, progress and certificates. No quiz means no award.
+
+**Import limits, not full-format conversion:** PDF/DOCX/PPTX text extraction only;
+binary PPT/DOC remain explicitly unsupported (export to PPTX/DOCX first). Text mode
+accepts up to 2,400 extracted characters; PPTX slide mode preserves real source
+order/boundaries for 3–6 slides, each with text and at most 400 characters. Both use
+the existing 4 MiB/resource-bounded safe parser. Over-limit content is rejected,
+not truncated. Images, original fonts, layout and full visual fidelity are **not**
+imported. Originals are neither retained nor sent to AI.
+
+Local evidence: serial offline suite **378/378**, focused real-action/PGlite and
+mounted Chromium checks, scoped ESLint, direct TypeScript and an isolated
+environment-file-free webpack build. Reproducible safe commands:
+`node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 "tests/*.test.mjs"`
+and `node tests\offline-run.mjs tests\offline-build.mjs`.
+The runner uses OS-only child environments and network denial; the build snapshots
+only allowlisted files and replaces the dotenv loader. See the tracker for failed
+iterations and evidence limits. No connected tests, remote migration, provider call,
+commit or deployment occurred. Coordinator owns acceptance/handover; independent QA
+must verify the authorized target migration/cache, real action transport, approval
+and deployed PDF worker packaging. A linked-dependency snapshot does not prove that
+last packaging requirement.
+
 ## 3 November 2026 - Daily 4D reflections hidden for everyone
 
 Per the latest owner request, Daily 4D reflections is removed from desktop/mobile

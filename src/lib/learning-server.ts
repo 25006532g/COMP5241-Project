@@ -2,7 +2,7 @@ import "server-only";
 import { createClient as createAdminClient, type User } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { collectRows, lessonSchema, type LessonContent } from "@/lib/learning";
+import { collectRows, storedLessonSchema, type LessonContent } from "@/lib/learning";
 import { z } from "zod";
 import { isAdmin } from "@/lib/permissions";
 export { isAdmin, isInstructor, canPublishLessons, canEditLesson, canManageEnrollment } from "@/lib/permissions";
@@ -56,7 +56,7 @@ export async function accessibleLesson(id: string, user: User, adminReview = fal
   const { data, error } = await database().from("forge_lessons").select("*").eq("id", id).maybeSingle();
   if (error) throw new Error("Could not load this lesson.");
   if (!data || (data.visibility !== "public" && data.owner_id !== user.id && !(adminReview && isAdmin(user) && data.review_requested))) return null;
-  return { ...data, content: lessonSchema.parse(data.content) } as LessonRow;
+  return { ...data, content: storedLessonSchema.parse(data.content) } as LessonRow;
 }
 
 export async function enrolledLesson(id: string, user: User) {

@@ -45,7 +45,7 @@ export default async function Reports() {
           <dl className="report-evidence">
             <div><dt>REVIEWED</dt><dd>{row.evidence.reviewedAt ? "Acknowledged" : "No review record"}</dd></div>
             <div><dt>ATTENDED</dt><dd>{row.evidence.attendedAt ? "Final quiz reached" : "No quiz-reached record"}</dd></div>
-            <div><dt>PASSED</dt><dd>{row.evidence.passed ? "Public saved pass (6–10/10)" : "No public saved pass record"}</dd></div>
+            <div><dt>PASSED</dt><dd>{row.evidence.passed ? "Public saved pass (at least 60%)" : "No public saved pass record"}</dd></div>
           </dl>
         </li>)}</ul>
         {!roster.length && <p>No current public enrollments.</p>}
@@ -54,7 +54,7 @@ export default async function Reports() {
         <p>{history.length} saved public attempts. Includes learners no longer in the public roster; those learners are excluded from the counts above. Each passing attempt remains an independent snapshot and certificate. Private attempts and private enrollments are excluded.</p>
         {!history.length && <p>No saved public attempts.</p>}
         {history.map(attempt => <details key={attempt.id}>
-          <summary>{attempt.user_id} · Version {attempt.lesson_version} · {attempt.score}/10 · {new Date(attempt.completed_at).toLocaleDateString("en-GB", { timeZone: "UTC" })}</summary>
+          <summary>{attempt.user_id} · Version {attempt.lesson_version} · {attempt.score}/{attempt.questions.length} · {new Date(attempt.completed_at).toLocaleDateString("en-GB", { timeZone: "UTC" })}</summary>
           <p>Saved lesson title: {attempt.lesson_title}</p>
           <ol>{attempt.questions.map((question, index) => <li key={index}>
             <strong>{question.prompt}</strong><p>Selected: {question.options[attempt.answers[index]]}</p><p>Correct: {question.options[question.correct]}</p>

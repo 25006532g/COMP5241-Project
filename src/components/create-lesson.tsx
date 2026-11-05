@@ -2,160 +2,85 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { LessonContent } from "@/lib/learning";
 import { extractLessonUpload } from "@/app/teaching/actions";
-import { LessonEditor } from "@/components/learning-controls";
-import { createManualLesson, updateLesson } from "@/app/learning/actions";
-import { authorLessonSchema, defaultSlideStyle, emptyAuthorLesson, type AuthorLesson } from "@/lib/slide-lesson";
-
-export const UPLOAD_DRAFT_KEY = "forge-upload-lesson";
-
-function clip(value: string, max: number) {
-  const text = value.replace(/\s+/g, " ").trim();
-  return text.length > max ? text.slice(0, max - 1).trimEnd() : text;
-}
-
-export function draftFromUpload(name: string, text: string): LessonContent {
-  const parts = text.split(/\n{2,}/).map(part => part.trim()).filter(Boolean);
-  const slides = Array.from({ length: 4 }, (_, index) => {
-    const part = parts[index] ?? "";
-    return {
-      title: clip(part, 80) || `Slide ${index + 1}`,
-      body: clip(part, 400) || "Add the main point for this slide.",
-      example: "Add an example.",
-    };
-  });
-  const summary = clip(text, 300);
-  return {
-    title: clip(name, 120) || "Uploaded lesson",
-    subject: "",
-    summary: summary.length >= 10 ? summary : "Review the uploaded text and write a short summary.",
-    slides,
-    activity: { prompt: "", steps: ["", "", ""] },
-    questions: Array.from({ length: 10 }, () => ({ prompt: "", options: ["", "", "", ""], correct: 0, explanation: "" })),
-  };
-}
-
-function slidesFromExtract(text: string, mode: "text" | "powerpoint"): AuthorLesson["slides"] {
-  const style = { ...defaultSlideStyle };
-  const blocks = mode === "powerpoint"
-    ? text.split(/\n{2,}/).map(part => part.trim()).filter(Boolean)
-    : text.replace(/\s+/g, " ").trim().match(/.{1,320}(\s|$)/g)?.map(part => part.trim()).filter(Boolean) ?? [];
-  const slides = blocks.slice(0, 6).map((block, index) => {
-    const lines = block.split("\n").map(line => line.trim()).filter(Boolean);
-    const title = clip(lines[0] ?? `Slide ${index + 1}`, 100) || `Slide ${index + 1}`;
-    const body = clip((mode === "powerpoint" ? lines.slice(1).join(" ") : "") || lines[0] || block, 400) || "Add the main point for this slide.";
-    return { title, body, style };
-  });
-  while (slides.length < 3) slides.push({ title: `Slide ${slides.length + 1}`, body: "Add the main point for this slide.", style: { ...style } });
-  return slides;
-}
+import { createManualLesson, updateLesson, type ActionState } from "@/app/learning/actions";
+import { authorLessonSchema, emptyAuthorLesson, type AuthorLesson } from "@/lib/slide-lesson";
 
 export function UploadLessonPage() {
-  const router = useRouter();
   const [mode, setMode] = useState<"text" | "powerpoint">("text");
-  const [title, setTitle] = useState("");
-  const [slides, setSlides] = useState<AuthorLesson["slides"] | null>(null);
-  const [index, setIndex] = useState(0);
+  const [draft, setDraft] = useState<AuthorLesson | null>(null);
+  const [generation, setGeneration] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const inFlight = useRef(false);
+  const epoch = useRef(0);
+  const locked = useRef(false);
+  const [saveLocked, setSaveLocked] = useState(false);
+  useEffect(() => () => { epoch.current++; }, []);
+  function invalidate() {
+    epoch.current++;
+    setDraft(null);
+    setError("");
+  }
 
   async function readFile(form: FormData) {
-    const file = form.get("material");
-    if (mode === "powerpoint" && file instanceof File && !/\.pptx?$/i.test(file.name)) {
-      setError("Import PowerPoint accepts a PPT or PPTX file. Choose Copy text only for PDF or Word.");
-      setSlides(null);
-      return;
-    }
+    if (inFlight.current || locked.current) return;
+    inFlight.current = true;
+    const request = ++epoch.current;
+    form.set("mode", mode);
     setBusy(true);
+    setDraft(null);
     setError("");
     try {
       const result = await extractLessonUpload(form);
-      if (!result.text) {
+      if (request !== epoch.current) return;
+      if (!result.slides) {
         setError(result.error ?? "Could not read that file.");
-        setSlides(null);
         return;
       }
-      if (!title) setTitle(clip(result.name ?? "", 120));
-      setSlides(slidesFromExtract(result.text, mode));
-      setIndex(0);
+      setDraft({ ...emptyAuthorLesson(), title: result.name ?? "", slides: result.slides });
+      setGeneration(value => value + 1);
     } catch {
-      setError("Upload failed. Try the file again.");
+      if (request === epoch.current) setError("Upload failed. Try the file again.");
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
 
-  async function save(intent: "save" | "publish") {
-    if (!slides) {
-      setError("Upload a file and preview the slides before saving.");
-      return;
-    }
-    const parsed = authorLessonSchema.safeParse({ title, audience: "learners", difficulty: "foundation", slides, quiz: [] });
-    if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? "Add a lesson title of at least 3 characters.");
-      return;
-    }
-    setBusy(true);
-    setError("");
-    const form = new FormData();
-    form.set("template", "slides");
-    form.set("intent", intent);
-    form.set("content", JSON.stringify(parsed.data));
-    try {
-      const result = await createManualLesson({}, form);
-      if (result.error) setError(result.error);
-      else if (result.lessonId) router.push(`/studio?edit=${result.lessonId}`);
-      else setError("Save was not confirmed. Check your lessons before trying again.");
-    } catch {
-      setError("Save was not confirmed. Check your lessons before trying again.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const slide = slides?.[index];
   return <section className="learning-section" aria-labelledby="upload-heading">
     <h2 id="upload-heading">Upload a file</h2>
     <form className="learning-form" onSubmit={event => { event.preventDefault(); void readFile(new FormData(event.currentTarget)); }}>
-      <fieldset>
+      <fieldset disabled={busy || saveLocked}>
         <legend>How should this file become a lesson?</legend>
-        <label className="checkbox-field"><input type="radio" name="mode" checked={mode === "text"} onChange={() => { setMode("text"); setSlides(null); }} /> Copy the text only</label>
-        <label className="checkbox-field"><input type="radio" name="mode" checked={mode === "powerpoint"} onChange={() => { setMode("powerpoint"); setSlides(null); }} /> Import the PowerPoint as slides</label>
+        <label className="checkbox-field"><input type="radio" name="mode" checked={mode === "text"} onChange={() => { setMode("text"); invalidate(); }} /> Copy the text only</label>
+        <label className="checkbox-field"><input type="radio" name="mode" checked={mode === "powerpoint"} onChange={() => { setMode("powerpoint"); invalidate(); }} /> Import the PowerPoint as slides</label>
       </fieldset>
-      <p>{mode === "text" ? "Text is copied into slides. PDF, Word, PPT, and PPTX are accepted. The original file is not stored." : "Each PowerPoint slide becomes a lesson slide. Use PPT or PPTX. Legacy PPT may need to be saved as PPTX first."}</p>
-      <label>Lesson title<input value={title} maxLength={120} onChange={event => setTitle(event.target.value)} /></label>
-      <label>File<input type="file" name="material" required accept={mode === "powerpoint" ? ".ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation" : ".ppt,.pptx,.pdf,.doc,.docx,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"} /></label>
-      <button className="primary-button" type="submit" disabled={busy}>{busy ? "Reading file..." : "Preview slides"}</button>
+      <p>{mode === "text" ? "PDF, DOCX and PPTX text only: at most 2,400 characters, in up to six slides. Complete any blank slides before saving." : "PPTX only: 3–6 slides, at most 400 text characters per slide. Real slide order is retained, not original layout."} Binary PPT and DOC cannot be imported safely; export as PPTX or DOCX first. Images, original fonts, positioning and full formatting are not imported. Files must be at most 4 MiB. Originals are not stored or sent to AI. Over-limit content is rejected, never clipped.</p>
+      <label>File<input type="file" name="material" required disabled={busy || saveLocked} onChange={invalidate} accept={mode === "powerpoint" ? ".ppt,.pptx" : ".ppt,.pptx,.pdf,.doc,.docx"} /></label>
+      <button className="primary-button" type="submit" disabled={busy || saveLocked}>{busy ? "Reading file..." : "Preview slides"}</button>
     </form>
-    {slide && <section className="slide-stage" aria-label="Slide preview" style={{ background: slide.style.background, color: slide.style.color, textAlign: slide.style.align }}>
-      <div className="slide-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</div>
-      <div>
-        <span className="eyebrow">{index + 1} / {slides?.length}</span>
-        <h2 style={{ fontSize: slide.style.size }}>{slide.title}</h2>
-        <p>{slide.body}</p>
-        <div className="player-navigation">
-          <button type="button" className="secondary-button" disabled={index === 0} onClick={() => setIndex(index - 1)}>Previous</button>
-          <button type="button" className="secondary-button" disabled={!slides || index === slides.length - 1} onClick={() => setIndex(index + 1)}>Next</button>
-        </div>
-      </div>
-    </section>}
     {error && <p role="alert" className="form-notice notice-error">{error}</p>}
-    <p>
-      <button type="button" className="secondary-button" disabled={busy || !slides} onClick={() => void save("save")}>Save</button>
-      <button type="button" className="auth-submit" disabled={busy || !slides} onClick={() => void save("publish")}>Save and publish</button>
-    </p>
-    <p>Save keeps the lesson private. Save and publish sends it to an administrator for approval before other learners can see it.</p>
+    {draft && <SlideLessonEditor key={generation} initial={draft} onSaveLock={value => { locked.current = value; setSaveLocked(value); }} />}
   </section>;
 }
 
-export function SlideLessonEditor({ lessonId = "", version = 1, initial }: { lessonId?: string; version?: number; initial?: AuthorLesson }) {
+export function SlideLessonEditor({ lessonId = "", version = 1, initial, onSaveLock }: { lessonId?: string; version?: number; initial?: AuthorLesson; onSaveLock?: (locked: boolean) => void }) {
   const router = useRouter();
   const [draft, setDraft] = useState<AuthorLesson>(initial ?? emptyAuthorLesson());
   const [index, setIndex] = useState(0);
   const [quizOn, setQuizOn] = useState((initial?.quiz.length ?? 0) > 0);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [ack, setAck] = useState({ id: lessonId, version });
+  const [success, setSuccess] = useState("");
+  const [uncertain, setUncertain] = useState(false);
+  const inFlight = useRef(false);
+  const blocked = useRef(false);
+  const live = useRef(true);
+  const notice = useRef<HTMLParagraphElement>(null);
+  useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
+  useEffect(() => { if (error || success) notice.current?.focus(); }, [error, success]);
   const slide = draft.slides[index] ?? draft.slides[0];
 
   function updateSlide(patch: Partial<AuthorLesson["slides"][number]>) {
@@ -166,6 +91,7 @@ export function SlideLessonEditor({ lessonId = "", version = 1, initial }: { les
   }
 
   async function save(intent: "save" | "publish") {
+    if (inFlight.current || blocked.current) return;
     const quiz = quizOn ? draft.quiz : [];
     const payload = { ...draft, quiz };
     const parsed = authorLessonSchema.safeParse(payload);
@@ -174,26 +100,41 @@ export function SlideLessonEditor({ lessonId = "", version = 1, initial }: { les
       return;
     }
     setPending(true);
+    inFlight.current = true;
+    onSaveLock?.(true);
     setError("");
+    setSuccess("");
     const form = new FormData();
     form.set("template", "slides");
     form.set("intent", intent);
     form.set("content", JSON.stringify(parsed.data));
-    form.set("lessonId", lessonId);
-    form.set("version", String(version));
+    form.set("lessonId", ack.id);
+    form.set("version", String(ack.version));
     try {
-      const result = lessonId ? await updateLesson({}, form) : await createManualLesson({}, form);
-      if (result.error) setError(result.error);
-      else if (result.lessonId) router.push(`/studio?edit=${result.lessonId}`);
-      else setError("Save was not confirmed. Check Your lessons before trying again.");
+      const result: ActionState = ack.id ? await updateLesson({}, form) : await createManualLesson({}, form);
+      if (!live.current) return;
+      if (result.saveUncertain || !result.error && (!result.lessonId || !result.version)) {
+        blocked.current = true; setUncertain(true);
+        setError("Save outcome is unknown. Keep this input and check Your lessons in another tab before saving again.");
+      } else if (result.error) setError(result.error);
+      else {
+        setAck({ id: result.lessonId!, version: result.version! });
+        setSuccess(`${result.success ?? "Lesson saved."} Version ${result.version}.`);
+        // Stay mounted with acknowledged ID/version for reliable repeated saves.
+        // Refresh server history/review forms without a same-URL navigation reset.
+        router.refresh();
+      }
     } catch {
-      setError("Save was not confirmed. Check Your lessons before trying again.");
+      if (!live.current) return;
+      blocked.current = true; setUncertain(true);
+      setError("Save outcome is unknown. Keep this input and check Your lessons in another tab before saving again.");
     } finally {
-      setPending(false);
+      inFlight.current = false;
+      if (live.current) { setPending(false); onSaveLock?.(blocked.current); }
     }
   }
 
-  return <div className="learning-form">
+  return <div className="learning-form"><fieldset disabled={pending || uncertain}>
     <section className="slide-stage" aria-label="Slide preview" style={{ background: slide.style.background, color: slide.style.color, textAlign: slide.style.align }}>
       <div className="slide-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</div>
       <div>
@@ -254,29 +195,13 @@ export function SlideLessonEditor({ lessonId = "", version = 1, initial }: { les
       </fieldset>)}
       <button type="button" className="secondary-button" disabled={draft.quiz.length >= 10} onClick={() => setDraft({ ...draft, quiz: [...draft.quiz, { prompt: "", options: ["", "", "", ""], correct: 0 }] })}>Add question</button>
     </>}
-    {error && <p role="alert" className="form-notice notice-error">{error}</p>}
+    </fieldset>
+    {(error || success) && <p ref={notice} tabIndex={-1} role={error ? "alert" : "status"} className={`form-notice${error ? " notice-error" : ""}`}>{error || success}</p>}
+    {uncertain && <a className="text-link" href="/studio" target="_blank" rel="noopener noreferrer">Check Your lessons (new tab)</a>}
     <p>
-      <button type="button" className="secondary-button" disabled={pending} onClick={() => void save("save")}>{pending ? "Saving..." : "Save"}</button>
-      <button type="button" className="auth-submit" disabled={pending} onClick={() => void save("publish")}>{pending ? "Saving..." : "Save and publish"}</button>
+      <button type="button" className="secondary-button" disabled={pending || uncertain} onClick={() => void save("save")}>{pending ? "Saving..." : "Save"}</button>
+      <button type="button" className="auth-submit" disabled={pending || uncertain} onClick={() => void save("publish")}>{pending ? "Saving..." : "Save and publish"}</button>
     </p>
     <p>Save keeps the lesson private. Save and publish sends it to an administrator for approval before anyone else can see it. A quiz needs at least 3 questions.</p>
   </div>;
-}
-
-export function ManualLesson({ fallback, admin }: { fallback: LessonContent; admin: boolean }) {
-  const fallbackRef = useRef(fallback);
-  const [initial, setInitial] = useState<LessonContent | null>(null);
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(UPLOAD_DRAFT_KEY);
-      if (raw) {
-        sessionStorage.removeItem(UPLOAD_DRAFT_KEY);
-        setInitial(JSON.parse(raw) as LessonContent);
-        return;
-      }
-    } catch { /* Use the blank lesson. */ }
-    setInitial(fallbackRef.current);
-  }, []);
-  if (!initial) return <p>Opening the lesson editor...</p>;
-  return <LessonEditor key={initial.title} id="" version={1} initial={initial} action={createManualLesson} admin={admin} />;
 }

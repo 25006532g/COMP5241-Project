@@ -12,13 +12,13 @@ export const lessonSchema = z.object({
   subject: z.string().trim().min(2).max(60),
   summary: z.string().trim().min(10).max(300),
   metadata: z.unknown().optional(),
-  template: z.literal("slides").optional(),
+  template: z.literal("standard").optional(),
   slides: z.array(z.object({
     title: z.string().min(1).max(100),
     body: z.string().min(1).max(400),
     example: z.string().min(1).max(240),
     style: slideStyleSchema.optional(),
-  })).min(3).max(6),
+  })).min(4).max(6),
   activity: z.object({
     prompt: z.string().min(1).max(240),
     steps: z.array(z.string().min(1).max(120)).min(3).max(6),
@@ -28,10 +28,27 @@ export const lessonSchema = z.object({
     options: z.array(z.string().min(1).max(200)).length(4),
     correct: z.number().int().min(0).max(3),
     explanation: z.string().min(1).max(400),
-  })).max(10),
+  })).length(10),
 });
 
-export type LessonContent = z.infer<typeof lessonSchema>;
+// AI callers retain a plain Zod object (.shape/.extend/toJSONSchema). Stored
+// author slides have a separate contract; never relax the AI response schema.
+export const slideLessonSchema = lessonSchema.extend({
+  template: z.literal("slides"),
+  slides: z.array(lessonSchema.shape.slides.element).min(3).max(6),
+  questions: z.array(lessonSchema.shape.questions.element).max(10).refine(
+    questions => questions.length === 0 || questions.length >= 3, "Use no quiz or 3 to 10 questions."),
+});
+export const storedLessonSchema = z.union([slideLessonSchema, lessonSchema]);
+export type LessonContent = z.infer<typeof storedLessonSchema>;
+
+export function attemptOutcome(attempt: { score: number; questions?: unknown; answers?: unknown }) {
+  const total = Array.isArray(attempt.questions) ? attempt.questions.length : 10;
+  const valid = Number.isInteger(attempt.score) && total >= 3 && total <= 10 &&
+    attempt.score >= 0 && attempt.score <= total &&
+    (!Array.isArray(attempt.answers) || attempt.answers.length === total);
+  return { total, passed: valid && attempt.score >= Math.ceil(total * 0.6) };
+}
 
 const evidenceSchema = z.object({
   reviewed_at: z.iso.datetime({ offset: true }).optional(),
@@ -50,11 +67,11 @@ export function versionEvidence(enrollment: { progress_evidence?: unknown } | un
 
 export function lessonProgress(
   enrollment: { progress_evidence?: unknown } | undefined,
-  attempts: { original_lesson_id: string; lesson_version: number; score: number }[],
+  attempts: { original_lesson_id: string; lesson_version: number; score: number; questions?: unknown; answers?: unknown }[],
   id: string, version: number,
 ) {
   return { ...versionEvidence(enrollment, version), passed: attempts.some(attempt =>
-    attempt.original_lesson_id === id && attempt.lesson_version === version && attempt.score >= 6 && attempt.score <= 10) };
+    attempt.original_lesson_id === id && attempt.lesson_version === version && attemptOutcome(attempt).passed) };
 }
 
 export async function collectRows<Row>(readPage: (start: number, end: number) => PromiseLike<{ data: Row[] | null; error: unknown }>) {

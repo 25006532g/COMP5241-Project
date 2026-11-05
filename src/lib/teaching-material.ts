@@ -35,6 +35,10 @@ function checkDeadline(deadline: number) {
   if (Date.now() > deadline) throw new MaterialError("Extraction took too long. Split the teaching file and try again.");
 }
 
+function cleanText(text: string) {
+  return text.replace(/[^\S\n]+/g, " ").replace(/ *\n */g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
 function textCollector() {
   let text = "";
   let unitLength = 0;
@@ -51,7 +55,7 @@ function textCollector() {
       text += value;
     },
     finish() {
-      const result = text.replace(/[^\S\n]+/g, " ").replace(/ *\n */g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+      const result = cleanText(text);
       if (!/[\p{L}\p{N}]/u.test(result)) {
         throw new MaterialError("No extractable text found. Scanned or image-only files need OCR first; export a searchable PDF or a PPTX containing text.");
       }
@@ -163,7 +167,7 @@ async function openOfficeZip(buffer: Buffer, deadline: number, kind: "PPTX" | "D
   }
 }
 
-async function extractPptx(buffer: Buffer, deadline: number): Promise<string> {
+async function extractPptx(buffer: Buffer, deadline: number): Promise<{ text: string; slides: string[] }> {
   const { zip, entries } = await openOfficeZip(buffer, deadline, "PPTX");
   try {
     const getPart = (name: string) => readXml(zip, entries.get(name.toLowerCase()), deadline);
@@ -206,22 +210,25 @@ async function extractPptx(buffer: Buffer, deadline: number): Promise<string> {
       },
     }, deadline);
     const output = textCollector();
+    const units: string[] = [];
     const usedSlides = new Set<string>();
     for (const id of slideIds) {
       const path = slides.get(id);
       if (!path || usedSlides.has(path.toLowerCase())) throw new MaterialError("Missing or repeated PPTX slide. Re-export the presentation.");
       usedSlides.add(path.toLowerCase());
       output.next();
+      let unit = "";
       parseXml(await getPart(path), "sld", PRESENTATION_NS, {
         text(value, parent) {
-          if (parent?.local === "t" && DRAWING_NS.has(parent.uri)) output.append(value);
+          if (parent?.local === "t" && DRAWING_NS.has(parent.uri)) { output.append(value); unit += value; }
         },
         close(tag) {
-          if (DRAWING_NS.has(tag.uri) && ["p", "br"].includes(tag.local)) output.append("\n");
+          if (DRAWING_NS.has(tag.uri) && ["p", "br"].includes(tag.local)) { output.append("\n"); unit += "\n"; }
         },
       }, deadline);
+      units.push(cleanText(unit));
     }
-    return output.finish();
+    return { text: output.finish(), slides: units };
   } finally {
     zip.close();
   }
@@ -322,7 +329,7 @@ async function extractPdf(buffer: Buffer, deadline: number): Promise<string> {
   }
 }
 
-export async function extractTeachingMaterial(file: File): Promise<string> {
+export async function extractStructuredTeachingMaterial(file: File): Promise<{ text: string; slides?: string[] }> {
   if (!(file instanceof File) || !file.size) {
     throw new MaterialError("Choose a non-empty PDF, PPTX, or DOCX file.");
   }
@@ -349,9 +356,16 @@ export async function extractTeachingMaterial(file: File): Promise<string> {
     const buffer = Buffer.from(await file.arrayBuffer());
     if (buffer.length !== file.size || buffer.length > MAX_MATERIAL_BYTES) throw new MaterialError("Invalid upload size. Upload the file again.");
     const deadline = Date.now() + MAX_PARSE_MS;
-    return await (extension === "pdf" ? extractPdf(buffer, deadline) : extension === "docx" ? extractDocx(buffer, deadline) : extractPptx(buffer, deadline));
+    if (extension === "pptx") return await extractPptx(buffer, deadline);
+    return { text: await (extension === "pdf" ? extractPdf(buffer, deadline) : extractDocx(buffer, deadline)) };
   } catch (error) {
     if (error instanceof MaterialError) throw error;
     throw new MaterialError("Could not read this file. It may be corrupt, encrypted or unsupported. Export a new unencrypted PDF, PPTX, or DOCX and try again.");
   }
+
+}
+
+// Keep the existing AI import signature and resource bounds unchanged.
+export async function extractTeachingMaterial(file: File): Promise<string> {
+  return (await extractStructuredTeachingMaterial(file)).text;
 }

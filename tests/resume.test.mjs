@@ -19,7 +19,8 @@ test("resume rejects invalid position and answer payloads", () => {
     { ...progress, stage: "passed" },
     { ...progress, slide: -1 },
     { ...progress, answers: Array(10).fill(4) },
-    { ...progress, answers: Array(9).fill(-1) },
+    { ...progress, answers: Array(2).fill(-1) },
+    { ...progress, answers: Array(11).fill(-1) },
     { ...progress, ordering: Array(100).fill(0) },
   ]) assert.equal(resumeSchema.safeParse(invalid).success, false);
 });

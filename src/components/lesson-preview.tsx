@@ -71,9 +71,9 @@ export function LessonPreview({ content }: { content: LessonContent }) {
       <header><span className="eyebrow">LESSON PREVIEW</span><button type="button" className="icon-button" aria-label="Close preview" onClick={() => dialog.current?.close()}><X size={18} /></button></header>
       <h2>{content.title || "Untitled lesson"}</h2><p>{content.summary}</p>
       <LessonMetadata subject={content.subject} metadata={content.metadata} />
-      {content.slides.map((slide, index) => <section key={index}><span className="eyebrow">SLIDE {index + 1}</span><h3>{slide.title}</h3><p><LessonText text={slide.body} /></p><blockquote><LessonText text={slide.example} /></blockquote></section>)}
-      <section><span className="eyebrow">PRACTICE</span><h3>{content.activity.prompt}</h3><ol>{content.activity.steps.map((step, index) => <li key={index}>{step}</li>)}</ol></section>
-      <section><span className="eyebrow">FINAL QUIZ</span>{content.questions.map((question, index) => <div key={index}><h3>{index + 1}. {question.prompt}</h3><ol type="A">{question.options.map((option, optionIndex) => <li key={optionIndex}>{option}</li>)}</ol></div>)}</section>
+      {content.slides.map((slide, index) => <section key={index} style={{ background: slide.style?.background, color: slide.style?.color, textAlign: slide.style?.align }}><span className="eyebrow">SLIDE {index + 1}</span><h3 style={{ color: slide.style?.color, fontSize: slide.style?.size }}>{slide.title}</h3><p style={{ color: slide.style?.color, fontSize: slide.style ? Math.max(16, slide.style.size - 6) : undefined }}><LessonText text={slide.body} /></p>{content.template !== "slides" && <blockquote><LessonText text={slide.example} /></blockquote>}</section>)}
+      {content.template !== "slides" && <section><span className="eyebrow">PRACTICE</span><h3>{content.activity.prompt}</h3><ol>{content.activity.steps.map((step, index) => <li key={index}>{step}</li>)}</ol></section>}
+      {content.questions.length > 0 && <section><span className="eyebrow">FINAL QUIZ</span>{content.questions.map((question, index) => <div key={index}><h3>{index + 1}. {question.prompt}</h3><ol type="A">{question.options.map((option, optionIndex) => <li key={optionIndex}>{option}</li>)}</ol></div>)}</section>}
     </dialog>
   </>;
 }

@@ -3,7 +3,7 @@ import { LearnerShell } from "@/components/learner-shell";
 import { ActionForm, LessonEditor } from "@/components/learning-controls";
 import { SlideLessonEditor, UploadLessonPage } from "@/components/create-lesson";
 import { fromStoredLesson } from "@/lib/slide-lesson";
-import { requestReview, updateLesson } from "@/app/learning/actions";
+import { approveSlideLesson, requestReview, updateLesson } from "@/app/learning/actions";
 import { collectRows } from "@/lib/learning";
 import { isInstructor, accessibleLesson, database, displayName, isAdmin, requireUser, canEditLesson, canPublishLessons } from "@/lib/learning-server";
 
@@ -15,7 +15,7 @@ export default async function Studio({ searchParams }: { searchParams: Promise<{
   const { edit, manual, upload } = await searchParams;
   const lesson = edit ? await accessibleLesson(edit, user, true) : null;
   if (edit && (!lesson || !canEditLesson(user, lesson))) notFound();
-  const owned = lesson ? [] : await collectRows((start, end) => database().from("forge_lessons")
+  const owned = lesson || manual === "1" || upload === "1" ? [] : await collectRows((start, end) => database().from("forge_lessons")
     .select("id,title,subject,visibility,version")
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false })
@@ -48,13 +48,14 @@ export default async function Studio({ searchParams }: { searchParams: Promise<{
           </li>
         </ol>
       </section>}
-      {!lesson && upload === "1" && <UploadLessonPage />}
+      {!lesson && upload === "1" && <UploadLessonPage key={`${user.id}-upload`} />}
       {lesson ? <>
         {lesson.content.template === "slides"
-          ? <SlideLessonEditor key={`${lesson.id}-${lesson.version}`} lessonId={lesson.id} version={lesson.version} initial={fromStoredLesson(lesson.content)} />
+          ? <SlideLessonEditor key={`${user.id}-${lesson.id}`} lessonId={lesson.id} version={lesson.version} initial={fromStoredLesson(lesson.content)} />
           : <LessonEditor key={`${lesson.id}-${lesson.version}`} id={lesson.id} version={lesson.version} initial={lesson.content} action={updateLesson} admin={canPublishLessons(user)} />}
-        {lesson.owner_id === user.id && lesson.visibility === "private" && !canPublishLessons(user) && <section className="learning-section"><h2>Publication review</h2><p>Submitting grants administrators access to this draft and permission to publish it for all learners.</p><ActionForm action={requestReview} label="Submit for publication review"><input type="hidden" name="lessonId" value={lesson.id} /></ActionForm></section>}
-      </> : manual === "1" ? <SlideLessonEditor key="blank" /> : null}
+        {lesson.content.template === "slides" && isAdmin(user) && lesson.review_requested && <section className="learning-section"><h2>Administrator approval</h2><p>Review the saved slides and answer key above. Save changes and request review again before approving the new version.</p><ActionForm action={approveSlideLesson} label="Approve saved version for publication"><input type="hidden" name="lessonId" value={lesson.id} /><input type="hidden" name="version" value={lesson.version} /></ActionForm></section>}
+        {lesson.content.template !== "slides" && lesson.owner_id === user.id && lesson.visibility === "private" && !canPublishLessons(user) && <section className="learning-section"><h2>Publication review</h2><p>Submitting grants administrators access to this draft and permission to publish it for all learners.</p><ActionForm action={requestReview} label="Submit for publication review"><input type="hidden" name="lessonId" value={lesson.id} /></ActionForm></section>}
+      </> : manual === "1" ? <SlideLessonEditor key={`${user.id}-blank`} /> : null}
     </div>
   </LearnerShell>;
 }

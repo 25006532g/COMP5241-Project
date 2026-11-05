@@ -8,6 +8,7 @@ import { tmpdir } from "node:os";
 import { chromium } from "@playwright/test";
 import ts from "typescript";
 import { z } from "zod";
+import { slides as slideLesson } from "./slide-authoring-harness.mjs";
 
 registerHooks({ resolve(specifier, context, next) {
   if (specifier.startsWith("@/lib/")) return next(new URL(`../src/lib/${specifier.slice(6)}.ts`, import.meta.url).href, context);
@@ -32,6 +33,7 @@ sources.editor = transpile("../src/components/learning-controls.tsx");
 sources["./lesson-preview"] = transpile("../src/components/lesson-preview.tsx");
 sources["./lesson-metadata"] = transpile("../src/components/lesson-metadata.tsx");
 sources["@/lib/curriculum"] = transpile("../src/lib/curriculum.ts");
+sources["@/lib/learning"] = transpile("../src/lib/learning.ts");
 sources["@/lib/demo-lessons"] = transpile("../src/lib/demo-lessons.ts");
 sources["@/lib/permissions"] = transpile("../src/lib/permissions.ts");
 sources.studio = transpile("../src/app/studio/page.tsx");
@@ -105,7 +107,7 @@ test("mounted real studio: manual creation, same-ID editing and retained uncerta
           return { data: { id }, error: null };
         },
         async maybeSingle() {
-          if (failSave) return { data: null, error: {} };
+          if (failSave) return { data: null, error: { code: "23514" } };
           calls.push({ kind, ...filters });
           const row = rows.get(filters.id);
           if (!row || row.version !== filters.version) return { data: null, error: null };
@@ -122,6 +124,7 @@ test("mounted real studio: manual creation, same-ID editing and retained uncerta
     "@/lib/learning-server": server, "@/lib/learning": learning,
     "@/lib/recommendations": recommendations, "@/lib/resume": resume,
     "@/lib/curriculum": curriculum,
+    "@/lib/slide-lesson": slideLesson,
     "@/lib/openrouter": { coachReply: async (...args) => { providerCalls.push(args); return "Synthetic coach reply"; } },
     "@/lib/lesson-generation-server": { startGeneration: async () => { throw new Error("Staged generation is covered by the real-helper/PGlite and mounted-generation suites."); } },
     "@/lib/ai-eligibility-server": { requireAiAccess: async () => { aiAccessChecks++; if (!aiAllowed) throw new Error("AI access denied"); } },
@@ -159,6 +162,8 @@ test("mounted real studio: manual creation, same-ID editing and retained uncerta
     window.manualSettled = 0;
     function load(name) {
       if (name === "@/components/learning-controls") return load("editor");
+      if (name === "@/components/create-lesson") return { SlideLessonEditor() { throw new Error("Slide authoring is covered by slide-authoring-ui.test.mjs"); } };
+      if (name === "@/lib/slide-lesson") return {};
       if (name === "@/components/lesson-metadata") return load("./lesson-metadata");
       if (name === "@/components/lesson-generation") return { LessonGeneration: () => load("react").createElement("p", {}, "Saved generation remains available (not exercised here).") };
       if (name === "@/components/learner-shell") return { LearnerShell: ({ children }) => load("react").createElement("main", {}, children) };
@@ -204,14 +209,14 @@ test("mounted real studio: manual creation, same-ID editing and retained uncerta
   assert.equal(rows.get(calls[0].id).version, 2);
   assert.equal(rows.get(calls[0].id).title, "Updated software requirements");
 
-  await context.test("actual Studio starter selection is inert, editable, private then same-ID/version saved", async () => {
+  await context.test("retained legacy starter fixtures are editable, private then same-ID/version saved (not Studio defaults)", async () => {
     aiAllowed = false;
     try {
       for (const [index, id] of demoLessons.DEMO_LESSON_IDS.entries()) {
         const starter = demoLessons.getDemoLessonStarter(id);
         const before = calls.length, beforeRows = rows.size, beforeAi = aiAccessChecks;
         const beforeProvider = providerCalls.length, beforeQuota = quotaCalls.length;
-        const page = await mount(undefined, false, undefined, { manual: "1", starter: id });
+        const page = await mount(starter.content);
         try {
           await page.setViewportSize({ width: index === 0 ? 320 : 1440, height: 900 });
           assert.equal(await page.getByLabel("Title", { exact: true }).inputValue(), starter.content.title);
@@ -220,27 +225,13 @@ test("mounted real studio: manual creation, same-ID editing and retained uncerta
           assert.equal(await page.locator('input[name="lessonId"]').inputValue(), "");
           assert.deepEqual(JSON.parse(await page.locator('input[name="content"]').inputValue()), starter.content);
           assert.equal(await page.getByLabel("Review and publish this lesson").count(), 0);
-          assert.ok((await page.getByRole("heading", { name: "Authored lesson starters" }).locator("..").innerText()).includes("Owner content and pedagogical review pending"));
-          for (const reference of starter.references) {
-            assert.equal(await page.getByRole("link", { name: reference.title, exact: true }).getAttribute("href"), reference.url);
-          }
           assert.equal(calls.length, before, "selection must not write");
           assert.equal(rows.size, beforeRows);
-          const reopened = await mount(undefined, false, undefined, { manual: "1", starter: id });
+          const reopened = await mount(starter.content);
           assert.equal(await reopened.locator('input[name="lessonId"]').inputValue(), "");
           assert.equal(calls.length, before, "reopening the URL must not save");
           await reopened.close();
           await page.getByLabel("Title", { exact: true }).fill(`Reviewed draft ${index + 1}`);
-          const leave = await page.evaluate(() => {
-            const notices = [];
-            window.confirm = message => { notices.push(message); return false; };
-            const links = [document.querySelector('a[href="/studio?manual=1"]'),
-              document.querySelector('a[href="/studio?manual=1&starter=product-tradeoffs"]')];
-            const canceled = links.map(link => !link.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true })));
-            return { notices, canceled };
-          });
-          assert.deepEqual(leave.canceled, [true, true], "actual starter and blank links must honor dirty cancellation");
-          assert.ok(leave.notices.every(message => /unsaved lesson changes/.test(message)));
           assert.equal(await page.getByLabel("Title", { exact: true }).inputValue(), `Reviewed draft ${index + 1}`);
           assert.equal(calls.length, before);
           await page.getByRole("button", { name: "Save lesson", exact: true }).focus();
@@ -279,14 +270,9 @@ test("mounted real studio: manual creation, same-ID editing and retained uncerta
           assert.equal(providerCalls.length, beforeProvider);
           assert.equal(quotaCalls.length, beforeQuota);
           const width = index === 0 ? 320 : 1440;
-          await page.getByRole("heading", { name: `Starter review: ${starter.content.title}`, exact: true }).scrollIntoViewIfNeeded();
-          assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-          await page.screenshot({ path: join(screenshots, `starter-review-${id}-${width}.png`) });
           await page.getByLabel("Title", { exact: true }).scrollIntoViewIfNeeded();
           await page.screenshot({ path: join(screenshots, `starter-editor-${id}-${width}.png`) });
-          await page.getByRole("heading", { name: "Authored lesson starters" }).scrollIntoViewIfNeeded();
           assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-          await page.screenshot({ path: join(screenshots, `starter-${id}-${index === 0 ? 320 : 1440}.png`) });
         } finally { await page.close(); }
       }
     } finally { aiAllowed = true; }
@@ -320,20 +306,8 @@ test("mounted real studio: manual creation, same-ID editing and retained uncerta
     } finally { await page.close(); }
   });
 
-  await context.test("blank/invalid starter feedback, explicit manual opt-in and persisted edit precedence", async () => {
+  await context.test("persisted legacy edit precedence and owner isolation", async () => {
     const before = calls.length, beforeAi = aiAccessChecks;
-    for (const starter of [undefined, "", "unknown", "__proto__", ["sdlc-small-change"], ["coding-agent-4d", "product-tradeoffs"], null, 7, {}]) {
-      const page = await mount(undefined, false, undefined, { manual: "1", ...(starter === undefined ? {} : { starter }) });
-      try {
-        assert.equal(await page.getByLabel("Title", { exact: true }).inputValue(), "");
-        assert.equal(await page.getByRole("alert").count(), starter === undefined ? 0 : 1);
-        if (starter !== undefined) assert.match(await page.getByRole("alert").innerText(), /Starter not found.*exactly one starter ID/);
-      } finally { await page.close(); }
-    }
-    const noOptIn = await mount(undefined, false, undefined, { starter: "sdlc-small-change" });
-    assert.match(await noOptIn.getByRole("alert").innerText(), /manual authoring/);
-    assert.equal(await noOptIn.locator('input[name="content"]').count(), 0);
-    await noOptIn.close();
     const row = rows.get(calls[0].id);
     const snapshot = structuredClone(row);
     for (const starter of ["coding-agent-4d", ["unknown", "sdlc-small-change"]]) {
@@ -365,7 +339,7 @@ test("mounted real studio: manual creation, same-ID editing and retained uncerta
     assert.equal(calls.length, before);
     user.app_metadata.role = "instructor";
     try {
-      const page = await mount(undefined, false, undefined, { manual: "1", starter: "coding-agent-4d" });
+      const page = await mount(content, true);
       assert.equal(await page.getByLabel("Review and publish this lesson").isChecked(), false, "even instructors start private");
       await page.getByRole("button", { name: "Save lesson", exact: true }).click();
       await page.getByRole("status").filter({ hasText: "Lesson created." }).waitFor();
@@ -526,9 +500,14 @@ test("mounted real studio: manual creation, same-ID editing and retained uncerta
     });
   }
 
-  await context.test("real blank route reveals incomplete quiz, then keyboard create and same-ID save at 320px/desktop", async () => {
+  await context.test("retained legacy blank editor reveals incomplete ten-question quiz, then keyboard create and same-ID save", async () => {
     for (const width of [320, 1440]) {
-      const page = await mount(undefined, false, undefined, { manual: "1" });
+      const page = await mount({
+        title: "", subject: "", summary: "",
+        slides: Array.from({length:4},() => ({title:"",body:"",example:""})),
+        activity:{prompt:"",steps:["","",""]},
+        questions:Array.from({length:10},() => ({prompt:"",options:["","","",""],correct:0,explanation:""})),
+      });
       await page.setViewportSize({ width, height: 900 });
       assert.equal(await page.getByLabel("Steps in correct order, one per line", { exact: true }).inputValue(), "\n\n");
       assert.deepEqual(await submittedSteps(page), [], "the raw empty default must not invent real steps");

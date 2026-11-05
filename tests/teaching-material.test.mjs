@@ -11,7 +11,8 @@ const hooks = registerHooks({
     return nextResolve(specifier, context);
   },
 });
-const { extractTeachingMaterial, MAX_MATERIAL_BYTES } = await import("../src/lib/teaching-material.ts");
+const material = await import("../src/lib/teaching-material.ts");
+const { extractTeachingMaterial, extractStructuredTeachingMaterial, MAX_MATERIAL_BYTES } = material;
 hooks.deregister();
 
 function zip(parts) {
@@ -62,6 +63,33 @@ function pptxParts(texts = ["First slide", "Second &amp; final"], order = texts.
     ...texts.map((text, index) => [`ppt/slides/slide${index + 1}.xml`, `<p:sld xmlns:p="${presentationNs}" xmlns:a="${drawingNs}"><p:cSld><p:spTree><p:sp><p:txBody><a:p><a:r><a:t>${text}</a:t></a:r></a:p></p:txBody></p:sp></p:spTree></p:cSld></p:sld>`]),
   ];
 }
+
+test("template upload uses real ordered PPTX units, rejects mode tampering and never truncates text", async () => {
+  const { load, slides } = await import("./slide-authoring-harness.mjs");
+  const { z } = await import("zod");
+  const texts = ["First paragraph\n\nStill the first slide", "Second slide", "Third slide"];
+  const file = new File([zip(pptxParts(texts,[3,1,2]))],"ordered.pptx");
+  const parsed = await extractStructuredTeachingMaterial(file);
+  assert.deepEqual(parsed.slides,[texts[2],texts[0],texts[1]]);
+  const actions = load("../src/app/teaching/actions.ts", {
+    "next/cache": {}, zod:{z}, "@/lib/learning-server":{currentUser:async () => ({id:"synthetic"})},
+    "@/lib/account-directory":{}, "@/lib/ai-eligibility-server":{}, "@/lib/lesson-generation-server":{},
+    "@/lib/teaching-material":material, "@/lib/slide-lesson":slides, "@/lib/curriculum":{},
+  });
+  const form = (file,mode) => {const f=new FormData();f.set("material",file);f.set("mode",mode);return f;};
+  const result = await actions.extractLessonUpload(form(file,"powerpoint"));
+  assert.deepEqual(result.slides.map(s => s.body),[texts[2],texts[0],texts[1]]);
+  assert.match((await actions.extractLessonUpload(form(file,"forged"))).error,/Invalid option/);
+  assert.match((await actions.extractLessonUpload(form(new File([zip(pptxParts())],"renamed.pdf"),"powerpoint"))).error,/requires PPTX/);
+  for (const units of [Array(7).fill("text"),["ok","ok","x".repeat(401)],["ok","","ok"]]) {
+    const result = await actions.extractLessonUpload(form(new File([zip(pptxParts(units))],"large.pptx"),"powerpoint"));
+    assert.ok(result.error); assert.equal(result.slides,undefined);
+  }
+  const longWord = "W".repeat(1201);
+  const chunks = slides.slidesFromMaterial({text:longWord},"text");
+  assert.equal(chunks.map(s => s.body).join(""),longWord,"long tokens must not disappear");
+  assert.throws(() => slides.slidesFromMaterial({text:"x".repeat(2401)},"text"),/2,400/);
+});
 
 function rc4(key, data) {
   const state = Array.from({ length: 256 }, (_, index) => index);

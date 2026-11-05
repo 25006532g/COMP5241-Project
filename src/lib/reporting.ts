@@ -22,9 +22,10 @@ export const reportRows = {
     id, user_id: id, lesson_id: id, original_lesson_id: id,
     lesson_title: z.string().min(1), lesson_version: version,
     certificate_kind: z.literal("public"), score: z.number().int().min(0).max(10),
-    answers: z.array(z.number().int().min(0).max(3)).length(10),
-    questions: lessonSchema.shape.questions, completed_at: timestamp,
-  }).refine(attempt => attempt.lesson_id === attempt.original_lesson_id)),
+    answers: z.array(z.number().int().min(0).max(3)).min(3).max(10),
+    questions: z.array(lessonSchema.shape.questions.element).min(3).max(10), completed_at: timestamp,
+  }).refine(attempt => attempt.lesson_id === attempt.original_lesson_id &&
+    attempt.answers.length === attempt.questions.length && attempt.score <= attempt.questions.length)),
 };
 
 export function buildLessonReport(
