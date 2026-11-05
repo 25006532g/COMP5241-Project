@@ -481,10 +481,10 @@ test("temporary validation locks retain range-only correction, notice focus and 
       const rendered=await pixels();
       // Gate only the first real validation, not its result or the UI lock.
       await page.evaluate(()=>{
-        const module=presentationModules("@/lib/presentation-fabric"),validate=module.validateTextLayout;
+        const fabricModule=presentationModules("@/lib/presentation-fabric"),validate=fabricModule.validateTextLayout;
         window.validationEntered=false;
-        module.validateTextLayout=async(...args)=>{
-          module.validateTextLayout=validate;window.validationEntered=true;
+        fabricModule.validateTextLayout=async(...args)=>{
+          fabricModule.validateTextLayout=validate;window.validationEntered=true;
           await new Promise(resolve=>{window.releaseValidation=resolve;});
           return validate(...args);
         };
