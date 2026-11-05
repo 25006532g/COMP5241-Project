@@ -233,6 +233,7 @@ test("mounted author/upload/player: same-tick guard, versions, uncertainty, styl
     await upload.getByLabel("File",{exact:true}).setInputFiles(file);
     await upload.getByRole("button",{name:"Preview slides",exact:true}).click();
     await upload.getByRole("textbox",{name:"Lesson title",exact:true}).waitFor();
+    await upload.getByRole("button",{name:"Change file",exact:true}).click();
     await upload.getByLabel("File",{exact:true}).setInputFiles({...file,name:"changed.pptx"});
     assert.equal(await upload.getByRole("textbox",{name:"Lesson title",exact:true}).count(),0);
     uploadFailure = true;
@@ -244,8 +245,12 @@ test("mounted author/upload/player: same-tick guard, versions, uncertainty, styl
     await upload.getByRole("textbox",{name:"Lesson title",exact:true}).waitFor();
     assert.equal(uploads,3);
     await upload.setViewportSize({width:320,height:900});
-    assert.ok(await upload.evaluate(()=>document.documentElement.scrollWidth <= innerWidth));
+    // Let Fabric's ResizeObserver apply the new viewport before measuring.
+    await upload.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    assert.ok(await upload.evaluate(()=>document.documentElement.scrollWidth <= innerWidth),
+      await upload.evaluate(()=>JSON.stringify([...document.querySelectorAll("body *")].filter(el=>el.getBoundingClientRect().right>innerWidth).map(el=>({tag:el.tagName,class:el.className,right:el.getBoundingClientRect().right})))));
     await upload.screenshot({path:join(artifacts,"upload320.png"),fullPage:true});
+    await upload.getByRole("button",{name:"Change file",exact:true}).click();
     await upload.getByLabel("Import the PowerPoint as slides",{exact:true}).check();
     assert.equal(await upload.getByRole("textbox",{name:"Lesson title",exact:true}).count(),0);
     await upload.getByRole("button",{name:"Preview slides",exact:true}).focus();

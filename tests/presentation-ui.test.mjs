@@ -44,6 +44,7 @@ test("mounted presentation: real Fabric IME, properties/history/slides, native e
     await page.getByRole("button",{name:"bold",exact:true}).click();
     await page.getByRole("button",{name:"bold",exact:true}).click();
     await page.evaluate(()=>editCanvas.getActiveObject().exitEditing());
+    await page.getByText("Position & size",{exact:true}).click();
     await page.getByLabel("X position",{exact:true}).fill("90");
     await page.getByLabel("Rotation",{exact:true}).fill("15");
     await page.getByText("Shapes",{exact:true}).click();await page.getByRole("button",{name:"rect",exact:true}).click();
@@ -109,7 +110,9 @@ test("mounted presentation: real Fabric IME, properties/history/slides, native e
     assert.equal(stored.length,1);assert.equal(stored[0].visibility,"private");assert.equal(stored[0].review_requested,true);assert.equal(stored[0].content.format,"presentation");assert.equal("body" in stored[0].content.slides[0],false);
     await page.screenshot({path:join(artifacts,"editor1440.png"),fullPage:true});
     await page.setViewportSize({width:320,height:900});
+    await page.locator(".presentation-properties > summary").click();
     await page.getByRole("button",{name:"Add text",exact:true}).focus();await page.keyboard.press("Enter");
+    await page.locator(".presentation-text-content > summary").click();
     await page.getByRole("textbox",{name:/^Textbox content/}).fill("Keyboard accessible content");
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);
     for(const box of await page.locator(".presentation-surface").evaluateAll(els=>els.map(e=>({w:e.clientWidth,h:e.clientHeight})))){
@@ -170,6 +173,7 @@ test("mounted range fonts, multiselect transforms and delayed image replacement 
     assert.equal(runs.paragraphs[0].runs[1].font,"Arial");
     assert.equal(runs.paragraphs[1].runs[0].text,"Second paragraph");
     await page.getByRole("button",{name:"Add text",exact:true}).click();
+    await page.locator(".presentation-outline > summary").click();
     const checks=page.locator(".presentation-outline input[type=checkbox]");
     await checks.nth(0).check();await checks.nth(1).check();
     await page.waitForFunction(()=>editCanvas.getActiveObjects().length===2);
@@ -183,6 +187,7 @@ test("mounted range fonts, multiselect transforms and delayed image replacement 
     assert.equal(await page.getByRole("button",{name:"Save",exact:true}).isDisabled(),true);
     release();
     await page.getByLabel("Image alt text",{exact:true}).fill("Private diagram");
+    await page.getByText("Position & size",{exact:true}).click();
     await page.getByLabel("Width",{exact:true}).fill("240");
     assert.equal(await page.getByLabel("Height",{exact:true}).inputValue(),"120");
     await page.getByLabel("Replace image",{exact:true}).setInputFiles({name:"replacement.png",mimeType:"image/png",buffer:tallPng});
@@ -196,6 +201,7 @@ test("mounted range fonts, multiselect transforms and delayed image replacement 
     await page.waitForFunction(()=>document.querySelector('[role=status]')?.textContent.includes("Version 1"));
     const undone=JSON.parse(new Map(writes.at(-1)).get("content")).document.slides[0].elements.find(e=>e.type==="image");
     assert.equal(undone.assetId,first);assert.equal(undone.alt,"Private diagram");assert.equal(undone.w/undone.h,2);
+    await page.getByRole("button",{name:"Lesson settings",exact:true}).click();
     await page.getByRole("button",{name:"Clean expired image uploads",exact:true}).click();
     await page.getByRole("alert").filter({hasText:"cleanup was not confirmed"}).waitFor();
     assert.deepEqual(errors,[]);
@@ -214,6 +220,7 @@ test("duplicating a rotated object near the edge retains a valid saveable draft"
         {id:crypto.randomUUID(),type:"shape",shape:"rect",x:300,y:246,w:200,h:200,rotation:45,fill:"#ffffff",stroke:"#000000",strokeWidth:1},
       ]}],
     }}});
+    await page.locator(".presentation-outline > summary").click();
     await page.locator(".presentation-outline input[type=checkbox]").check();
     await page.getByRole("button",{name:"Duplicate objects",exact:true}).click();
     const valid=await page.evaluate(()=>{

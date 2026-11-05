@@ -6,6 +6,120 @@ For a presentation-ready overview of features, design choices and prototype scre
 
 Track remaining work, blockers, acceptance criteria and verification updates in [IMPLEMENTATION_TRACKER.md](IMPLEMENTATION_TRACKER.md).
 
+## 5 November 2026 — independent narrow upload retest: passed
+
+Independently ran only the two requested files, unchanged, together:
+
+```powershell
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\presentation-workspace-qa.test.mjs tests\presentation-upload.test.mjs
+```
+
+**4/4 passed**, zero failures/skips/cancellations; exit 0, 27.2306723s.
+The original upload-viewport regression now passes: at 1366×768, scrollY=0,
+Add slide moved from historical y=756.594–792.594 to **332–368**; the full
+549.328125×309 canvas moved from y=779.844–1088.844 to **355.25–664.25**.
+1440×900 tools/full 712×400.5 canvas also fit initially; canvases remain 16:9.
+320px collapsed/expanded upload layouts have no horizontal page overflow.
+Disclosure retains draft/file/mode; invalidation, reimport/retry, stale-result
+rejection and pending/unknown-save locks passed. A separate stdin-only keyboard
+probe passed at 1366 and 320: title focus after preview, keyboard reopen, Tab
+through mode/File/Preview, close, and Tab back to the retained title.
+
+Actually opened fresh `upload-1366.png`, `upload-320.png` and
+`importer-expanded-320.png` in
+`C:\Users\SOLUSER\AppData\Local\Temp\forge-upload-followup-Dd4Okz\`.
+Only README/tracker changed; all 191 protected source/test/database/config files,
+including the tagged presentation migration, fingerprint identically.
+Browsers closed; synthetic screenshots retained; no helper remains.
+
+**Bounded upload UI acceptance clear; not global release approval.** OS-only
+network-denying runner and offline browser fixtures only. No full review,
+suite/build/lint/types, server, remote service, actual parser/connected permissions
+or desktop PowerPoint certification. See the latest tracker entry for exact
+evidence, probe corrections, cleanup and limits; earlier entries are historical.
+
+## 5 November 2026 — upload preview placement follow-up
+
+Successful upload previews now collapse the importer into a compact **Imported
+file** bar with filename, import mode and keyboard-operable **Change file**.
+It replaces the duplicate upload page heading instead of consuming the editor's
+height budget. Change file reopens the retained form; Close importer keeps edits.
+Changing file/mode still invalidates the old preview. Successful preview focuses
+Lesson title only after the lazy editor mounts. Save/unknown-outcome locks remain.
+
+The retained independent QA test went from **1 pass / 1 fail** to **2/2 passing**.
+Final grouped upload/layout/editor regressions: **11/11 passed**; scoped ESLint,
+direct TypeScript and whitespace checks passed. At 1366×768, without scrolling,
+Add slide is y=332–368 and the entire 549.328×309 canvas is y=355.25–664.25;
+the editor ends at y=766. Manual layout is unchanged. Uploaded 1440/1910/1920
+desktop bounds and 320px controls/expanded importer also passed; final 1366/320
+screenshots were actually opened. Exact commands, geometry, iterations and file
+inventory are in the latest tracker entry.
+
+**Independent narrow upload QA is requested; not release approval.** Local
+offline fixtures only: no connected service, real upload parser/native PowerPoint
+validation, server startup, migration, dependency change, full suite or build.
+The open-defect QA entry below is retained as historical reproduction evidence.
+
+## 5 November 2026 — independent workspace UI QA: upload follow-up required
+
+Independent bounded offline acceptance: **8 passing / 1 failing distinct tests**
+(seven existing focused browser tests, plus two new route/upload checks).
+Manual workspace measurements independently match **1166/712px editor/canvas
+at 1440×900**, **1092/549.328px at 1366×768**, and **1646/1104px at
+1920×1080**. Responsive layouts, 20px controls, dialog keyboard/focus,
+formatting/history, images, guarded saves and native PPTX toolbar checks passed.
+Studio history/standard-editor widths remain 850px; presentation/manual/upload
+route containers alone widen.
+
+**Open UI defect, escalated to coordinator/implementer:** after upload preview,
+the original upload form remains above the editor. At 1366×768 with scrollY=0,
+Add slide occupies y=756.594–792.594 and the canvas begins at y=779.844,
+below the viewport. The same geometry reproduced twice. The failing assertion
+is retained in `tests/presentation-workspace-qa.test.mjs`; QA made no product fix.
+See the latest tracker entry for exact commands, repro, screenshots actually
+opened, preservation hashes and limitations.
+
+Only that new QA test and these two documentation files changed in this turn;
+all 189 pre-existing protected code/test/config/migration files remain identical.
+Browsers and local PGlite closed; temporary synthetic screenshots were retained.
+No server, remote service, full suite/build/types, dependency change or migration
+operation was run. This is **local UI acceptance with an open defect**, not
+global release or desktop PowerPoint fidelity certification.
+
+## 5 November 2026 — wider presentation workspace
+
+The presentation editor now uses the available portal width (including manual,
+slide-edit and upload pages), without widening the lesson history or standard
+lesson editor. Lesson title, Save and Save and publish remain at the top, with
+grouped history, insertion, preview and editable-PPTX tools beneath them.
+**Save and publish still requests administrator review**, not immediate publication.
+
+Slides have management controls above independently scrolling thumbnails.
+Object properties show contextual styling, with **Position & size** and
+**Alignment & layers** disclosures; the **Accessible object outline** below the
+canvas supports keyboard selection/multiselect. **Lesson settings** contains
+audience, difficulty, discard and upload cleanup. **Quiz** and **Help** open
+separate keyboard-operable dialogs; Escape returns to the opening button.
+Below 1200px, slide/property panels start collapsed. The canvas retains 16:9
+and fits both available width and desktop height using the existing Fabric zoom.
+
+Local offline verification: **9/9 focused tests passed**, scoped ESLint and direct
+TypeScript passed. With the actual 242px sidebar reservation, topbar and Tailwind
+reset, editor/canvas widths were **1166/712px at 1440×900** and
+**1092/549px at 1366×768**. Primary desktop actions were in the initial viewport;
+320/768/1024/1920 layouts, enlarged controls and dialog focus were checked.
+Screenshots were actually opened and iterated on, not merely captured.
+
+```powershell
+node tests/offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests/presentation-layout.test.mjs tests/presentation-ui.test.mjs tests/presentation-acceptance.test.mjs
+```
+
+See the tracker for exact measurements, artifact paths, commands and limitations.
+No server, remote service, migration, dependency change or deployment was used.
+**Independent desktop/mobile QA and coordinator acceptance are requested**;
+this is local implementation evidence, not release certification.
+
 ## 5 November 2026 — independent bounded presentation acceptance
 
 Independent local reruns: **9/9 existing focused tests + 3/3 new grouped

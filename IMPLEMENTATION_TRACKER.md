@@ -2,6 +2,636 @@
 
 Last reviewed: 2026-11-05
 
+## 5 November 2026 — independent narrow upload-placement retest (passed)
+
+**Scope/ownership:** one fresh bounded post-fix QA, no nested agents, product
+edits or broader review. Coordinator retains final acceptance ownership.
+Independently reran only the requested workspace/upload test files together;
+the implementer's 11-test/lint/types claims were not rerun or adopted here.
+**4 distinct tests passed, zero failed/skipped/cancelled. Bounded upload UI
+acceptance clear; no current product defect reproduced. Not release approval.**
+
+### Safety, preservation and fixtures
+
+Requested sibling skills were absent; loaded repository
+`.github/skills/forge-{delivery,security,verification}/SKILL.md`. Read latest
+README/tracker, package, both scoped tests, offline runner/network preload and
+their shared browser/authoring harnesses. Inspected only upload focus/disclosure
+source lines needed to assess that acceptance gap.
+
+Recorded initial Git status (11 modified tracked files and three untracked test
+files); preserved all existing dirty work. Git was not on PATH, so used the
+existing explicit Git executable below. No environment/secret file was opened.
+Before execution, a stdin probe through `tests/offline-run.mjs` confirmed an
+OS-only environment and synchronous denial of fetch, socket, HTTP and HTTPS
+before I/O. Two initial **probe-only** failures were corrected without changing
+the runner: Windows injects six additional OS identity keys, and denied fetch
+throws synchronously rather than returning a rejected promise. Final probe
+passed, exit 0; these are not application-test failures.
+
+Browser contexts used `offline:true`, `serviceWorkers:"block"` and aborting
+unexpected routes; the synthetic `https://forge.test/` page was fulfilled in
+memory. Original uploader/editor/Fabric/CSS ran in the existing portal harness
+with Tailwind preflight and reserved 242px sidebar/66px topbar. Extraction and
+save transport were synthetic. No PGlite instance was needed or created.
+
+SHA-256 inventory before/after execution: **191 identical protected files**
+under `src`, `tests`, `supabase`, plus seven root manifest/config/type files.
+Inventory
+uses sorted slash-normalized relative paths and, for each file,
+`path + NUL + SHA256(contents) + LF`, then SHA256 of the concatenation:
+`014f88cf767ab26cc0f2081b18ac5dcfd1451c2137ff3cbffdfb09f6c2ed101b`.
+Specific preserved fingerprints:
+
+* `tests/presentation-workspace-qa.test.mjs`:
+  `D5B149498DD2C31CEC47081D357F810B6831EC69B4D2A707B552062768E37A30`
+* `tests/presentation-upload.test.mjs`:
+  `A75BD39EE68D9DF4DDD2630FA2610546000E5A07B5F5204A04651D0AD9B14CFB`
+* `supabase/migrations/20261105140000_presentations_ran.sql`:
+  `9860874031055A45F99B7316AAD1EEE38B60EE9DF2B80D6CB1DF119B2B236B08`
+
+No selector, bound, measurement, skip or assertion was changed. No new test file
+was necessary. Only this tracker and README were edited by this QA.
+
+### Exact execution and independent results
+
+Repository cwd, existing Node on PATH:
+
+```powershell
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\presentation-workspace-qa.test.mjs tests\presentation-upload.test.mjs
+# 4/4 passed; fail/skipped/cancelled/todo 0; exit 0; 27230.6723ms.
+```
+
+The two workspace tests passed unchanged, including the formerly failing
+initial-upload primary-action assertion and foreign/missing edit-route denials.
+The two new upload tests passed: initial layout/action hit tests and disclosure/
+failure recovery/retention/lock behavior. All asserted browser errors and
+unexpected requests were empty.
+
+CSS pixels; initial geometry measured with **scrollY=0**, not after scrolling:
+
+| Upload viewport | Editor width; bottom | Canvas width×height; y–bottom | Add slide y–bottom | Page horizontal overflow |
+| --- | --- | --- | --- | --- |
+| 1366×768 | 1092; 766 | 549.328125×309; 355.25–664.25 | 332–368 | No |
+| 1440×900 | 1166; 898 | 712×400.5; 375.5–776 | 332–368 | No |
+| 1910×1080 | 1636; 1078 | 1104×621; 355.25–976.25 | 332–368 | No |
+| 1920×1080 | 1646; 1078 | 1104×621; 355.25–976.25 | 332–368 | No |
+| 320×900 | 300; 1021.625 | 266×149.625; 659.5–809.125 | 562–602 after keyboard opening Slides | No |
+
+Historical independent 1366 failure (not rerun against old source in this task):
+Add slide y=756.59375–792.59375; canvas y=779.84375–1088.84375.
+Now Add slide y=332–368 and canvas y=355.25–664.25, fully initially visible.
+Desktop Save/Save and publish, Undo/Redo, Add text/Add slide, preview/export,
+settings/Quiz/Help and Change file passed viewport bounds and center hit tests.
+All measured canvases passed 16:9 tolerance. At 320, collapsed and expanded
+importer fit; focused/scrolled controls remained reachable without horizontal
+overflow, not a requirement to show every panel at once.
+
+Meaningful retention/failure guards passed: opening/closing preserves edited
+title and serialized canvas objects without extra extraction or save; file/mode
+are retained. Actual mode/file changes invalidate the old preview. Returned
+extraction error and thrown transport error keep the file and permit retry.
+Duplicate same-tick submissions produce one extraction; a late input event
+invalidates the pending epoch and its resolved result cannot resurrect a preview.
+Pending save disables Change file/File and rejects a forged hidden-form submit
+without another extraction. Unknown outcome retains edited title and leaves
+Change file/Save disabled, with exactly one persist invocation.
+
+**Additional narrow keyboard evidence, not extra node:test counts:** ran a
+stdin-only ESM probe, invocation
+`node tests\offline-run.mjs --input-type=module -` (PowerShell single-quoted
+here-string piped to stdin), exit 0, **two viewport workflows passed**.
+Reused the same `mountPresentation`/module mappings and synthetic extraction;
+no files or harness changes. This closes a specific gap: the existing mobile
+test explicitly focuses File, rather than asserting natural Tab traversal.
+Repro at 1366×768 and 320×900: preview `keyboard.pptx`; assert automatic Lesson
+title focus; edit title; Shift+Tab reaches Change file; Enter expands and focus
+remains on the now-labelled, enabled Close importer. Tab reaches selected import
+mode, then retained File, then Preview slides. Three Shift+Tabs return to Close
+importer; Enter closes; Tab reaches the unchanged edited title. Assert no
+horizontal overflow and no page errors/unexpected requests. Both passed.
+This tests only upload focus, not a rerun of already accepted editor keyflows.
+
+### Artifacts actually opened, cleanup and untested requirements
+
+Fresh captured **and actually opened**:
+
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-upload-followup-Dd4Okz\upload-1366.png`
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-upload-followup-Dd4Okz\upload-320.png`
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-upload-followup-Dd4Okz\importer-expanded-320.png`
+
+Desktop visibly shows compact source context, focused title, tools and whole
+canvas. Mobile shows wrapped source context, reachable tools and whole canvas;
+expanded form shows readable radios/File/Preview and retained edited title.
+Same directory also contains 1440/1910/1920 captures, **not opened in this task**.
+Unchanged workspace QA captures:
+`C:\Users\SOLUSER\AppData\Local\Temp\forge-workspace-qa-3s3AjM\`
+(not opened; no redundant screenshot matrix).
+
+Both test files close contexts/Chromium in finally; the supplemental probe also
+confirmed finally cleanup. All started commands completed; process inspection
+found no remaining Playwright-profile Chromium. No helper/server was started.
+Synthetic screenshots remain outside Git; no database/storage fixtures to remove.
+Final whitespace/preservation check:
+
+```powershell
+& 'C:\Users\SOLUSER\AppData\Local\GitHubDesktop\app-3.6.10\resources\app\git\cmd\git.exe' --no-pager diff --check
+# Passed, exit 0 (recorded after documentation edits).
+```
+
+**Failures/escalation:** none reproduced in the scoped product behavior; earlier
+open-upload-defect entries below are historical and superseded by this retest.
+**Not tested:** full suite/build/lint/types, broad manual-editor polish, real
+file parsing/server action transport, connected permissions/DB/storage/provider/
+quotas, target-applied migration state, native desktop PowerPoint or release
+certification. No environment loader, connected e2e/instructor test, installation,
+migration operation, deployment or commit. These remain separate external gates.
+
+## 5 November 2026 — narrow upload-placement fix (independent re-QA requested)
+
+**Owner/scope:** local UI implementer; coordinator owns acceptance. One reproduced
+usability defect only, not a feature restart or release certification. Preserved
+the prior dirty product/user/QA work. Requested sibling skills were absent; loaded
+repository `.github/skills/forge-{delivery,verification,security}/SKILL.md`.
+No nested agents. Inspected Git status, controlling uploader/Studio/CSS, latest
+QA evidence and nearby harnesses before editing.
+
+### Root cause and delivered change
+
+Falsifiable hypothesis: the still-expanded importer plus duplicate upload
+headings displaces the fixed-height polished editor; replacing that space with a
+compact success bar should restore desktop canvas/actions without shrinking the
+manual editor. First ran the exact independent QA test **before edits**: **1 pass,
+1 fail**, 14.0941119s, exit 1. At 1366×768, scrollY=0, editor y=554.59375,
+Add slide y=756.59375–792.59375, canvas y=779.84375–1088.84375. The retained
+Add-slide assertion failed, matching independent QA.
+
+Successful extraction now hides (does not unmount/reset) the importer and shows
+Imported file / filename / mode / Change file. The bar replaces the duplicate
+portal upload heading only while a preview exists. Its 36px desktop row retains
+the existing editor height and canvas scale. No forced page scrolling or smaller
+canvas workaround. Opening/closing the disclosure does not reimport, save, delete
+or reset content. Its visible warning explains that an actual file/mode change
+replaces the preview. Existing invalidation, epoch guard, extraction error/retry,
+same-tick guard and save-lock callbacks remain. Change file is disabled while
+saving/uploading or after an unknown save outcome. A wrapper **inside Suspense**
+focuses Lesson title once the lazy editor is actually mounted; no focus remains
+on the hidden Preview slides button. Scoped radio sizing keeps the expanded
+320px form readable rather than allowing full-width radio inputs.
+
+**Exact six-file inventory for this follow-up:**
+
+* `src/components/create-lesson.tsx` — compact retained importer/disclosure,
+  filename context, successful-mount focus.
+* `src/app/globals.css` — upload-only success heading/bar, focus/radios/mobile
+  styling; existing polished-editor rules unchanged.
+* `tests/presentation-upload.test.mjs` — two new focused offline browser tests.
+* `tests/slide-authoring-ui.test.mjs` — use Change file before the two existing
+  file/mode changes; settle Fabric's responsive resize for two animation frames
+  before the existing mobile overflow assertion; add failure geometry diagnostics.
+  Existing save/review/version/content assertions retained.
+* `README.md`, `IMPLEMENTATION_TRACKER.md` — current fix/repro/evidence/handoff.
+
+Did not edit `tests/presentation-workspace-qa.test.mjs` or weaken/skip its original
+assertions. No changes to Studio route logic, presentation editor/canvas modules,
+library/schema/assets/actions/account/AI, migrations (including the tagged
+`20261105140000_presentations_ran.sql`), policies, dependencies or configuration.
+
+### Exact commands and results (repository cwd)
+
+Every Node invocation used the existing OS-only environment/network-denial runner.
+Chromium contexts were offline, service workers blocked, unexpected routes aborted.
+Extraction in new tests is synthetic; original JSX/lazy editor/Fabric/CSS runs
+inside the existing actual-size portal harness with Tailwind preflight. Existing
+authoring/editor tests use their local in-memory PGlite and real save actions.
+
+```powershell
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\presentation-workspace-qa.test.mjs
+# Before edits: 1/2 pass, 1 reproduced product failure; exit 1, 14.0941119s.
+# Immediately after product fix: 2/2 pass; exit 0, 12.7066444s.
+
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\presentation-workspace-qa.test.mjs tests\presentation-upload.test.mjs tests\slide-authoring-ui.test.mjs tests\presentation-layout.test.mjs tests\presentation-ui.test.mjs
+# Final: 11/11 pass, 0 fail/skipped/cancelled; exit 0, 107.3589726s.
+
+node tests\offline-run.mjs node_modules\eslint\bin\eslint.js src\components\create-lesson.tsx tests\presentation-upload.test.mjs tests\slide-authoring-ui.test.mjs
+# Passed, no diagnostics.
+node tests\offline-run.mjs node_modules\typescript\bin\tsc --noEmit --incremental false
+# Passed, no diagnostics; no Next typegen/environment loader.
+& 'C:\Users\SOLUSER\AppData\Local\GitHubDesktop\app-3.6.10\resources\app\git\cmd\git.exe' --no-pager diff --check
+# Passed.
+```
+
+Iterations, not additional distinct passes: first five-file grouped run was
+10/11 (123.8122678s); existing upload test measured immediately after switching
+to 320px and failed its overflow assertion. Added bounds diagnostics; its
+standalone rerun passed unchanged geometry assertions, **1/1**, 15.7680547s:
+`node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\slide-authoring-ui.test.mjs`.
+Added the same two-animation-frame layout settling used by the layout harness
+after viewport resize, not a scroll reset or wait-for-a-passing-overflow condition.
+Also improved scoped radio sizing after actually opening the expanded screenshot.
+The final grouped execution above passed all 11. Scoped lint/direct TS both
+passed before and after the final code changes. No full suite or build.
+
+### Final measured upload geometry and visual assessment
+
+CSS pixels; desktop actual shell reserves sidebar242/topbar66. All initial
+measurements below have **scrollY=0**, no horizontal overflow and 16:9 canvas.
+
+| Viewport | Editor x,y; width×height; bottom | Canvas x,y; width×height; bottom |
+| --- | --- | --- |
+| 1366×768 | 258,130; 1092×636; 766 | 483.328125,355.25; 549.328125×309; 664.25 |
+| 1440×900 | 258,130; 1166×768; 898 | 439,375.5; 712×400.5; 776 |
+| 1910×1080 | 258,130; 1636×948; 1078 | 478,355.25; 1104×621; 976.25 |
+| 1920×1080 | 258,130; 1646×948; 1078 | 483,355.25; 1104×621; 976.25 |
+| 320×900 | 10,150; 300×871.625; 1021.625 | 27,659.5; 266×149.625; 809.125 |
+
+Desktop primary controls passed viewport bounds **and center hit tests**, including
+disabled Undo/Redo bounds. Exact 1366 control rectangles (x,y,width,height):
+
+| Control | Rectangle |
+| --- | --- |
+| Change file | 1260.421875,82,89.578125,36 |
+| Save | 1180.671875,155,47.171875,40 |
+| Save and publish | 1235.84375,155,114.15625,40 |
+| Undo / Redo | 271,218,51.84375,36 / 330.84375,218,49.9375,36 |
+| Add text | 413.78125,218,68.8125,36 |
+| Add slide | 269,332,130,36 |
+| Fullscreen preview | 717.234375,218,122.125,36 |
+| Export editable PPTX | 847.359375,218,136.46875,36 |
+| Lesson settings | 1121.8125,218,104.828125,36 |
+| Quiz / Help | 1234.640625,218,46.78125,36 / 1289.421875,218,47.578125,36 |
+
+The other three desktop sizes have the same control y/height ranges: Change
+file82–118, saves155–195, ribbon218–254, Add slide332–368. Their complete
+rectangles are emitted by the new test on rerun. At 320, import bar is
+x10,y72,w300,h66. Save x10,y227,w47.171875,h40; Save and publish
+x65.171875,y227,w114.15625,h40; Add text x21,y340,w68.8125,h40; preview
+x21,y390,w122.125,h40; export x151.125,y390,w136.46875,h40. Add slide after
+keyboard-opening Slides is x21,y562,w60.640625,h40. Focus and ordinary scrolling
+keep mobile controls reachable without horizontal overflow; mobile is not
+required to display every panel simultaneously.
+
+Manual layout is unchanged: at 1366/1440/1920 editor y122.59375, widths
+1092/1166/1646; canvas widths549.328125/712/1104; workspace bottoms
+758.59375/890.59375/1070.59375. Existing layout/dialog/enlarged-control,
+IME/format/history, image, unknown-save, real save/review/version assertions passed.
+New coverage also checks success title focus, importer/file/mode retention,
+no autosave/reimport on disclosure, file/mode invalidation, returned/transport
+extraction failures and retry, same-tick extraction guard, late-event epoch
+rejection, hidden-form submit save guard and unknown-save content/lock retention.
+
+Final screenshots **captured and actually opened**:
+`C:\Users\SOLUSER\AppData\Local\Temp\forge-upload-followup-JdiEEs\`
+`upload-1366.png`, `upload-320.png`, `importer-expanded-320.png`.
+Desktop shows full canvas, all primary controls and clear source/change entry.
+Mobile shows wrapped source context, separate tool targets and full canvas;
+expanded form radios/file/Preview are readable and reachable. Same directory
+also has 1440/1910/1920 captures. Final unchanged-QA captures:
+`C:\Users\SOLUSER\AppData\Local\Temp\forge-workspace-qa-FLM6gF\`.
+
+**Cleanup/gaps:** browser contexts/Chromium and existing test PGlite close in
+finally; no helper/server remains running. Synthetic screenshots retained outside
+Git. No secrets/environment files, remote service/provider/storage, setup loader,
+migration, connected e2e/instructor test, installation, commit or deployment.
+This proves bounded offline UI behavior, not real upload parser/server transport,
+connected authorization or native PowerPoint fidelity. **Independent QA should
+rerun the retained workspace test plus narrow upload regression; coordinator
+acceptance remains open.** Earlier independent open-defect entry follows as
+historical evidence, not the current implementer's result.
+
+## 5 November 2026 — independent bounded workspace UI QA (upload defect open)
+
+**Result/owner:** coordinator retains acceptance; implementer owns product fixes.
+**Nine distinct bounded tests: eight passing, one failing in final executions.**
+No release approval. No nested agents or product changes. Existing dirty work
+was preserved. The seven existing browser tests were adequate for manual-editor
+flows; added only `tests/presentation-workspace-qa.test.mjs` for two missing
+checks: actual Studio route width isolation and actual upload-to-editor placement.
+
+### Safety and exact independent execution
+
+Requested sibling skills did not exist; read repository
+`.github/skills/forge-{delivery,security,verification}/SKILL.md`, latest README/
+tracker entries, package, layout/UI/acceptance tests and browser/offline harnesses
+before choosing checks. All Node commands used `tests/offline-run.mjs` (OS-only
+environment, network-denial preload). No environment/secret files or dotenv/Next
+environment loader. Pre-execution stdin assertion probe confirmed no application
+configuration keys and denied fetch, socket and HTTPS requests. Browser contexts
+were offline, service workers blocked, unexpected routes aborted; synthetic page
+and image routes were fulfilled in memory. PGlite was used only by the existing
+real-save UI flow. New route checks mock leaf editors/data; new upload check runs
+the original UploadLessonPage and real presentation editor with mocked extraction,
+not a real PPTX parser or server action transport.
+
+From repository cwd:
+
+```powershell
+node tests/offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests/presentation-layout.test.mjs tests/presentation-ui.test.mjs
+# 6/6 passed; 56.4898784s; exit 0.
+node tests/offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern="independent mounted draft" tests/presentation-acceptance.test.mjs
+# 1/1 selected test passed; 11.4610408s; exit 0.
+node tests/offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests/presentation-workspace-qa.test.mjs
+# Final: 1/2 passed, 1 product failure; 18.2285106s; exit 1.
+node tests/offline-run.mjs node_modules/eslint/bin/eslint.js tests/presentation-workspace-qa.test.mjs
+# Final: passed, no diagnostics; exit 0.
+& 'C:\Users\SOLUSER\AppData\Local\GitHubDesktop\app-3.6.10\resources\app\git\cmd\git.exe' --no-pager diff --check
+```
+
+Iterations, not additional distinct passes: first new-test execution was 1/2,
+with a QA harness error (`Unexpected browser dependency ./learning`), 8.288224s.
+Corrected the new test's missing module source to transpile actual learning.ts;
+no product/assertion change. Second execution was 1/2 with the product failure
+below, 14.7942204s. New-test lint initially found an unnamed marker component;
+named it `Marker`. Final same two tests again reproduced the product failure.
+No assertion was weakened or skipped. No full suite, build, types or product
+lint rerun. Filtered acceptance execution did not run its two non-browser tests.
+
+### Passing geometry, actions, responsive and keyboard evidence
+
+Actual CSS-pixel measurements from this QA run, with Tailwind preflight and the
+242px-reserved sidebar/66px desktop topbar, not an isolated viewport:
+
+| Viewport | Inner editor width | Actual Fabric canvas width × height | Horizontal page overflow |
+| --- | ---: | ---: | --- |
+| 1440×900 | 1166 | 712 × 400.5 | No |
+| 1366×768 | 1092 | 549.328125 × 309 | No |
+| 1920×1080 | 1646 | 1104 × 621 | No |
+| 1024×768 | 750 | 716 × 402.75 | No |
+| 768×1024 | 736 | 702 × 394.875 | No |
+| 320×900 | 300 | 266 × 149.625 | No |
+| 683×384 | 651 | 616.875 × 347 | No |
+
+Manual desktop workspace bottoms 890.594/758.594/1070.594px fit their initial
+viewports. Save, Save and publish, Undo/Redo (disabled where history unavailable),
+Add text, Add slide, preview, export, settings, Quiz and Help passed initial
+viewport bounds and center hit tests. Ribbon gaps >=6px; Shapes and Insert
+PNG/JPEG visibly grouped alongside Add text. No overlap/truncation observed in
+the opened screenshots. All measured canvases retained 16:9. Thumbnail scrolling
+did not move Add slide; inspector overflow stayed independently bounded.
+
+At 1024/768/320 and 683, panels began collapsed, properties opened by keyboard,
+and Add slide was reachable after opening Slides; no horizontal page overflow.
+Desktop dialog checks used Enter, Tab/Shift+Tab (12 steps per dialog), Escape
+and trigger-focus restoration for Lesson settings, Quiz and Help. Actual hidden
+file-input focus produced the upload-label focus indicator; keyboard Shapes
+insertion returned focus. Mobile checks included keyboard Add text/content,
+outline Space selection, settings/quiz input reachability and Escape/restore.
+20px editor/control checks passed at 1366 and 320, including centered settings,
+third quiz question and no modal horizontal overflow. This is enlarged text,
+**not native browser zoom**. Not an exhaustive Tab traversal of every action at
+every size.
+
+Existing focused flows passed: real Fabric CJK composition, selected-character
+formatting with history, numeric X/rotation, multi-selection/stacking, zoom-aware
+real mouse dragging and keyboard undo/redo, image insertion/replacement/undo,
+pending-upload/save interlocks, private save and review-request version handling,
+uncertain-save lock, fullscreen-denial feedback, cleanup-failure feedback, current
+unsaved text/shape/image native PPTX toolbar OOXML and missing-image cancellation.
+Quiz validation blocked persistence and focused feedback; metadata/quiz history
+and modal feedback focus passed. These are local fixtures, not connected claims.
+
+New actual-Studio branch test passed at 1440 and 1920: manual, upload,
+presentation edit and legacy-slide edit receive the wide modifier and page widths
+1198/1678px; history and standard edit stay 850px. An unmodified other-portal
+CSS control stays 1180px at 1920. Actual page function rejected foreign-owner and
+missing edits using local synthetic data and real permission helper. Leaf editors
+were placeholders in this branch test; it is not full-app navigation or a remote
+authorization audit.
+
+### Reproduced product defect — upload form buries desktop workspace
+
+**Escalation to coordinator/implementer; UI acceptance remains open.**
+Repro: desktop viewport 1366×768, open `/studio?upload=1`, select a supported file,
+choose Preview slides, then inspect the resulting editor without page scrolling.
+Offline reproduction uses synthetic successful extraction (three valid legacy
+slides), actual UploadLessonPage/lazy presentation editor and the same controlling
+portal wrapper/CSS. `scrollY=0` throughout. Run the new QA test command above.
+
+* Editor: x=258, y=554.59375, width=1092, height=636, bottom=1190.59375.
+* **Add slide**: x=269, y=756.59375, width=130, height=36; bottom=792.59375
+  exceeds viewport bottom768. Canvas y=779.84375, width=549.328125, height=309:
+  no canvas pixels in the initial viewport.
+* At 1440×900 editor/canvas widths still pass1166/712, but canvas extends from
+  y=800.09375 to1200.59375. At 1920×1080 widths1646/1104 pass and primary buttons
+  fit, but canvas extends from755.84375 to1376.84375. Thus wide geometry alone
+  does not prevent uploaded-editor page scrolling.
+* Same failing Add-slide bounds reproduced in both post-harness-correction runs.
+  No browser errors or unexpected network attempts occurred.
+
+Relevant product locations: `src/components/create-lesson.tsx:52-65` retains the
+full uploader immediately above the newly mounted editor;
+`src/app/studio/page.tsx:25-27,53` widens this route but does not compact that
+content; `src/app/globals.css:382` assumes the manual editor's top offset for
+viewport height (and `:36` adds upload-section spacing).
+Minimal recommendation: authorized implementer should compact/collapse the
+importer after successful preview with a clearly reachable change/re-import
+control, preserve invalidation/retry/save-lock semantics, and fit the workspace
+to its actual remaining viewport height. Do not mask overflow or merely weaken
+the test. Changes to create-lesson.tsx require coordinator ownership approval;
+QA did not edit it. Retest the retained failing assertion after the fix.
+
+### Actually opened screenshots
+
+All paths below are this independent run, not prior implementer artifacts:
+
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-presentation-layout-SiS0sa\`:
+  `workspace-1440.png`, `workspace-1366.png`, `workspace-1920.png`,
+  `workspace-768.png`, `workspace-320.png` (five opened).
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-presentation-accessibility-Y3IsAm\`:
+  `text20px-1366.png`, `settings320-text20px.png` (both opened).
+* First product-failure run:
+  `C:\Users\SOLUSER\AppData\Local\Temp\forge-workspace-qa-iDKqtT\`:
+  `upload-1366.png`, `upload-1440.png` (both opened).
+* Final reproduction:
+  `C:\Users\SOLUSER\AppData\Local\Temp\forge-workspace-qa-MkgMHP\`:
+  `upload-1366.png`, `upload-1920.png` (both opened).
+
+Eleven screenshots actually opened. Other captured screenshots, including
+layout1024/683, UI `forge-presentation-lqy66H` and toolbar
+`forge-independent-presentation-gx1SYo`, are not claimed as opened.
+
+### Preservation, cleanup and untested requirements
+
+Initial/final SHA-256 aggregate match for **189 pre-existing files**, sorted path
+plus NUL plus file bytes: all src/, supabase/, existing tests/, package/lock,
+Next/TS/ESLint/PostCSS configuration and next-env.d.ts:
+`5c25693212b6f65b44f9b3e98816588bc826dd67594855f72111ea62497b5fa6`.
+The new QA test is excluded from that comparison. Specifically protected
+`supabase/migrations/20261105140000_presentations_ran.sql` SHA-256:
+`9860874031055a45f99b7316aad1eee38b60ee9df2b80d6cb1df119b2b236b08`.
+Initial dirty inventory: these two docs, four product UI files, three existing
+presentation test/harness files and untracked presentation-layout.test.mjs.
+QA changed only README, tracker and the new QA test; no dependency/config/source/
+SQL changes.
+
+All QA commands completed. Browser contexts/Chromium and existing UI-test PGlite
+closed in finally, including failing test iterations. No cleanup failure
+reported; temporary synthetic screenshots retained intentionally; browser-managed
+downloads not promoted to repository files. No server, watcher or detached helper
+started. No remote DB/storage/migration, real provider/quota, connected e2e/
+instructor suite, install, deployment or commit.
+
+**Separate unverified gates:** native browser zoom, Safari/Firefox/touch hardware,
+live Next routing/real upload parsing and transport, connected permissions and
+remote persistence, full saved-document close/reopen roundtrip in this QA turn,
+exhaustive keyboard traversal at every breakpoint, mobile upload-specific
+placement, and native desktop PowerPoint fidelity. Prior evidence is not adopted
+as an independent pass. This is local UI acceptance with the upload defect open,
+not global release or PowerPoint fidelity certification.
+
+## 5 November 2026 — focused presentation visual/usability implementation
+
+**Ownership:** approved local UI implementation only; coordinator retains
+planning/acceptance. No delegation. Initial Git working tree was clean; existing
+implementation was continued, not replaced. Requested sibling skills were absent;
+read repository `.github/skills/forge-delivery/SKILL.md` and
+`.github/skills/forge-verification/SKILL.md`, package, documentation and controlling
+editor/canvas/studio/shell CSS and browser fixtures.
+
+### Delivered changes (exact inventory)
+
+* `src/app/studio/page.tsx`: explicit `presentation-studio` modifier for manual,
+  slide-template edit and upload pages. History and standard editors stay bounded.
+* `src/app/globals.css`: remove the unconditional 850px `!important` cap;
+  presentation-only wide, compact heading; document/save bar, grouped ribbon,
+  consistent warm/green panels, 152px slide rail and 244px inspector; bounded
+  independent scrolling; responsive native disclosures and centered utility
+  dialogs. No navigation redesign, body overflow hiding or control scaling.
+* `src/components/presentation-editor.tsx`: visible title/save state/primary
+  actions; compact accessible image chooser; fixed slide management above
+  thumbnails; contextual styles plus persistent position/size and alignment/layer
+  disclosures; initially collapsed outline; named Lesson settings, Quiz and Help
+  dialogs. Modal keyboard cycling, Escape, trigger focus return and focused
+  validation/cleanup feedback. Original history, mutations, save intent/version/
+  uncertain-result interlocks, image actions and export implementation retained.
+* `src/components/presentation-canvas.tsx`: fit the minimum available width/height
+  with one Fabric zoom, maintaining logical 960×540 coordinates and pointer mapping.
+* `tests/presentation-browser-harness.mjs`: realistic sidebar/workspace/topbar/
+  heading wrapper and the installed Tailwind preflight in its base layer. All
+  browser content remains synthetic/in-memory; no server or connected app.
+* `tests/presentation-ui.test.mjs`: open new named disclosures/settings as needed;
+  existing CJK/history/image/save/export assertions retained.
+* `tests/presentation-acceptance.test.mjs`: open outline/layers; drag relative to
+  the actual centered canvas, not its larger fitting host. Assertions retained.
+* New `tests/presentation-layout.test.mjs`: three focused grouped tests for real
+  containing-block geometry, initial action visibility/hit testing/gaps, screenshot
+  pixels, independent rail scrolling, responsive disclosures, dialog keyboard/
+  focus, metadata and quiz history/validation, hidden file-input focus, shape
+  keyboard insertion, enlarged controls and 320px dialogs.
+* `README.md` and this tracker: actual usage and verification evidence.
+
+### Hypothesis, checks and iterations
+
+**Falsifiable hypothesis:** removing only the presentation containing-block cap,
+  with compact fixed-width side panels and fit-height stage, yields a canvas
+  >=600px at 1440×900 and >=540px at 1366×768 without hiding primary actions.
+  Focused check: mounted offline Chromium geometry in the real 242px-reserved
+  portal structure, plus the existing UI regression flow.
+
+Baseline UI tests passed **3/3 (21.969s)**. First restructured UI run failed
+  **0/3**: CSS grid's intrinsic 960px canvas overflow intercepted inspector clicks.
+  Explicit zero-minimum grid tracks fixed it. Subsequent **2/3** runs exposed
+  disclosure remount/toggle state loss after canvas selection restoration; explicit
+  state/click toggling fixed it. UI then passed **3/3**.
+
+Opened screenshots exposed thumbnail overflow through native details' anonymous
+  content box; measured available panel height now bounds the actual scroll
+  region. New dialog checks exposed native Tab cycling through browser chrome;
+  explicit boundary cycling and notice-focus handling now keep focus in the modal.
+  New-test Font/Audience exact-label lookups were corrected to their accessible
+  combobox roles, without removing assertions.
+
+Added screenshot-pixel checks and a paint settle after scrolling, because an
+  early capture showed stale canvas painting immediately after panel/scroll
+  changes; no screenshot-only style or forced canvas redraw was introduced.
+  Adding actual Tailwind preflight exposed a genuine **535px** height-fit width at
+  1366×768, below the unchanged 540px check. Reduced stage/main padding by 2px each,
+  giving **549.328px**. Final screenshot review also caught reset-removed modal
+  centering and an enlarged Close label wrapping; explicit margins/max-width and
+  a nonshrinking Close button fixed both. Final focused mobile recheck passed1/1,
+  followed by the complete final9/9 below.
+
+### Exact final commands and results (repository cwd)
+
+All Node execution used `tests/offline-run.mjs`: scrubbed OS-only environment,
+  network-denial preload, no application environment loader or secret files.
+
+```powershell
+# Initial baseline:
+node tests/offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests/presentation-ui.test.mjs
+# Focused iteration checks:
+node tests/offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests/presentation-layout.test.mjs
+node tests/offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern="enlarged editor" tests/presentation-layout.test.mjs
+# Final complete focused matrix:
+node tests/offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests/presentation-layout.test.mjs tests/presentation-ui.test.mjs tests/presentation-acceptance.test.mjs
+# Final static checks (separate invocations through the same safe runner):
+node tests/offline-run.mjs node_modules/typescript/bin/tsc --noEmit --incremental false
+node tests/offline-run.mjs node_modules/eslint/bin/eslint.js src/components/presentation-editor.tsx src/components/presentation-canvas.tsx src/app/studio/page.tsx tests/presentation-browser-harness.mjs tests/presentation-ui.test.mjs tests/presentation-acceptance.test.mjs tests/presentation-layout.test.mjs
+& 'C:\Users\SOLUSER\AppData\Local\GitHubDesktop\app-3.6.10\resources\app\git\cmd\git.exe' --no-pager diff --check
+```
+
+Final matrix: **9/9 passed**, 83.541s, zero failures/skips/cancellations, exit0.
+  These are nine distinct tests, not accumulated reruns. Includes actual Fabric
+  IME/CJK and character formatting/history; multiselect/stacking and real mouse
+  drag with zoom; image replacement/undo; private save/review/version/unknown-save
+  locks; quiz validation/focus/history; native text/shape/image PPTX download and
+  missing-image cancellation; fullscreen denial and cleanup failure feedback;
+  existing local model/authorization/action/SQL acceptance.
+  Direct TypeScript passed; scoped ESLint on **7 code/test files** passed, no
+  diagnostics. Git whitespace check passed. No full suite, Next typegen or build
+  was run for this UI-only change.
+
+### Final measured geometry and visual evidence
+
+Widths are rendered CSS pixels, not viewport width claims. Editor is the inner
+  `.presentation-editor`; canvas is Fabric's actual `.canvas-container`.
+
+| Viewport | Editor width | Canvas width × height | Desktop primary actions initially visible |
+| --- | ---: | ---: | --- |
+| 1440×900 | 1166 | 712 × 400.5 | Yes |
+| 1366×768 | 1092 | 549.328 × 309 | Yes |
+| 1920×1080 | 1646 | 1104 × 621 | Yes |
+| 1024×768 | 750 | 716 × 402.75 | Responsive panels; page scroll allowed |
+| 768×1024 | 736 | 702 × 394.875 | Responsive panels; page scroll allowed |
+| 320×900 | 300 | 266 × 149.625 | Save/tools above stage; panels collapsed |
+| 683×384 | 651 | 616.875 × 347 | Reduced-viewport reflow; page scroll allowed |
+
+Desktop reserved sidebar =242px, canvas/stage/workspace stay within bounds.
+  Workspace bottoms: 890.594/758.594/1070.594px respectively, inside each desktop
+  viewport. Save, Save and publish, editable export, preview, Undo/Redo, Add text,
+  Add slide, settings, Quiz and Help passed initial viewport bounds and center
+  hit tests; ribbon gaps >=6px (configured8px). Shapes and image insertion remain
+  alongside Add text. No horizontal document overflow at any measured size;
+  all canvases remain16:9. The 683×384 case is a reduced-layout-viewport proxy,
+  **not a claim of real browser-zoom testing**. Separate20px-control checks passed,
+  including mobile settings/quiz input reachability and focus restoration.
+
+**Actually opened nine final screenshots**, not just captured:
+
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-presentation-layout-tqo454\workspace-1440.png`
+* Same directory: `workspace-1366.png`, `workspace-1920.png`,
+  `workspace-1024.png`, `workspace-768.png`, `workspace-320.png`, `workspace-683.png`.
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-presentation-accessibility-cPi5gb\text20px-1366.png`
+* Same directory: `settings320-text20px.png`.
+
+Other final test captures (not claimed as opened):
+  `C:\Users\SOLUSER\AppData\Local\Temp\forge-presentation-PFzwdb\` and
+  `C:\Users\SOLUSER\AppData\Local\Temp\forge-independent-presentation-vZb70F\`.
+
+**Cleanup/boundaries:** browser contexts/Chromium and all PGlite databases closed
+  in finally; downloads remained temporary; screenshot artifacts intentionally
+  retained for QA. No long-running helper, server startup, dependency install,
+  package change, SQL/schema/policy/action change, remote Supabase/storage/
+  migration, provider call, connected e2e/instructor suite, deployment or commit.
+
+**Independent QA requested:** bounded final desktop/mobile geometry and key
+  flows, including real-app upload-to-editor placement and standard-editor width
+  isolation. Offline fixture reproduces controlling shell CSS, not a live Next
+  page/real account or upload transport. Native browser zoom, Safari/Firefox,
+  native desktop PowerPoint fidelity and connected service transport remain
+  unverified. No blocker to the approved local implementation; no release
+  certification or coordinator acceptance is asserted.
+
 ## 5 November 2026 — independent bounded presentation acceptance (QA)
 
 **Ownership/result:** coordinator owns acceptance. Independently executed **12

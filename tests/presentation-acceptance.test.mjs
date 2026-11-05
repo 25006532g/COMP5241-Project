@@ -293,6 +293,7 @@ test("independent mounted draft: image-inclusive toolbar OOXML, pixel geometry, 
     assert.ok(pixels.red,"A visible native shape must be rendered.");
     assert.ok(Math.abs(pixels.red[0]/pixels.width-240/960)<.01,JSON.stringify(pixels));
     assert.ok(Math.abs(pixels.red[1]/pixels.height-270/540)<.01,JSON.stringify(pixels));
+    await page.locator(".presentation-outline > summary").click();
     const checks=page.locator(".presentation-outline input[type=checkbox]");
     await checks.nth(1).check();
     const stage=page.getByRole("group",{name:/^Slide canvas/});
@@ -303,7 +304,7 @@ test("independent mounted draft: image-inclusive toolbar OOXML, pixel geometry, 
     await page.keyboard.press("Control+y");
     await page.waitForFunction(()=>editCanvas.getObjects()[1].left===250);
     await checks.nth(1).check();
-    const bounds=await stage.boundingBox(),zoom=await page.evaluate(()=>editCanvas.getZoom());
+    const bounds=await page.locator(".presentation-editable .canvas-container").boundingBox(),zoom=await page.evaluate(()=>editCanvas.getZoom());
     await page.mouse.move(bounds.x+350*zoom,bounds.y+320*zoom);
     await page.mouse.down();await page.mouse.move(bounds.x+380*zoom,bounds.y+340*zoom,{steps:5});await page.mouse.up();
     await page.waitForFunction(()=>Math.abs(editCanvas.getObjects()[1].left-280)<2);
@@ -313,6 +314,7 @@ test("independent mounted draft: image-inclusive toolbar OOXML, pixel geometry, 
     await page.waitForFunction(()=>Math.abs(editCanvas.getObjects()[1].left-280)<2);
     // Unified undo/redo intentionally clears selection; select the object again.
     await checks.nth(1).check();
+    await page.getByText("Alignment & layers",{exact:true}).click();
     await page.getByRole("button",{name:"Bring to front",exact:true}).click();
     await page.waitForFunction(id=>editCanvas.getObjects().at(-1).elementId===id,shape.id);
     const currentShape=await page.evaluate(()=>{const o=editCanvas.getObjects().at(-1);return {x:o.left,y:o.top};});

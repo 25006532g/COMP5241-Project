@@ -17,12 +17,27 @@ function bundle(path){
 }
 sources.zod=`module.exports=require(${JSON.stringify(bundle(require.resolve("zod")))});`;
 export async function mountPresentation(page,props={}){
-  const css=readFileSync("src/app/globals.css","utf8").replace('@import "tailwindcss";',"");
+  const preflight=readFileSync(join(dirname(require.resolve("tailwindcss/package.json")),"preflight.css"),"utf8");
+  const css=`@layer base {${preflight}}\n${readFileSync("src/app/globals.css","utf8").replace('@import "tailwindcss";',"")}`;
   // Fulfilled in memory, not a server/network connection; HTTPS gives real
   // secure-context randomUUID and browser export APIs.
   await page.route("https://forge.test/",route=>route.fulfill({contentType:"text/html",body:"<div></div>"}));
   await page.goto("https://forge.test/");
-  await page.setContent(`<style>${css}</style><main class="portal-page studio-editor"><div id="root"></div></main>`);
+  // Match LearnerShell's controlling blocks, including the reserved 242px rail
+  // and sticky topbar. Do not measure a fictitious full-viewport editor.
+  await page.setContent(`<style>${css}</style>
+    <div class="portal-shell">
+      <aside class="portal-sidebar"><a class="portal-brand" href="/studio">FORGE / Learning studio</a>
+        <nav class="portal-nav"><a href="/learn">My learning</a><a href="/catalog">Explore lessons</a><a href="/studio" class="active">Lesson studio</a></nav>
+      </aside>
+      <div class="portal-workspace">
+        <header class="portal-topbar"><button class="portal-menu" type="button" aria-label="Open navigation">Menu</button><a class="catalog-shortcut" href="/catalog">Explore lessons</a><span class="portal-avatar">QA</span></header>
+        <main class="portal-page studio-editor presentation-studio">
+          <header class="portal-heading"><div><span class="eyebrow">LESSON STUDIO</span><h1>Write a lesson.</h1></div></header>
+          <div id="root"></div>
+        </main>
+      </div>
+    </div>`);
   await page.addScriptTag({path:join(process.cwd(),"node_modules/fabric/dist/index.min.js")});
   await page.addScriptTag({path:join(process.cwd(),"node_modules/pptxgenjs/dist/pptxgen.bundle.js")});
   await page.evaluate(({sources,props})=>{

@@ -22,8 +22,9 @@ export default async function Studio({ searchParams }: { searchParams: Promise<{
     .order("created_at", { ascending: false })
     .order("id")
     .range(start, end));
+  const presentationWorkspace = lesson ? lesson.content.template === "slides" : manual === "1" || upload === "1";
   return <LearnerShell active="/studio" name={await displayName(user)} admin={isAdmin(user)} instructor={isInstructor(user)}>
-    <div className="portal-page studio-editor">
+    <div className={`portal-page studio-editor${presentationWorkspace ? " presentation-studio" : ""}`}>
       <header className="portal-heading"><div><span className="eyebrow">LESSON STUDIO</span><h1>{lesson ? "Edit lesson." : upload === "1" ? "Upload a file." : manual === "1" ? "Write a lesson." : "Create a lesson."}</h1></div></header>
       {!lesson && manual !== "1" && upload !== "1" && <section className="learning-section"><h2>Your lessons</h2>
         <p>Only lessons you created are listed here.</p>

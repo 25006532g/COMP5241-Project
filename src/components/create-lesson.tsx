@@ -7,8 +7,18 @@ import { createManualLesson, updateLesson, type ActionState } from "@/app/learni
 import { authorLessonSchema, emptyAuthorLesson, type AuthorLesson } from "@/lib/slide-lesson";
 const PresentationLessonEditor=lazy(()=>import("./presentation-editor").then(m=>({default:m.PresentationLessonEditor})));
 
+// Mount inside Suspense so focus moves only after the lazy editor is ready,
+// never back to the now-hidden Preview slides button.
+function UploadPreview({draft,onSaveLock}:{draft:AuthorLesson;onSaveLock:(locked:boolean)=>void}) {
+  const preview=useRef<HTMLDivElement>(null);
+  useEffect(()=>{preview.current?.querySelector<HTMLInputElement>(".presentation-document-bar input")?.focus();},[]);
+  return <div ref={preview}><PresentationLessonEditor initialLegacy={draft} onSaveLock={onSaveLock}/></div>;
+}
+
 export function UploadLessonPage() {
   const [mode, setMode] = useState<"text" | "powerpoint">("text");
+  const [fileName, setFileName] = useState("");
+  const [importerOpen, setImporterOpen] = useState(true);
   const [draft, setDraft] = useState<AuthorLesson | null>(null);
   const [generation, setGeneration] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -41,6 +51,7 @@ export function UploadLessonPage() {
       }
       setDraft({ ...emptyAuthorLesson(), title: result.name ?? "", slides: result.slides });
       setGeneration(value => value + 1);
+      setImporterOpen(false);
     } catch {
       if (request === epoch.current) setError("Upload failed. Try the file again.");
     } finally {
@@ -49,20 +60,27 @@ export function UploadLessonPage() {
     }
   }
 
-  return <section className="learning-section" aria-labelledby="upload-heading">
-    <h2 id="upload-heading">Upload a file</h2>
-    <form className="learning-form" onSubmit={event => { event.preventDefault(); void readFile(new FormData(event.currentTarget)); }}>
+  return <section className={`learning-section presentation-upload-page${draft ? " presentation-upload-ready" : ""}`} aria-labelledby="upload-heading">
+    <div className={draft ? "presentation-import-bar" : undefined}>
+      <h2 id="upload-heading">{draft ? "Imported file" : "Upload a file"}</h2>
+      {draft && <>
+        <p title={fileName}><strong>{fileName}</strong> · {mode === "text" ? "Text only" : "PowerPoint slides"}</p>
+        <button type="button" className="secondary-button" aria-expanded={importerOpen} aria-controls="upload-importer" disabled={busy || saveLocked} onClick={() => setImporterOpen(value => !value)}>{importerOpen ? "Close importer" : "Change file"}</button>
+      </>}
+    </div>
+    <form id="upload-importer" className="learning-form" hidden={!!draft && !importerOpen} onSubmit={event => { event.preventDefault(); void readFile(new FormData(event.currentTarget)); }}>
+      {draft && <p>Changing the file or import mode replaces this preview. Close the importer to keep editing.</p>}
       <fieldset disabled={busy || saveLocked}>
         <legend>How should this file become a lesson?</legend>
         <label className="checkbox-field"><input type="radio" name="mode" checked={mode === "text"} onChange={() => { setMode("text"); invalidate(); }} /> Copy the text only</label>
         <label className="checkbox-field"><input type="radio" name="mode" checked={mode === "powerpoint"} onChange={() => { setMode("powerpoint"); invalidate(); }} /> Import the PowerPoint as slides</label>
       </fieldset>
       <p>{mode === "text" ? "PDF, DOCX and PPTX text only: at most 2,400 characters, in up to six slides. Complete any blank slides before saving." : "PPTX only: 3–6 slides, at most 400 text characters per slide. Real slide order is retained, not original layout."} Binary PPT and DOC cannot be imported safely; export as PPTX or DOCX first. Images, original fonts, positioning and full formatting are not imported. Files must be at most 4 MiB. Originals are not stored or sent to AI. Over-limit content is rejected, never clipped.</p>
-      <label>File<input type="file" name="material" required disabled={busy || saveLocked} onChange={invalidate} accept={mode === "powerpoint" ? ".ppt,.pptx" : ".ppt,.pptx,.pdf,.doc,.docx"} /></label>
+      <label>File<input type="file" name="material" required disabled={busy || saveLocked} onChange={event => { setFileName(event.currentTarget.files?.[0]?.name ?? ""); invalidate(); }} accept={mode === "powerpoint" ? ".ppt,.pptx" : ".ppt,.pptx,.pdf,.doc,.docx"} /></label>
       <button className="primary-button" type="submit" disabled={busy || saveLocked}>{busy ? "Reading file..." : "Preview slides"}</button>
     </form>
     {error && <p role="alert" className="form-notice notice-error">{error}</p>}
-    {draft && <Suspense fallback={<p>Loading presentation editor…</p>}><PresentationLessonEditor key={generation} initialLegacy={draft} onSaveLock={value => { locked.current = value; setSaveLocked(value); }} /></Suspense>}
+    {draft && <Suspense fallback={<p>Loading presentation editor…</p>}><UploadPreview key={generation} draft={draft} onSaveLock={value => { locked.current = value; setSaveLocked(value); }} /></Suspense>}
   </section>;
 }
 
