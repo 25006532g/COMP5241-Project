@@ -27,7 +27,7 @@ function creationAcknowledgement(data: { id?: unknown } | null, error: { code?: 
   // Only definite statement/schema rejections prove that retrying cannot duplicate a row.
   // Response-shaping and transport failures can happen after commit.
   if (error) {
-    if (!data && error.code === "23514") return { error: "The database rejected the lesson CHECK constraint (23514). Ask the administrator to apply 20261105093000_slide_authoring.sql and refresh the Supabase schema cache, then retry. Nothing was saved; your input is retained." };
+    if (!data && error.code === "23514") return { error: "The database rejected the lesson CHECK constraint (23514). Ask the administrator to apply 20261105093000_slide_authoring_ran.sql and refresh the Supabase schema cache, then retry. Nothing was saved; your input is retained." };
     if (!data && ["42P01", "42703", "PGRST204", "PGRST205"].includes(error.code ?? "")) {
       return { error: "Lesson storage is unavailable. Check the learning database migrations and schema cache, then try again. Nothing was saved." };
     }
