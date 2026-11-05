@@ -109,6 +109,10 @@ export async function deleteAccount(formData: FormData) {
     redirect(`/profile/delete?error=${encodeURIComponent("Account deletion is temporarily unavailable. Please try again later.")}`);
   }
   try {
+    // Same-account password verification above remains mandatory. Remove blobs
+    // before auth cascades lose the metadata needed to retry private cleanup.
+    const {cleanupPresentationAssets}=await import("@/lib/presentation-assets-server");
+    await cleanupPresentationAssets(user.id,true);
     const { error } = await admin.auth.admin.deleteUser(user.id);
     if (error !== null) throw error;
   } catch {

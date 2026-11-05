@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useCallback, useEffect, useId, useRef, useState, useTransition } from "react";
+import { lazy,Suspense,useActionState, useCallback, useEffect, useId, useRef, useState, useTransition } from "react";
 import { ArrowDown, ArrowUp, Bookmark, Check, ChevronLeft, ChevronRight, LoaderCircle, Plus, Save, Trash2 } from "lucide-react";
 import { attend, reviewLesson, saveBookmark, saveResume, submitQuiz, updateLesson, type ActionState } from "@/app/learning/actions";
-import type { LessonContent, VersionEvidence } from "@/lib/learning";
+import type { LessonContent, PresentationLesson, VersionEvidence } from "@/lib/learning";
+const PresentationView=lazy(()=>import("./presentation-view").then(m=>({default:m.PresentationView})));
 import type { ResumeState } from "@/lib/resume";
 import { LessonPreview, LessonText } from "./lesson-preview";
 import { MetadataFields } from "./lesson-metadata";
@@ -45,7 +46,8 @@ export function BookmarkButton({ id, initial }: { id: string; initial: boolean }
   return <div><button className="secondary-button" disabled={pending} aria-pressed={saved} onClick={() => startTransition(async () => { const result = await saveBookmark(id, !saved); setError(result.error ?? ""); if (!result.error) setSaved(!saved); })}><Bookmark size={17} fill={saved ? "currentColor" : "none"} />{pending ? "Saving..." : saved ? "Saved" : "Save lesson"}</button>{error && <p role="alert">{error}</p>}</div>;
 }
 
-type PlayerContent = Omit<LessonContent, "questions"> & { questions: { prompt: string; options: string[] }[] };
+type SafeContent<T> = T extends LessonContent ? Omit<T,"questions"> & { questions:{prompt:string;options:string[]}[] } : never;
+type PlayerContent = SafeContent<LessonContent>;
 type ProgressEvidence = VersionEvidence & { passed: boolean };
 type PlayerProps = { id: string; ownerId?: string; version: number; content: PlayerContent; saved: ResumeState | null; revision: number; resumeAvailable: boolean; evidence?: ProgressEvidence };
 
@@ -68,6 +70,7 @@ export function LessonPlayer(props: PlayerProps) {
 function PlayerSession({ id, version, content, saved, revision, resumeAvailable, evidence: loadedEvidence }: PlayerProps) {
   const initial = saved && saved.answers.length === content.questions.length && saved.slide < content.slides.length && saved.ordering.length === content.activity.steps.length && new Set(saved.ordering).size === saved.ordering.length && saved.ordering.every(index => index < saved.ordering.length) && (content.template !== "slides" || saved.stage !== "activity" && (content.questions.length > 0 || saved.stage !== "quiz")) ? saved : null;
   const [slide, setSlide] = useState(initial?.slide ?? 0);
+  const legacySlide = "format" in content ? null : content.slides[slide];
   const [stage, setStage] = useState<"slides" | "activity" | "quiz">(initial?.stage ?? "slides");
   const [order, setOrder] = useState(initial?.ordering ?? content.activity.steps.map((_, index) => index).reverse());
   const [checked, setChecked] = useState(false);
@@ -178,12 +181,12 @@ function PlayerSession({ id, version, content, saved, revision, resumeAvailable,
   return <div className="learning-player"><EvidenceSummary evidence={evidence} quizLength={quizLength} />{!resumeAvailable && <p role="alert" className="form-notice notice-error">Progress saving is unavailable. You can continue this lesson, but your place will not be saved. Please contact the site administrator.</p>}{resumeError && <p role="alert" className="form-notice notice-error">{resumeError} {resumeConflict ? <button type="button" onClick={() => location.reload()}>Reload lesson</button> : <button type="button" disabled={savingProgress} onClick={() => void flush()}>Retry saving progress</button>}</p>}
     <nav className="learning-tabs" aria-label="Lesson sections"><button aria-current={stage === "slides" ? "step" : undefined} onClick={() => setStage("slides")}>Slides</button>{content.template !== "slides" && <button aria-current={stage === "activity" ? "step" : undefined} onClick={() => setStage("activity")}>Practice</button>}{quizLength > 0 && <button disabled={pending} aria-current={stage === "quiz" ? "step" : undefined} onClick={startQuiz}>Final quiz</button>}</nav>
     {result.error && <p ref={actionError} tabIndex={-1} role="alert" className="form-notice notice-error">{result.error}</p>}
-    {stage === "slides" && <section className="slide-stage" style={{ background: content.slides[slide].style?.background, color: content.slides[slide].style?.color, textAlign: content.slides[slide].style?.align }}>
+    {stage === "slides" && <section className={"format" in content ? "presentation-player" : "slide-stage"} style={{ background: legacySlide?.style?.background, color: legacySlide?.style?.color, textAlign: legacySlide?.style?.align }}>
       <div className="slide-number" aria-hidden="true">{String(slide + 1).padStart(2, "0")}</div>
       <div><span className="eyebrow">{slide + 1} / {content.slides.length}</span>
-        <h2 ref={stageHeading} tabIndex={-1} style={{ color: content.slides[slide].style?.color, fontSize: content.slides[slide].style?.size, textAlign: content.slides[slide].style?.align }}>{content.slides[slide].title}</h2>
-        <p style={{ color: content.slides[slide].style?.color, fontSize: content.slides[slide].style ? Math.max(16, content.slides[slide].style.size - 6) : undefined, textAlign: content.slides[slide].style?.align }}><LessonText text={content.slides[slide].body} /></p>
-        {content.template !== "slides" && <blockquote><LessonText text={content.slides[slide].example} /></blockquote>}
+        <h2 ref={stageHeading} tabIndex={-1} style={{ color: legacySlide?.style?.color, fontSize: legacySlide?.style?.size, textAlign: legacySlide?.style?.align }}>{content.slides[slide].title}</h2>
+        {"format" in content ? <Suspense fallback={<p>Loading presentation…</p>}><PresentationView slide={content.slides[slide]} lessonId={id}/></Suspense> : <p style={{ color: legacySlide?.style?.color, fontSize: legacySlide?.style ? Math.max(16, legacySlide.style.size - 6) : undefined, textAlign: legacySlide?.style?.align }}><LessonText text={legacySlide?.body??""} /></p>}
+        {content.template !== "slides" && <blockquote><LessonText text={legacySlide?.example??""} /></blockquote>}
         {slide === content.slides.length - 1 && <section className="review-acknowledgement" aria-label="Optional slide review acknowledgement">
           <h3>Finished reviewing this version&apos;s slides?</h3>
           <p>Only acknowledge if you have reviewed the slides. {quizLength ? "You can continue to the final quiz without acknowledging." : "This lesson has no quiz or quiz certificate."}</p>
@@ -213,7 +216,7 @@ function PlayerSession({ id, version, content, saved, revision, resumeAvailable,
   </div>;
 }
 
-export function LessonEditor({ id, version, initial, action: saveLesson, admin }: { id: string; version: number; initial: LessonContent; action: (previous: ActionState, form: FormData) => Promise<ActionState>; admin: boolean }) {
+export function LessonEditor({ id, version, initial, action: saveLesson, admin }: { id: string; version: number; initial: Exclude<LessonContent,PresentationLesson>; action: (previous: ActionState, form: FormData) => Promise<ActionState>; admin: boolean }) {
   const [draft, setContent] = useState(initial);
   // Keep raw typing (including Enter/caret position) separate from the canonical lesson.
   const [stepsText, setStepsText] = useState(initial.activity.steps.join("\n"));

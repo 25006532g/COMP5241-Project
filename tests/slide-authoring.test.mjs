@@ -162,6 +162,7 @@ test("actual route renderers: owner-only Create history, separate blank/upload, 
     const controls = load("../src/components/learning-controls.tsx",{
       react:React,"react/jsx-runtime":jsx,"next/link":{default:({children,...props})=>React.createElement("a",props,children),__esModule:true},
       "lucide-react":{}, "@/app/learning/actions":h.actions,"./lesson-preview":{},"./lesson-metadata":{},
+      "./presentation-view":load("../src/components/presentation-view.tsx",{react:React,"react/jsx-runtime":jsx}),
     });
     const deps = {
       "react/jsx-runtime":jsx, "next/link":{default:({children,...props})=>React.createElement("a",props,children),__esModule:true},
@@ -170,6 +171,7 @@ test("actual route renderers: owner-only Create history, separate blank/upload, 
       "@/components/learner-shell":{LearnerShell:({children})=>React.createElement("main",{},children)},
       "@/components/learning-controls":{...controls,ActionForm:({children})=>React.createElement("form",{},children),LessonEditor:()=>React.createElement("p",{},"Legacy editor")},
       "@/components/create-lesson":{SlideLessonEditor:({initial})=>React.createElement("p",{},initial ? "Slide editor" : "Blank manual"),UploadLessonPage:()=>React.createElement("p",{},"Separate upload")},
+      "@/components/presentation-editor":{PresentationLessonEditor:({initial,initialLegacy})=>React.createElement("p",{},initial||initialLegacy?"Slide editor":"Blank manual")},
       "@/lib/slide-lesson":slides, "@/lib/learning":learning,"@/lib/learning-server":server,"@/app/learning/actions":h.actions,
       "@/lib/onboarding-server":{loadSetup:async()=>({code:"ok",user:h.state.user,profile:{onboarding_completed_at:"2026-11-05"}})},
       "@/components/learner-import":{LearnerImport:()=>React.createElement("p",{},"Roster management")},

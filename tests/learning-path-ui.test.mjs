@@ -26,7 +26,7 @@ function load(file, dependencies) {
 }
 const curriculum = load("lib/curriculum.ts", { zod: { z } });
 const recommendations = load("lib/recommendations.ts", { zod: { z }, "@/lib/curriculum": curriculum });
-const learning = load("lib/learning.ts", { zod: { z } });
+const learning = load("lib/learning.ts", { zod: { z },"./presentation.ts":load("lib/presentation.ts",{zod:{z}}) });
 const permissions = load("lib/permissions.ts", {});
 const id = n => `11111111-1111-4111-8111-${String(n).padStart(12, "0")}`;
 const catalog = [1, 2].map(n => ({ id: id(n), title: `Synthetic private testing ${n}`, subject: "Software testing", summary: "Synthetic only." }));

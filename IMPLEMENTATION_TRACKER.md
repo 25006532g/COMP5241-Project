@@ -2,6 +2,346 @@
 
 Last reviewed: 2026-11-05
 
+## 5 November 2026 — independent bounded presentation acceptance (QA)
+
+**Ownership/result:** coordinator owns acceptance. Independently executed **12
+distinct focused/grouped tests: 9 existing + 3 QA-added, all passing in their
+final runs**, not the full suite/build. Implementer's 391/391, lint/typecheck/build
+claims above/below remain prior implementation evidence, not QA reruns. No
+product defect reproduced; no product editing or implementer fix request needed.
+Only added `tests/presentation-acceptance.test.mjs` and updated existing README
+and tracker. No existing test assertion was weakened or existing test changed.
+
+### Safety and source preservation
+
+Read repository delivery/security/verification skills, README, recovery entry,
+nearby presentation/slide/account harnesses and actual migration privileges.
+Requested sibling skill paths were absent; used `.github/skills/` equivalents.
+Node execution used `tests/offline-run.mjs`: OS-only environment, network-denial
+preload, no environment files or actual Next environment loader. A separate
+assertion command confirmed application configuration absent and fetch, sockets
+and HTTPS calls denied. Only synthetic users/content, in-memory PGlite and
+offline Chromium; service workers blocked, unexpected routes aborted, synthetic
+document/image routes fulfilled in memory. No remote Supabase/storage/migration,
+provider/quota use, connected e2e/instructor suite, server startup, deployment,
+installation, full build/suite or commit.
+
+Initial and final SHA-256 aggregate match for **187 existing files**: sorted
+paths plus NUL plus file bytes, covering all `src/`, `supabase/`, existing `tests/`
+(excluding QA's new test), package/lock, Next/TS/ESLint/PostCSS configuration and
+`next-env.d.ts`:
+`6c89178e6ea8a564a67828eb27b701e858622707569beb93f8e4cfa71009f1c4`.
+This includes all pre-existing dirty application/migration/manifest/config files
+and historical `_ran` migrations. Initial/final Git status used installed
+`C:\Users\SOLUSER\AppData\Local\github-copilot-git-2.56.0-2\cmd\git.exe`
+because Git was not on PATH. Only the new QA test was added to the initial
+changed-path inventory; both documentation files were already dirty.
+
+### Exact commands and results (repository cwd)
+
+```powershell
+node tests/offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests/presentation-model.test.mjs tests/presentation-images.test.mjs tests/presentation-assets.test.mjs tests/presentation-storage.test.mjs tests/presentation-integration.test.mjs tests/presentation-ui.test.mjs
+node tests/offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests/presentation-acceptance.test.mjs
+node tests/offline-run.mjs node_modules/eslint/bin/eslint.js tests/presentation-acceptance.test.mjs
+node tests/offline-run.mjs --input-type=module -e "import assert from 'node:assert/strict'; import net from 'node:net'; import https from 'node:https'; assert.equal(Object.keys(process.env).filter(k=>/SUPABASE|OPENROUTER|NEXT_PUBLIC|DATABASE_URL|API_KEY/.test(k)).length,0); await assert.rejects(async()=>fetch('https://synthetic.invalid'),/network forbidden/); assert.throws(()=>net.connect(443,'synthetic.invalid'),/network forbidden/); assert.throws(()=>https.get('https://synthetic.invalid'),/network forbidden/); console.log('PASS: application configuration absent; fetch/socket/HTTPS denied');"
+& 'C:\Users\SOLUSER\AppData\Local\github-copilot-git-2.56.0-2\cmd\git.exe' --no-pager diff --check
+```
+
+| Independent gate | Actual result |
+| --- | --- |
+| Existing six-file focused matrix | 9/9 passed; 29.886s; zero failures/skips/cancellations; exit0 |
+| QA-added final three grouped tests | 3/3 passed; 43.417s; zero failures/skips/cancellations; exit0 |
+| New-test-only ESLint | exit0, no diagnostics |
+| Configuration/network assertion | exit0, configuration absent; three network APIs denied |
+| Git diff whitespace check | exit0 |
+
+**QA-only failures/corrections, not hidden product passes:** the first added-test
+run was 2/3 (40.748s). Its browser flow tried Bring to front after undo/redo had
+intentionally cleared selection; corrected the test to reselect. Intermediate
+browser-only command below was 0/1 (6.227s): stack assertion mistook the textbox's
+own `prst="rect"` for the actual shape. Replaced that selector with parsed OOXML
+`spTree` object classification and exact native shape geometry checks. No
+application change or weakened product requirement. First corrected complete run
+passed3/3 in13.080s. Final3/3 above reran every added test after also strengthening
+foreign-update denial and a well-formed stale-version save that attempts to
+remove current image references; the confirmed row remains byte-for-byte equal.
+
+```powershell
+node tests/offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern="independent mounted draft" tests/presentation-acceptance.test.mjs
+```
+
+### Actual acceptance coverage
+
+* **Boundaries/persistence:** actual create actions and SQL accept exactly 1 and
+  30 slides with 100 objects; JSON/schema/stored-author roundtrip is exact. Zero
+  or 31 slides/101 objects fail both actions and direct SQL (23514), with no
+  clipping or partial rejected writes. Presentation quiz 0/3/10 accepted, 1/2/11
+  rejected. Actual `generateLesson` with synthetic completion accepts 4/6 slides
+  with ten questions; rejects 3/7 slides and 0/3/9/11 questions. Legacy conversion
+  preserves title/body/style and does not change the stored legacy row.
+* **Mounted native editor:** actual React19/Fabric6 component, hidden-textarea
+  Chromium CJK composition, selected CJK font/size/color/bold, paragraph
+  preservation, numeric rotation/position, slide CRUD/reorder, ActiveSelection,
+  actual mouse drag and Shift+Arrow/Ctrl+Z/Y history. Image insertion/replacement
+  aspect ratio and undo, delayed upload/save interlock, rotated-edge duplication,
+  same-tick repeat-save protection, private review save and unknown-save lock
+  passed. Fullscreen denial stays usable in a dialog and restores trigger focus;
+  cleanup transport failure gives visible feedback.
+* **Actual toolbar export:** current unsaved styled Chinese text + shape +
+  embedded PNG, with no save request, yields separate native OOXML text/shape/
+  image objects, styled runs, rotation, translated positions/extents and changed
+  back-to-front order. Quiz sentinel absent. Missing asset via synthetic 404
+  cancels the real export button and causes no second/partial download. Pixel
+  sampling also checks canonical shape position on the real canvas, not source
+  strings. This is native OOXML evidence, not PowerPoint desktop fidelity.
+* **Private assets/security:** new probes load real `learning-server` access
+  helpers (not the simpler harness access stub), asset helpers, image actions,
+  lesson actions and image GET route over PGlite/in-memory blobs. Owner allowed;
+  foreign/anonymous denied; forged `user_metadata.role` denied without blob
+  access; private unsubmitted admin denied; submitted reviewer allowed;
+  immediately revoked reviewer denied; authenticated enrolled/public read
+  allowed, learner upload denied. Draft/lesson/asset substitutions denied.
+  Stale-version denial and changing to another lesson cannot detach/authorize
+  the original asset; draftless reopened image save advances version.
+* **Failure recovery/SQL:** metadata stripping/signature/dimension rejection,
+  pending/upload/ready-ack failures, active reservation retention, expired upload
+  denial, failed blob cleanup retaining deleting rows, retry cleanup, saved-image
+  expiry/discard retention and GC resurrection denial passed. Real profile
+  deletion action invokes actual owner cleanup SQL/blob helper before synthetic
+  auth deletion; failed cleanup prevents auth deletion, retry removes owner
+  blobs/rows and leaves foreign assets intact. Real auth cascade is not tested.
+  Anon/authenticated direct table read/update/delete and RPC calls get42501;
+  service-role cleanup execute grant is present. Existing storage test reapplies
+  the actual migration with a simulated Storage schema and broad permissive
+  policy: private bucket plus restrictive authenticated read/insert denial.
+  These are **local** grants/policy results, never target RLS configuration.
+* **Responsive/accessibility:** mounted320/1440 has no horizontal page overflow,
+  16:9 surfaces, wrapping controls, literal accessible outline, keyboard activation
+  and checkbox focus. Screenshots visually inspected as below. Not a complete
+  accessibility audit or a real mobile device/OS-IME qualification.
+
+### Artifacts, cleanup and explicitly open requirements
+
+Actually opened all six synthetic full-page PNGs (the last pair is the final run):
+
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-presentation-WILFoA\editor1440.png`
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-presentation-WILFoA\editor320.png`
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-independent-presentation-LoEosO\native1440.png`
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-independent-presentation-LoEosO\native320.png`
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-independent-presentation-CNgH53\native1440.png`
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-independent-presentation-CNgH53\native320.png`
+
+Screenshots remain outside Git as sanitized component evidence; PPTX inspected
+in memory, no desktop file was opened. Browsers/contexts/databases closed in
+`finally`, no cleanup error; all owned bounded commands completed. Empty temp
+directories from the two failed QA browser attempts were removed; six screenshots
+retained intentionally. No running service or persistent database was created.
+
+**Untested/external, not passes:** connected Supabase grants/RLS/action transport
+and races, actual target migration/bucket/cache state and cleanup scheduling;
+real auth/storage/account-deletion cascades; native PowerPoint desktop fonts,
+CJK wrapping/line spacing/editing fidelity. Target state remains unknown: the
+`_ran` suffix is not application evidence. No full routed Next CSS/packaging
+rerun, exhaustive keyboard command matrix, real mobile device or native OS IME
+qualification. Harness CSS strips the Tailwind import. High-fidelity PPTX import
+remains approved deferred work. No overall release certification.
+
+## 5 November 2026 — presentation recovery and finishing (implementation, not acceptance)
+
+**Scope/ownership:** recovered the substantial existing partial presentation
+implementation; no restart, reset, nested agent or unrelated feature work.
+Application/schema/tests/manifests and existing README/tracker only. Coordinator
+owns acceptance; request independent QA after this implementation handover.
+Sibling forge skills were absent; loaded repository `.github/skills/forge-delivery`
+and `forge-verification` equivalents. PowerShell/Node execution was verified.
+Git was absent from PATH; used installed
+`C:\Users\SOLUSER\AppData\Local\github-copilot-git-2.56.0-2\cmd\git.exe`
+for noninteractive status. All pre-existing dirty changes were preserved.
+
+**Recovered deliverable:** canonical versioned 960×540 JSON; 1–30 slides,
+100 objects/slide; React19/Fabric6 on-canvas rich text/IME, shapes, private raster
+images; thumbnails, collapsible panels, accessible outline/properties, transforms,
+keyboard controls, unified history, preview and native editable browser PPTX.
+Studio/upload adapters, learner/review rendering, long-slide resume, private
+save/review/version protections, image lifecycle, account export/deletion and
+bounded plain-text coaching are integrated. Standard/AI contracts remain strict.
+Legacy documents are converted locally on authoring and upgraded only by explicit
+save. Text-only PDF/DOCX/PPTX import is retained, not replaced with a layout importer.
+High-fidelity PPTX and binary PPT import are deferred, not claimed delivered.
+
+### Recovery changes and falsifiable checks
+
+1. **Compatibility before editing:** hypothesized installed packages and the
+   canonical model were executable. Offline model + real React/Fabric/Chromium IME
+   and native OOXML gate passed **2/2**. Installed Node25.2.1, React19.1.0,
+   Fabric6.7.1, PptxGenJS4.0.1, Next16.3.5; JSZip3.10.2 was already installed.
+2. Initial assets/images/storage/integration/UI matrix: **4/5**. Mounted UI timed
+   out after IME Undo→Redo. A separate actual-canvas probe showed the model had
+   redone text while the canvas still displayed the undone text. Hypothesis:
+   stale emission marker suppressed external redraw. Consuming that marker on
+   every synchronization fixed it; mounted flow passed immediately.
+3. New actual-action regression reproduced reopening an image lesson failing
+   save without a new upload-draft ID. Asset validation now accepts only
+   lesson-authorized existing assets in that case, still rejects draftless new
+   lesson reuse and retains server dimension/status/isolation checks. The
+   PGlite/action/blob-route test passed immediately after the fix.
+4. Strengthening the integration test to call **real `coachReply`**, rather than
+   a successful stub, reproduced rejection of 30 canonical text-only slides.
+   Added a separate presentation reference branch, not a relaxed standard/AI
+   lesson schema. Per-reference 24,000 serialized-character bound and per-slide
+   10,000-character body bound are enforced; images/asset refs and answer keys
+   are absent from completion input (literal image alt descriptions are text).
+   Actual adapter + all28 existing AI contract tests passed **29/29**.
+5. New rotated-edge duplication regression failed: the normal +12 offset moved
+   a corner beyond the slide. Duplication now uses the offset only if valid,
+   otherwise overlaps the original without invalidating the document.
+6. Fullscreen denial now visibly explains dialog fallback; cleanup transport
+   rejection reports an unconfirmed outcome instead of an unhandled promise.
+   Regression coverage includes both. Constraint feedback names both actual
+   prerequisite/presentation migrations. One intermediate wording broke the
+   existing actionable `apply <filename>` contract test; wording was corrected,
+   no assertion weakened; slide-authoring **3/3** passed again.
+7. Added current-unsaved-draft toolbar PPTX download verification, native rotated
+   position/stack OOXML assertions, selected-range CJK fonts/size/color across
+   paragraphs, real ActiveSelection movement, delayed upload/save lock,
+   aspect-changing replacement/undo, image-ratio and 50-entry-history bounds.
+   The initial Font exact-label selector was a test error (option text contributes
+   to its label); changed to the actual accessible combobox role. Browser **3/3**
+   then passed. Same-tick duplicate-upload/save probe observed **1 upload, 0 writes**.
+8. Declared already-installed JSZip3.10.2 directly in devDependencies and root
+   lock entry; checked agreement with installed/locked version. No install or
+   registry contact. Preserved webpack scripts, narrow browser-only PptxGenJS
+   node-scheme shim, 4.4MB action limit and TS extension support: isolated browser
+   packaging build/typecheck proves they work with the recovered dependencies.
+
+### Exact recovered file inventory (includes prior dirty presentation work)
+
+New application files:
+`src/lib/presentation.ts`, `presentation-fabric.ts`, `presentation-export.ts`,
+`presentation-images.ts`, `presentation-assets-server.ts`,
+`presentation-node-disabled.ts`;
+`src/components/presentation-editor.tsx`, `presentation-canvas.tsx`,
+`presentation-view.tsx`;
+`src/app/presentation/actions.ts`;
+`src/app/api/presentation/assets/[id]/route.ts`.
+New schema: `supabase/migrations/20261105140000_presentations.sql`.
+
+Modified integrations:
+`src/app/api/account/export/route.ts`,
+`src/app/courses/[slug]/lessons/[lesson]/page.tsx`,
+`src/app/globals.css`, `src/app/learning/actions.ts`,
+`src/app/profile/actions.ts`, `src/app/studio/page.tsx`,
+`src/components/create-lesson.tsx`, `learning-controls.tsx`, `lesson-preview.tsx`,
+`src/lib/learning.ts`, `resume.ts`, `slide-lesson.ts`, `openrouter.ts`.
+Configuration/manifests: `next.config.ts`, `tsconfig.json`, `package.json`,
+`package-lock.json`. Documentation: existing `README.md` and this tracker.
+
+New tests/harnesses under `tests/`:
+`presentation-model.test.mjs`, `presentation-compatibility.test.mjs`,
+`presentation-storage.test.mjs`, `presentation-integration.test.mjs`,
+`presentation-assets.test.mjs`, `presentation-images.test.mjs`,
+`presentation-ui.test.mjs`, `presentation-browser-harness.mjs`,
+`presentation-packaging.tsx`.
+Recovered modified tests/harnesses:
+`account.test.mjs`, `curriculum-ui.test.mjs`, `learning-path-ui.test.mjs`,
+`lesson-generation-harness.mjs`, `lesson-generation-ui.test.mjs`,
+`manual-authoring.test.mjs`, `offline-build.mjs`, `onboarding.test.mjs`,
+`resume.test.mjs`, `slide-authoring-harness.mjs`, `slide-authoring-ui.test.mjs`,
+`slide-authoring.test.mjs`.
+
+This recovery turn surgically changed only canvas synchronization, editor
+duplication/fallback/error handling, asset save validation, real coach integration
+and constraint guidance, the JSZip manifest/lock root entries, four presentation
+test files and these two documents. Other recovered changes remain intact.
+No historical `_ran` migration was edited.
+
+### Verification environment and reproducible commands
+
+All Node verification used `tests/offline-run.mjs`: OS-only child environment,
+fixed Node/Windows PATH and network denial; no `.env*`, setup/dotenv loader,
+remote services, provider/quota use, server startup, connected e2e/instructor
+suite, target migration, deployment or commit. A fresh stdin assertion probe
+confirmed absent application configuration and denied fetch/socket connections.
+Chromium contexts are offline, service workers blocked, external routes aborted;
+synthetic HTTPS document/image routes are fulfilled in memory, not by a server.
+Actual SQL/actions use local in-memory PGlite; browser action bridges and blob
+storage are synthetic. Browsers/contexts/databases close in `finally`.
+
+Commands from repository cwd:
+
+```powershell
+node tests/offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests/presentation-model.test.mjs tests/presentation-compatibility.test.mjs tests/presentation-images.test.mjs tests/presentation-assets.test.mjs tests/presentation-storage.test.mjs tests/presentation-integration.test.mjs tests/presentation-ui.test.mjs tests/slide-authoring.test.mjs
+node tests/offline-run.mjs --experimental-strip-types --test --test-concurrency=1 "tests/*.test.mjs"
+node tests/offline-run.mjs tests/offline-build.mjs --presentation-gate
+node tests/offline-run.mjs node_modules/eslint/bin/eslint.js next.config.ts src/lib/presentation.ts src/lib/presentation-fabric.ts src/lib/presentation-export.ts src/lib/presentation-images.ts src/lib/presentation-assets-server.ts src/lib/presentation-node-disabled.ts src/components/presentation-editor.tsx src/components/presentation-canvas.tsx src/components/presentation-view.tsx src/app/presentation/actions.ts "src/app/api/presentation/assets/[id]/route.ts" src/app/learning/actions.ts src/lib/openrouter.ts src/lib/learning.ts src/lib/resume.ts src/lib/slide-lesson.ts src/app/studio/page.tsx src/components/create-lesson.tsx src/components/learning-controls.tsx src/components/lesson-preview.tsx "src/app/courses/[slug]/lessons/[lesson]/page.tsx" src/app/api/account/export/route.ts src/app/profile/actions.ts tests/presentation-*.mjs tests/presentation-packaging.tsx tests/offline-build.mjs tests/account.test.mjs tests/curriculum-ui.test.mjs tests/learning-path-ui.test.mjs tests/lesson-generation-harness.mjs tests/lesson-generation-ui.test.mjs tests/manual-authoring.test.mjs tests/onboarding.test.mjs tests/resume.test.mjs tests/slide-authoring-harness.mjs tests/slide-authoring-ui.test.mjs tests/slide-authoring.test.mjs
+```
+
+Earlier broad sweep: **388/388**, 552.81s; it began before the final test additions,
+so is not a frozen-final-suite claim. Latest focused matrix: presentation **10/10**,
+plus slide-authoring **3/3** after the guidance correction; mounted browser
+position/stack/replacement additions **3/3**, 18.65s. Final scoped ESLint exited0.
+Isolated typegen→`tsc --noEmit --incremental false`→`next build --webpack` with
+the temporary presentation packaging route passed twice; snapshots/junctions
+were removed in `finally`.
+
+**Final frozen results (fresh runs after all source/test changes):**
+
+| Gate | Actual result |
+| --- | --- |
+| Full serial offline suite, exact command above | **391/391 passed**,430.22s;0 failures,skips,cancellations;exit0 |
+| Scoped ESLint, exact target list above | exit0,no diagnostics |
+| Isolated typegen | pass |
+| Isolated `tsc --noEmit --incremental false` | exit0 |
+| Isolated `next build --webpack` with presentation packaging route | exit0;compiled43s;25 pages generated |
+| OS-only configuration/network assertion probe | pass;configuration absent,fetch/socket calls denied |
+| Installed Git `--no-pager diff --check` | exit0 |
+| Final owned build snapshot/junction cleanup | confirmed removed:`C:\Users\SOLUSER\AppData\Local\Temp\forge-slide-build-8FjIFv` |
+
+Final full-suite coverage includes all10 presentation tests, existing legacy/
+standard/AI contracts, account export/deletion and broader learner/studio
+regressions. Only documentation changed after this frozen run. No cleanup error
+was reported; bounded verification sessions completed, no service was started.
+
+Screenshots actually opened at320/1440:
+`C:\Users\SOLUSER\AppData\Local\Temp\forge-presentation-TSSIZR\editor320.png`
+and `editor1440.png`. Literal outline, keyboard focus and no horizontal overflow
+were checked. Screenshots are retained outside Git; they are synthetic component
+evidence, not a full routed/browser or accessibility acceptance.
+
+### Target setup, retention and acceptance gates
+
+No target-applied state was read or changed. Workspace has
+`20261105093000_slide_authoring_ran.sql`, not the former non-`_ran` filename in
+older entries; the suffix proves **nothing** about a connected target.
+After separate authorization, verify/back up target and prerequisites, apply the
+additive `20261105140000_presentations.sql`, verify the **private**
+`forge-presentation-images` bucket (PNG only,4MiB) and restrictive browser-denial
+policies, service-role functions/tables, refresh PostgREST schema cache and deploy
+matching app code. On systems without Storage schema the migration deliberately
+skips bucket/policy provisioning. PGlite tests cover both paths and reapplication,
+not actual Supabase Storage configuration or real Next action transport/races.
+
+Images: signed PNG/JPEG safe decode,8,000px/side,16MP,4MiB input/output,
+sanitized metadata-free PNG; no original name/URL/SVG.64MiB/draft,10 active
+drafts/account,7-day staged retention. Undo references remain until explicit
+discard/expiry; saved references are excluded from GC. GC claims block racing
+resurrection and failed blob removal retains retry metadata. No scheduled
+remote cleanup job was created: owner/admin cleanup UI exists; operator scheduling
+is a target setup requirement. Account export includes canonical JSON/asset
+metadata but excludes binaries (download owned PPTX for embedded images);
+password-confirmed deletion stops before auth deletion when blob cleanup fails.
+
+**Independent QA requested:** verify real connected author/upload/read permissions,
+repeat/conflict/uncertain saves and review/approval/learner round trip; target
+bucket grants/cache and orphan cleanup; desktop PowerPoint editability, fonts,
+CJK wrapping/line spacing, native positions/rotation/stack and image rendering.
+Fonts are not embedded; no pixel-perfect/native-desktop fidelity acceptance is
+claimed. Rollback needs coordinated JSON/resume/data/application/storage
+restoration or conversion; do not blindly restore legacy checks or delete the
+bucket over new saved references. No rollback was executed or certified.
+No known local functional blocker remains from the reproduced defects; external
+gates and deferred high-fidelity/binary import remain openly unverified.
+
 ## 5 November 2026 — independent bounded lesson-authoring acceptance (LOCAL)
 
 **Owner/scope:** independent QA, no delegation. Read the current implementation

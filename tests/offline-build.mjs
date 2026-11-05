@@ -1,4 +1,4 @@
-import { cp, mkdtemp, symlink, unlink, rm, readdir } from "node:fs/promises";
+import { cp, mkdtemp, symlink, unlink, rm, readdir, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -11,6 +11,10 @@ try {
     await cp(join(root,name),join(snapshot,name),{recursive:true,filter:path=>!/^\.env/i.test(path.split(/[/\\]/).at(-1))});
   }
   if ((await readdir(snapshot)).some(name=>name.startsWith(".env"))) throw new Error("Snapshot is not environment-file-free");
+  if(process.argv.includes("--presentation-gate")){
+    await mkdir(join(snapshot,"src/app/presentation-packaging"),{recursive:true});
+    await cp(join(root,"tests/presentation-packaging.tsx"),join(snapshot,"src/app/presentation-packaging/page.tsx"));
+  }
   await symlink(join(root,"node_modules"),join(snapshot,"node_modules"),"junction"); linked = true;
   const os = {};
   for (const key of ["SystemRoot","WINDIR","TEMP","TMP","USERPROFILE","LOCALAPPDATA","APPDATA","COMSPEC","PATHEXT"]) if(process.env[key]) os[key]=process.env[key];

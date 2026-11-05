@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { FAMILIES } from "./curriculum";
-import { slideLessonSchema, slideStyleSchema, type LessonContent } from "./learning";
+import { isPresentation, presentationLessonSchema, slideLessonSchema, slideStyleSchema, type LessonContent } from "./learning";
+import { presentationAuthorSchema, type PresentationAuthor } from "./presentation";
 
 export const defaultSlideStyle = { color: "#17201d", size: 24 as const, align: "left" as const, background: "#fffefa" };
 
@@ -88,6 +89,7 @@ export function toStoredLesson(draft: AuthorLesson): LessonContent {
 }
 
 export function fromStoredLesson(content: LessonContent): AuthorLesson {
+  if(isPresentation(content))throw new Error("Open this lesson in the presentation editor.");
   const metadata = content.metadata && typeof content.metadata === "object" ? content.metadata as Record<string, unknown> : {};
   const audience = metadata.audience === "instructors" || metadata.audience === "both" ? metadata.audience : "learners";
   const difficulty = metadata.difficulty === "new" || metadata.difficulty === "intermediate" || metadata.difficulty === "advanced" ? metadata.difficulty : "foundation";
@@ -102,4 +104,21 @@ export function fromStoredLesson(content: LessonContent): AuthorLesson {
     })),
     quiz: content.template === "slides" ? content.questions.map(({ prompt, options, correct }) => ({ prompt, options, correct })) : [],
   };
+}
+
+export function toPresentationLesson(draft:PresentationAuthor) {
+  const parsed=presentationAuthorSchema.parse(draft);
+  return presentationLessonSchema.parse({
+    ...parsed.document,template:"slides",format:"presentation",title:parsed.title,
+    subject:FAMILIES["soft-product"],summary:"A presentation created by the lesson author.",
+    metadata:{version:1,audience:parsed.audience,difficulty:parsed.difficulty,topic:"soft-product",outcomes:["Review the author's presentation."],prerequisites:[]},
+    activity:{prompt:"Review the slides in order.",steps:["Read the presentation.","Review the readable outline.","Reflect on what you learned."]},
+    questions:parsed.quiz.map(q=>({...q,explanation:"Review the matching slide."})),
+  });
+}
+export function fromPresentationLesson(content:LessonContent):PresentationAuthor {
+  if(!isPresentation(content))throw new Error("Legacy content requires the legacy adapter.");
+  const metadata=content.metadata as Record<string,unknown>|undefined;
+  return presentationAuthorSchema.parse({title:content.title,audience:metadata?.audience??"learners",difficulty:metadata?.difficulty??"foundation",
+    document:{schemaVersion:1,width:960,height:540,slides:content.slides},quiz:content.questions.map(({prompt,options,correct})=>({prompt,options,correct}))});
 }

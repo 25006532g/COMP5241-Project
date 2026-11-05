@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
 import { LearnerShell } from "@/components/learner-shell";
 import { ActionForm, LessonEditor } from "@/components/learning-controls";
-import { SlideLessonEditor, UploadLessonPage } from "@/components/create-lesson";
-import { fromStoredLesson } from "@/lib/slide-lesson";
+import { UploadLessonPage } from "@/components/create-lesson";
+import {PresentationLessonEditor} from "@/components/presentation-editor";
+import { fromPresentationLesson,fromStoredLesson } from "@/lib/slide-lesson";
 import { approveSlideLesson, requestReview, updateLesson } from "@/app/learning/actions";
-import { collectRows } from "@/lib/learning";
+import { isPresentation,collectRows } from "@/lib/learning";
 import { isInstructor, accessibleLesson, database, displayName, isAdmin, requireUser, canEditLesson, canPublishLessons } from "@/lib/learning-server";
 
 export const runtime = "nodejs";
@@ -51,11 +52,12 @@ export default async function Studio({ searchParams }: { searchParams: Promise<{
       {!lesson && upload === "1" && <UploadLessonPage key={`${user.id}-upload`} />}
       {lesson ? <>
         {lesson.content.template === "slides"
-          ? <SlideLessonEditor key={`${user.id}-${lesson.id}`} lessonId={lesson.id} version={lesson.version} initial={fromStoredLesson(lesson.content)} />
+          ? <PresentationLessonEditor key={`${user.id}-${lesson.id}`} lessonId={lesson.id} version={lesson.version}
+            {...(isPresentation(lesson.content)?{initial:fromPresentationLesson(lesson.content)}:{initialLegacy:fromStoredLesson(lesson.content)})} />
           : <LessonEditor key={`${lesson.id}-${lesson.version}`} id={lesson.id} version={lesson.version} initial={lesson.content} action={updateLesson} admin={canPublishLessons(user)} />}
         {lesson.content.template === "slides" && isAdmin(user) && lesson.review_requested && <section className="learning-section"><h2>Administrator approval</h2><p>Review the saved slides and answer key above. Save changes and request review again before approving the new version.</p><ActionForm action={approveSlideLesson} label="Approve saved version for publication"><input type="hidden" name="lessonId" value={lesson.id} /><input type="hidden" name="version" value={lesson.version} /></ActionForm></section>}
         {lesson.content.template !== "slides" && lesson.owner_id === user.id && lesson.visibility === "private" && !canPublishLessons(user) && <section className="learning-section"><h2>Publication review</h2><p>Submitting grants administrators access to this draft and permission to publish it for all learners.</p><ActionForm action={requestReview} label="Submit for publication review"><input type="hidden" name="lessonId" value={lesson.id} /></ActionForm></section>}
-      </> : manual === "1" ? <SlideLessonEditor key={`${user.id}-blank`} /> : null}
+      </> : manual === "1" ? <PresentationLessonEditor key={`${user.id}-blank`} /> : null}
     </div>
   </LearnerShell>;
 }

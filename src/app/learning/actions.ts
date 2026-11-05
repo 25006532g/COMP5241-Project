@@ -5,11 +5,12 @@ import { z } from "zod";
 import { accessibleLesson, currentUser, database, enrolledLesson, isAdmin, canEditLesson, canPublishLessons } from "@/lib/learning-server";
 import { coachReply } from "@/lib/openrouter";
 import { startGeneration } from "@/lib/lesson-generation-server";
-import { gradeQuiz, lessonSchema, versionEvidence, type VersionEvidence } from "@/lib/learning";
-import { resumeSchema, type ResumeState } from "@/lib/resume";
+import { coachSlides, isPresentation, gradeQuiz, lessonSchema, versionEvidence, type VersionEvidence } from "@/lib/learning";
+import { presentationResumeSchema,resumeSchema, type ResumeState } from "@/lib/resume";
 import { requireAiAccess } from "@/lib/ai-eligibility-server";
 import { FAMILIES, readMetadata, selectionFromForm, subjectSelection, validateCurriculumContent } from "@/lib/curriculum";
-import { authorLessonSchema, toStoredLesson } from "@/lib/slide-lesson";
+import { authorLessonSchema, toStoredLesson,toPresentationLesson } from "@/lib/slide-lesson";
+import type {PresentationAuthor} from "@/lib/presentation";
 
 export type ActionState = { error?: string; progress?: VersionEvidence; saveUncertain?: true; generationId?: string; success?: string; lessonId?: string; version?: number; attemptId?: string; score?: number; feedback?: { prompt: string; correct: string; explanation: string }[] };
 
@@ -22,12 +23,24 @@ function failure(error: unknown): ActionState {
 function uncertainCreation(): ActionState {
   return { saveUncertain: true, error: "Save outcome is unknown. This lesson may already exist. Your input is retained here. Check your owned lessons before creating another copy." };
 }
+async function readPresentationDraft(form:FormData,raw:unknown,user:Awaited<ReturnType<typeof currentUser>>,lesson?:Awaited<ReturnType<typeof accessibleLesson>>):Promise<PresentationAuthor|null>{
+  if(form.get("template")!=="slides"||form.get("format")!=="presentation")return null;
+  const [{presentationAuthorSchema},{validatePresentationAssets}]=await Promise.all([import("@/lib/presentation"),import("@/lib/presentation-assets-server")]);
+  const draft=presentationAuthorSchema.parse(raw);
+  await validatePresentationAssets(draft.document,form.get("draftId"),user,lesson??undefined);
+  return draft;
+}
+async function bindImageDraft(form:FormData,userId:string,lessonId:string) {
+  if(!form.get("draftId"))return;
+  const {bindPresentationDraft}=await import("@/lib/presentation-assets-server");
+  await bindPresentationDraft(form.get("draftId"),userId,lessonId);
+}
 
 function creationAcknowledgement(data: { id?: unknown } | null, error: { code?: string } | null): ActionState | null {
   // Only definite statement/schema rejections prove that retrying cannot duplicate a row.
   // Response-shaping and transport failures can happen after commit.
   if (error) {
-    if (!data && error.code === "23514") return { error: "The database rejected the lesson CHECK constraint (23514). Ask the administrator to apply 20261105093000_slide_authoring_ran.sql and refresh the Supabase schema cache, then retry. Nothing was saved; your input is retained." };
+    if (!data && error.code === "23514") return { error: "The database rejected the lesson CHECK constraint (23514). Ask the administrator to check and apply 20261105093000_slide_authoring_ran.sql and, for presentations, 20261105140000_presentations_ran.sql as needed, then refresh the Supabase schema cache. Nothing was saved; your input is retained." };
     if (!data && ["42P01", "42703", "PGRST204", "PGRST205"].includes(error.code ?? "")) {
       return { error: "Lesson storage is unavailable. Check the learning database migrations and schema cache, then try again. Nothing was saved." };
     }
@@ -139,7 +152,11 @@ export async function updateLesson(_previous: ActionState, form: FormData): Prom
     if (!lesson || !canEditLesson(user, lesson)) throw new Error("You cannot edit this lesson.");
     const slideDraft = form.get("template") === "slides";
     if (lesson.content.template === "slides" && !slideDraft) throw new Error("Use the slide editor to save this lesson.");
-    const content = validateCurriculumContent(slideDraft ? toStoredLesson(authorLessonSchema.parse(JSON.parse(String(form.get("content"))))) : lessonSchema.parse(JSON.parse(String(form.get("content")))));
+    const native=slideDraft && form.get("format")==="presentation";
+    if(isPresentation(lesson.content)&&!native)throw new Error("Use the presentation editor to save this lesson.");
+    const raw=JSON.parse(String(form.get("content")));
+    const draft=await readPresentationDraft(form,raw,user,lesson);
+    const content = validateCurriculumContent(draft?toPresentationLesson(draft):slideDraft ? toStoredLesson(authorLessonSchema.parse(raw)) : lessonSchema.parse(raw));
     const expectedVersion = z.coerce.number().int().positive().parse(form.get("version"));
     const publish = !slideDraft && form.get("publish") === "on";
     const requestPublication = slideDraft && form.get("intent") === "publish";
@@ -155,6 +172,7 @@ export async function updateLesson(_previous: ActionState, form: FormData): Prom
     writeAttempted = false;
     if (!data) throw new Error("This lesson changed in another session. Reload before editing.");
     if (data.id !== id) return uncertainCreation();
+    if(draft) {writeAttempted=true;await bindImageDraft(form,user.id,id);writeAttempted=false;}
     revalidatePath("/catalog"); revalidatePath(`/courses/${id}`); revalidatePath("/admin"); revalidatePath("/studio");
     return { success: requestPublication ? "Saved and sent to an administrator for approval." : publish ? "Reviewed lesson published." : "Lesson saved.", lessonId: id, version: expectedVersion + 1 };
   } catch (error) { return writeAttempted ? uncertainCreation() : failure(error); }
@@ -224,7 +242,9 @@ export async function createManualLesson(_previous: ActionState, form: FormData)
   try {
     const user = await currentUser();
     const slideDraft = form.get("template") === "slides";
-    const content = validateCurriculumContent(slideDraft ? toStoredLesson(authorLessonSchema.parse(JSON.parse(String(form.get("content"))))) : lessonSchema.parse(JSON.parse(String(form.get("content")))));
+    const raw=JSON.parse(String(form.get("content")));
+    const draft=await readPresentationDraft(form,raw,user);
+    const content = validateCurriculumContent(draft?toPresentationLesson(draft):slideDraft ? toStoredLesson(authorLessonSchema.parse(raw)) : lessonSchema.parse(raw));
     const publish = !slideDraft && form.get("publish") === "on";
     const requestPublication = slideDraft && form.get("intent") === "publish";
     if (publish && !canPublishLessons(user)) throw new Error("Instructor access required to publish.");
@@ -233,6 +253,7 @@ export async function createManualLesson(_previous: ActionState, form: FormData)
     const { data, error } = await client.from("forge_lessons").insert({ owner_id: user.id, title: content.title, subject: content.subject, summary: content.summary, content, visibility: publish ? "public" : "private", review_requested: requestPublication, published_at: publish ? new Date().toISOString() : null }).select("id").single();
     const rejected = creationAcknowledgement(data, error);
     if (rejected) return rejected;
+    if(draft)await bindImageDraft(form,user.id,data!.id);
     revalidatePath("/catalog"); revalidatePath("/dashboard"); revalidatePath("/studio"); revalidatePath("/admin");
     return { success: requestPublication ? "Saved and sent to an administrator for approval." : slideDraft ? "Lesson saved." : "Lesson created.", lessonId: data!.id, version: 1 };
   } catch (error) {
@@ -252,10 +273,13 @@ export async function askCoach(id: string, history: unknown): Promise<{ reply?: 
     const topic = readMetadata(lesson.subject, lesson.content.metadata)?.topic ?? selection.topic;
     const messages = z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().trim().min(1).max(1200) })).min(1).max(12).parse(history);
     if (messages.at(-1)?.role !== "user") throw new Error("Enter a question for your coach.");
+    const referenceSlides=coachSlides(lesson.content);
+    if(JSON.stringify(referenceSlides).length>24000)throw new Error("This presentation is too large for text coaching. Use its readable outline instead.");
     const { data: allowed, error } = await database().rpc("forge_claim_coach_request", { request_user: user.id });
     if (error) throw new Error("Coach service unavailable. Check the database migration.");
     if (!allowed) throw new Error("Your shared 15/day text-AI quota (coach and interviews) has been reached. Lessons and quizzes remain available.");
-    const reply = await coachReply({ subject: FAMILIES[selection.family], topic, slides: lesson.content.slides }, messages);
+    const reply = await coachReply({ subject: FAMILIES[selection.family], topic, slides: referenceSlides,
+      ...(isPresentation(lesson.content)?{format:"presentation"}:{}) }, messages);
     await requireAiAccess(await currentUser());
     return { reply };
   } catch (error) { return failure(error); }
@@ -267,12 +291,12 @@ export async function saveResume(id: string, version: number, revision: number, 
     const lesson = await enrolledLesson(z.uuid().parse(id), user);
     if (lesson.version !== version) return { error: "This lesson changed. Reload to start at the updated version.", conflict: true };
     z.number().int().min(0).parse(revision);
-    const progress = resumeSchema.parse(state);
+    const progress = (isPresentation(lesson.content)?presentationResumeSchema:resumeSchema).parse(state);
     if (progress.answers.length !== lesson.content.questions.length ||
       lesson.content.template === "slides" && (progress.stage === "activity" || !lesson.content.questions.length && progress.stage === "quiz")) throw new Error("Invalid lesson stage or answer count.");
     if (progress.slide >= lesson.content.slides.length || progress.ordering.length !== lesson.content.activity.steps.length || new Set(progress.ordering).size !== progress.ordering.length || progress.ordering.some(index => index >= progress.ordering.length)) throw new Error("Invalid lesson position.");
     const client = database();
-    const values = { lesson_version: version, lesson_template: lesson.content.template ?? "standard", question_count: lesson.content.questions.length, stage: progress.stage, slide: progress.slide, ordering: progress.ordering, answers: progress.answers, updated_at: new Date().toISOString() };
+    const values = { lesson_version: version, lesson_template: lesson.content.template ?? "standard",lesson_format:isPresentation(lesson.content)?"presentation":"legacy",slide_count:lesson.content.slides.length, question_count: lesson.content.questions.length, stage: progress.stage, slide: progress.slide, ordering: progress.ordering, answers: progress.answers, updated_at: new Date().toISOString() };
     if (revision === 0) {
       const { data, error } = await client.from("forge_resume").insert({ user_id: user.id, lesson_id: id, ...values }).select("revision").single();
       if (error?.code === "23505") return { error: "Progress changed on another device. Reload before continuing.", conflict: true };

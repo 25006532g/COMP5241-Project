@@ -7,6 +7,7 @@ import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { chromium } from "@playwright/test";
 import { harness, draft, transpile } from "./slide-authoring-harness.mjs";
+import {sources as presentationSources} from "./presentation-browser-harness.mjs";
 
 const require = createRequire(import.meta.url);
 const sources = Object.fromEntries([
@@ -29,6 +30,8 @@ function bundle(path) {
 }
 sources.zod = `module.exports = require(${JSON.stringify(bundle(require.resolve("zod")))});`;
 sources["@/lib/curriculum"] = sources["./curriculum"];
+Object.assign(sources,presentationSources);
+sources["./presentation.ts"]=sources["./presentation"]=sources["@/lib/presentation"];
 const css = readFileSync(new URL("../src/app/globals.css",import.meta.url),"utf8").replace('@import "tailwindcss";',"");
 
 test("mounted author/upload/player: same-tick guard, versions, uncertainty, styles and stale-file recovery (offline Chromium)", async context => {
@@ -59,11 +62,17 @@ test("mounted author/upload/player: same-tick guard, versions, uncertainty, styl
       });
       await page.exposeFunction("studioUser",() => h.state.user);
       await page.exposeFunction("studioLesson",(id,user,review) => h.server.accessibleLesson(id,user,review));
+      await page.route("https://forge-slide.test/",route=>route.fulfill({contentType:"text/html",body:"<div></div>"}));
+      await page.goto("https://forge-slide.test/");
       await page.setContent(`<style>${css}</style><main class="portal-page studio-editor"><div id="root"></div></main>`);
+      await page.addScriptTag({path:join(process.cwd(),"node_modules/fabric/dist/index.min.js")});
       await page.evaluate(async ({sources,component,props}) => {
         const modules = {};
         function load(name) {
           if (name === "@/lib/learning") return load("./learning");
+          if (name === "fabric") return fabric;
+          if (name === "./presentation-editor"||name === "@/components/presentation-editor") return load("editor");
+          if (name === "@/app/presentation/actions") return new Proxy({},{get:()=>async()=>({error:"Image actions are covered by presentation-assets.test.mjs"})});
           if (name === "@/components/create-lesson") return load("author");
           if (name === "@/components/learning-controls") return load("player");
           if (name === "@/components/learner-shell") return {LearnerShell:({children})=>load("react").createElement("main",{},children)};
@@ -223,32 +232,33 @@ test("mounted author/upload/player: same-tick guard, versions, uncertainty, styl
     const file = {name:"synthetic.pptx",mimeType:"application/octet-stream",buffer:Buffer.from("synthetic transport fixture")};
     await upload.getByLabel("File",{exact:true}).setInputFiles(file);
     await upload.getByRole("button",{name:"Preview slides",exact:true}).click();
-    await upload.getByRole("textbox",{name:"Body",exact:true}).waitFor();
+    await upload.getByRole("textbox",{name:"Lesson title",exact:true}).waitFor();
     await upload.getByLabel("File",{exact:true}).setInputFiles({...file,name:"changed.pptx"});
-    assert.equal(await upload.getByRole("textbox",{name:"Body",exact:true}).count(),0);
+    assert.equal(await upload.getByRole("textbox",{name:"Lesson title",exact:true}).count(),0);
     uploadFailure = true;
     await upload.getByRole("button",{name:"Preview slides",exact:true}).click();
     await upload.getByRole("alert").waitFor();
-    assert.equal(await upload.getByRole("textbox",{name:"Body",exact:true}).count(),0);
+    assert.equal(await upload.getByRole("textbox",{name:"Lesson title",exact:true}).count(),0);
     uploadFailure = false;
     await upload.getByRole("button",{name:"Preview slides",exact:true}).click();
-    await upload.getByRole("textbox",{name:"Body",exact:true}).waitFor();
+    await upload.getByRole("textbox",{name:"Lesson title",exact:true}).waitFor();
     assert.equal(uploads,3);
     await upload.setViewportSize({width:320,height:900});
     assert.ok(await upload.evaluate(()=>document.documentElement.scrollWidth <= innerWidth));
     await upload.screenshot({path:join(artifacts,"upload320.png"),fullPage:true});
     await upload.getByLabel("Import the PowerPoint as slides",{exact:true}).check();
-    assert.equal(await upload.getByRole("textbox",{name:"Body",exact:true}).count(),0);
+    assert.equal(await upload.getByRole("textbox",{name:"Lesson title",exact:true}).count(),0);
     await upload.getByRole("button",{name:"Preview slides",exact:true}).focus();
     await upload.keyboard.press("Enter");
-    await upload.getByRole("textbox",{name:"Body",exact:true}).waitFor();
+    await upload.getByRole("textbox",{name:"Lesson title",exact:true}).waitFor();
     await upload.getByLabel("Lesson title",{exact:true}).fill("Uploaded accepted lesson");
     await upload.getByRole("button",{name:"Save and publish",exact:true}).focus();
     await upload.keyboard.press("Enter");
     await upload.getByRole("status").filter({hasText:"Version 1"}).waitFor();
     const imported = (await h.db.query("select * from forge_lessons where title='Uploaded accepted lesson'")).rows[0];
     assert.equal(imported.visibility,"private"); assert.equal(imported.review_requested,true);
-    assert.deepEqual(imported.content.slides.map(s=>s.body),draft().slides.map(s=>s.body));
+    assert.equal(imported.content.format,"presentation");
+    assert.deepEqual(imported.content.slides.map(s=>s.elements[1].paragraphs.map(p=>p.runs.map(r=>r.text).join("")).join("\n")),draft().slides.map(s=>s.body));
     await upload.screenshot({path:join(artifacts,"upload-review320.png"),fullPage:true});
     assert.deepEqual(requests,[]); assert.deepEqual(errors,[]);
     context.diagnostic(`Offline Chromium ${browser.version()}; screenshots ${artifacts}`);

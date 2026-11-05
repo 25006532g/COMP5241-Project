@@ -16,6 +16,7 @@ for (const [key, path] of [
   ["component", "../src/components/lesson-generation.tsx"], ["./lesson-metadata", "../src/components/lesson-metadata.tsx"],
   ["@/lib/lesson-generation", "../src/lib/lesson-generation.ts"], ["@/lib/curriculum", "../src/lib/curriculum.ts"],
   ["./curriculum", "../src/lib/curriculum.ts"], ["./learning", "../src/lib/learning.ts"],
+  ["./presentation.ts","../src/lib/presentation.ts"],
 ]) sources[key] = transpile(path);
 function bundleCjs(path) {
   if (sources[path]) return path;

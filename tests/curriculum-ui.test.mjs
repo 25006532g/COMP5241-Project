@@ -8,6 +8,7 @@ import { tmpdir } from "node:os";
 import { chromium } from "@playwright/test";
 import ts from "typescript";
 import { harness } from "./lesson-generation-harness.mjs";
+import {sources as presentationSources} from "./presentation-browser-harness.mjs";
 
 // Offline mounts of the real async route functions and client components. No app server,
 // environment files, connected database, provider, mail, or image requests are permitted.
@@ -23,7 +24,8 @@ function add(name, file) {
     compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
   }).outputText;
 }
-for (const name of ["learning", "curriculum", "slide-lesson", "demo-lessons", "recommendations", "resume", "lesson-generation"]) add(`@/lib/${name}`, `lib/${name}.ts`);
+for (const name of ["learning", "curriculum", "slide-lesson", "demo-lessons", "recommendations", "resume", "lesson-generation","presentation"]) add(`@/lib/${name}`, `lib/${name}.ts`);
+sources["./presentation.ts"]=sources["./presentation"]=sources["@/lib/presentation"];
 sources["./learning"] = sources["@/lib/learning"];
 sources["./curriculum"] = sources["@/lib/curriculum"];
 for (const name of ["create-lesson", "learning-controls", "lesson-metadata", "lesson-preview", "catalog-search", "learning-path", "lesson-generation"]) {
@@ -31,6 +33,8 @@ for (const name of ["create-lesson", "learning-controls", "lesson-metadata", "le
   sources[`./${name}`] = sources[`@/components/${name}`];
 }
 for (const [name, file] of Object.entries({ catalog: "catalog/page.tsx", overview: "courses/[slug]/page.tsx", player: "courses/[slug]/lessons/[lesson]/page.tsx", paths: "paths/page.tsx", studio: "studio/page.tsx", teaching: "teaching/page.tsx" })) add(name, `app/${file}`);
+Object.assign(sources,presentationSources);
+sources["@/components/presentation-editor"]=sources["./presentation-editor"]=sources.editor;
 function bundleCjs(path) {
   if (sources[path]) return path;
   sources[path] = "loading";
@@ -74,6 +78,7 @@ test("real curriculum routes and components: combined filters, legacy, player, p
     return h.actions[name](...args);
   });
   await page.goto("https://forge-curriculum.synthetic/");
+  await page.addScriptTag({path:join(process.cwd(),"node_modules/fabric/dist/index.min.js")});
   await page.evaluate(async sources => {
     const modules = {};
     let renderRoute, rows, currentRoute = 0;
@@ -106,6 +111,7 @@ test("real curriculum routes and components: combined filters, legacy, player, p
       return { error: "Synthetic unavailable service. Input is retained." };
     } });
     function load(name) {
+      if(name==="fabric")return fabric;
       if (name.endsWith(".module.css")) return { __esModule: true, default: new Proxy({}, { get: (_, key) => key }) };
       if (name === "@/lib/learning-server") return server;
       if (name === "@/lib/supabase/server") return auth;

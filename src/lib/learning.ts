@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { presentationSchema } from "./presentation.ts";
 
 export const slideStyleSchema = z.object({
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
@@ -39,8 +40,25 @@ export const slideLessonSchema = lessonSchema.extend({
   questions: z.array(lessonSchema.shape.questions.element).max(10).refine(
     questions => questions.length === 0 || questions.length >= 3, "Use no quiz or 3 to 10 questions."),
 });
-export const storedLessonSchema = z.union([slideLessonSchema, lessonSchema]);
+export const presentationLessonSchema = lessonSchema.omit({slides:true}).extend({
+  ...presentationSchema.shape, template:z.literal("slides"),format:z.literal("presentation"),
+  questions:slideLessonSchema.shape.questions,
+}).superRefine((v,ctx)=>{
+  const parsed=presentationSchema.safeParse({schemaVersion:v.schemaVersion,width:v.width,height:v.height,slides:v.slides});
+  if(!parsed.success)for(const issue of parsed.error.issues)ctx.addIssue({...issue,path:issue.path});
+});
+export const storedLessonSchema = z.union([presentationLessonSchema, slideLessonSchema, lessonSchema]);
 export type LessonContent = z.infer<typeof storedLessonSchema>;
+export type PresentationLesson = z.infer<typeof presentationLessonSchema>;
+export function isPresentation(value:unknown):value is PresentationLesson {
+  return Boolean(value && typeof value==="object" && "format" in value && value.format==="presentation");
+}
+// Bounded literal teaching text only: no image bytes, asset URLs or answer keys.
+export function coachSlides(content:LessonContent) {
+  if(!isPresentation(content))return content.slides;
+  return content.slides.map(s=>({title:s.title,body:s.elements.flatMap(e=>e.type==="text"?
+    [e.paragraphs.map(p=>p.runs.map(r=>r.text).join("")).join("\n")]:e.type==="image"?[`Image: ${e.alt}`]:[]).join("\n")}));
+}
 
 export function attemptOutcome(attempt: { score: number; questions?: unknown; answers?: unknown }) {
   const total = Array.isArray(attempt.questions) ? attempt.questions.length : 10;

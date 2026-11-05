@@ -16,9 +16,10 @@ export function load(path, dependencies) {
     name => { assert.ok(Object.hasOwn(dependencies, name), `Unexpected import ${name}`); return dependencies[name]; }, mod, mod.exports);
   return mod.exports;
 }
-export const learning = load("../src/lib/learning.ts", { zod: { z } });
+const presentation=load("../src/lib/presentation.ts",{zod:{z}});
+export const learning = load("../src/lib/learning.ts", { zod: { z },"./presentation.ts":presentation });
 export const curriculum = load("../src/lib/curriculum.ts", { zod: { z } });
-const slides = load("../src/lib/slide-lesson.ts", { zod: { z }, "./learning": learning, "./curriculum": curriculum });
+const slides = load("../src/lib/slide-lesson.ts", { zod: { z }, "./learning": learning, "./curriculum": curriculum,"./presentation":presentation });
 export const generation = load("../src/lib/lesson-generation.ts", { zod: { z }, "./learning": learning, "./curriculum": curriculum });
 const eligibility = load("../src/lib/eligibility.ts", {});
 const permissions = load("../src/lib/permissions.ts", {});

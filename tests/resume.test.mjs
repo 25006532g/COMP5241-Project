@@ -34,7 +34,7 @@ test("mounted LessonPlayer progress scheduling (offline)", async context => {
     ["react-dom/client", "react-dom", "react-dom-client.development.js"],
     ["scheduler", "scheduler", "scheduler.development.js"],
   ].map(([name, packageName, file]) => [name, readFileSync(join(dirname(require.resolve(`${packageName}/package.json`)), "cjs", file), "utf8")]));
-  for (const [name, file] of [["player", "learning-controls"], ["./lesson-preview", "lesson-preview"]]) {
+  for (const [name, file] of [["player", "learning-controls"], ["./lesson-preview", "lesson-preview"],["./presentation-view","presentation-view"]]) {
     sources[name] = ts.transpileModule(readFileSync(new URL(`../src/components/${file}.tsx`, import.meta.url), "utf8"), {
       compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
     }).outputText;

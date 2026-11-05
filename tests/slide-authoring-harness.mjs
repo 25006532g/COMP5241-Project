@@ -13,9 +13,10 @@ export function load(path, deps) {
   }, mod, mod.exports);
   return mod.exports;
 }
-export const learning = load("../src/lib/learning.ts", { zod: { z } });
+export const presentation = load("../src/lib/presentation.ts", { zod: { z } });
+export const learning = load("../src/lib/learning.ts", { zod: { z }, "./presentation.ts":presentation });
 export const curriculum = load("../src/lib/curriculum.ts", { zod: { z } });
-export const slides = load("../src/lib/slide-lesson.ts", { zod: { z }, "./learning": learning, "./curriculum": curriculum });
+export const slides = load("../src/lib/slide-lesson.ts", { zod: { z }, "./learning": learning, "./curriculum": curriculum,"./presentation":presentation });
 export const resume = load("../src/lib/resume.ts", { zod: { z } });
 const permissions = load("../src/lib/permissions.ts", {});
 export const draft = (count = 0) => ({
@@ -43,9 +44,11 @@ export async function harness() {
     const q = {
       select(c) { columns = c; return q; },
       eq(k, v) { filters.push(`${k}=$${args.push(v)}`); return q; },
+      in(k,v){filters.push(`${k}=any($${args.push(v)}::uuid[])`);return q;},
       order() { return q; }, range() { return q; },
       insert(v) { kind = "insert"; values = v; return q; },
       update(v) { kind = "update"; values = v; return q; },
+      delete(){kind="delete";return q;},
       maybeSingle() { single = true; return q; }, single() { single = true; return q; },
       then(resolve, reject) {
         const encode = v => Array.isArray(v) && table !== "forge_resume" || v && typeof v === "object" && !Array.isArray(v) ? JSON.stringify(v) : v;
@@ -53,7 +56,8 @@ export async function harness() {
         const vs = pairs.map(([,v]) => `$${args.push(encode(v))}`);
         const where = filters.length ? ` where ${filters.join(" and ")}` : "";
         const sql = kind === "insert" ? `insert into ${table}(${pairs.map(([k]) => k).join(",")}) values(${vs.join(",")}) returning ${columns}` :
-          kind === "update" ? `update ${table} set ${pairs.map(([k],i) => `${k}=${vs[i]}`).join(",")}${where} returning ${columns}` : `select ${columns} from ${table}${where}`;
+          kind === "update" ? `update ${table} set ${pairs.map(([k],i) => `${k}=${vs[i]}`).join(",")}${where} returning ${columns}` :
+          kind === "delete"?`delete from ${table}${where} returning ${columns}`:`select ${columns} from ${table}${where}`;
         if (kind) state.writes.push({ table, kind, values: structuredClone(values) });
         return db.query(sql, args).then(result => {
           if (state.lose && kind) { state.lose = false; throw new Error("PRIVATE_ACK"); }
@@ -83,6 +87,10 @@ export async function harness() {
     "@/lib/learning-server": server, "@/lib/learning": learning, "@/lib/curriculum": curriculum,
     "@/lib/slide-lesson": slides, "@/lib/resume": resume, "@/lib/openrouter": {},
     "@/lib/lesson-generation-server": {}, "@/lib/ai-eligibility-server": {},
+    "@/lib/presentation":presentation,
+    "@/lib/presentation-assets-server":load("../src/lib/presentation-assets-server.ts",{
+      "server-only":{},zod:{z},"./learning-server":server,"./presentation":presentation,"./learning":learning,
+    }),
   });
   const form = (value = draft(), extra = {}) => {
     const f = new FormData();

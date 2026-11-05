@@ -6,6 +6,112 @@ For a presentation-ready overview of features, design choices and prototype scre
 
 Track remaining work, blockers, acceptance criteria and verification updates in [IMPLEMENTATION_TRACKER.md](IMPLEMENTATION_TRACKER.md).
 
+## 5 November 2026 — independent bounded presentation acceptance
+
+Independent local reruns: **9/9 existing focused tests + 3/3 new grouped
+acceptance tests passed**; new-test ESLint, scrubbed-environment/network-denial
+probe and Git diff whitespace check passed. The implementer's 391-test suite and
+build were **not rerun** or adopted as independent results. Coordinator retains
+acceptance ownership; this is not release certification.
+
+Verified with actual model/actions/helpers, in-memory PGlite and mounted offline
+React/Fabric: exact 1/30/31-slide and 100/101-object boundaries without clipping,
+schema roundtrip/legacy preservation, strict standard/AI contracts, private image
+authorization/tampering, staging failure/retry/retention, linked-image reopening,
+version protection and account blob-cleanup ordering. Browser checks include CJK
+composition/selected-text formatting, multiselect, real mouse drag and keyboard
+undo/redo, image replacement undo, uncertain-save locks, fullscreen-denial feedback,
+320/1440 layout/focus and current-unsaved-draft toolbar PPTX text/shape/image OOXML.
+Missing images cancel export instead of producing a partial download.
+
+Only `tests/presentation-acceptance.test.mjs` and these existing documentation
+files were added/edited by this QA turn. All 187 pre-existing product, migration,
+configuration and test files fingerprint identically. Six synthetic screenshots
+were actually opened; exact commands, artifacts, QA-only test corrections and
+cleanup are recorded in the tracker. **No product defect reproduced.**
+
+Connected Supabase permissions/action transport, target migration/bucket/cache
+configuration and native PowerPoint desktop fidelity remain **open external
+gates**. Target-applied state is unknown; `_ran` filenames prove nothing.
+High-fidelity PPTX import remains deferred. No remote operation, server startup,
+provider request, dependency installation, full suite/build or commit was run.
+
+## 5 November 2026 — recovered presentation editor (local implementation)
+
+The existing partial implementation was recovered and continued, **not restarted**.
+This entry supersedes the older text-only manual-editor description below.
+Independent QA and coordinator acceptance are still required.
+
+**Use:** `/studio?manual=1` opens a blank 16:9 presentation. Create, rename,
+duplicate, reorder or delete slides; add and edit text directly on the canvas
+(including Chinese IME), format selected characters, insert shapes and PNG/JPEG
+images, and use the outline/properties for keyboard selection, movement, sizing,
+rotation, alignment and stacking. Panels collapse on narrow screens. Undo/redo
+covers slide, object and typing changes. Preview remains usable as a dialog when
+fullscreen is denied. **Export editable PPTX** exports the current unsaved author
+draft as native text/shapes and embedded images, excluding quizzes/answer keys.
+Review font availability, line wrapping and line spacing in desktop PowerPoint;
+fonts are not embedded and pixel-identical rendering is not promised.
+
+**Persistence and limits:** app-owned schemaVersion 1 JSON, 960×540, 1–30 slides,
+100 objects per slide, 50 undo entries, 10,000 characters per textbox and a
+1.5-million-character serialized document limit. Rotated corners must fit the
+slide; images preserve their source aspect ratio. Text overflow blocks save/export
+with feedback. Slide quizzes remain optional (0 or 3–10 questions); standard/AI
+lessons remain 4–6 slides with exactly 10 questions. Save stays private for every
+role; Save and publish requests separate administrator review. Confirmed versions,
+conflict rejection, repeated-save protection and uncertain-save locks remain.
+Learner/review rendering, resume through slide index29, text-only bounded coaching,
+account export and deletion are integrated. Legacy lessons remain readable;
+editing converts them in memory only, with no persisted upgrade until explicit save.
+
+**Private images:** authenticated server actions decode signed PNG/JPEG files,
+check dimensions (8,000px/side, 16MP, 4MiB input/output), strip metadata and store
+sanitized PNGs. No SVG, remote URL insertion or public bucket access. Staging is
+limited to 64MiB/draft and 10 active drafts/account. Unreferenced images remain
+undo-safe for seven days; discard/expired cleanup is explicit and retryable.
+Saved references survive expiry/discard. An operator must schedule abandoned-draft
+cleanup; no remote job was installed. Account JSON export includes canonical
+content and private asset metadata, **not image binaries**; export owned lessons
+as PPTX to download their embedded images. Deletion stops if blob cleanup is
+unconfirmed.
+
+**Target setup is NOT performed or verified.** The workspace prerequisite is
+`supabase/migrations/20261105093000_slide_authoring_ran.sql` (older entries below
+use its former non-`_ran` name). A filename does not establish target application.
+After separate target authorization, back up and verify prerequisites, apply
+`supabase/migrations/20261105140000_presentations.sql`, verify private
+`forge-presentation-images` bucket/policies and service-role-only access, refresh
+PostgREST's schema cache, and deploy matching code. The migration provisions the
+bucket only where the Storage schema exists; local PGlite tests simulate it.
+Do not roll back to legacy constraints/code over v1 documents, long resumes or
+asset references without a coordinated data/application/storage restoration plan.
+No target migration, remote Storage creation, deployment, provider call or
+connected test suite was authorized or run.
+
+**Local verification:** final frozen offline suite **391/391 passed** (430.22s,
+zero failures/skips/cancellations), scoped ESLint passed, and isolated
+typegen/TypeScript/webpack packaging build passed. Fabric6.7.1 / React19.1 / PptxGenJS4.0.1 compatibility is
+proved in real offline Chromium, including hidden-textarea Chinese IME and native
+OOXML. Final verification details, exact inventory, failure/recovery evidence and
+commands are in the tracker. Reproduce without environment files or services:
+
+```powershell
+node tests/offline-run.mjs --experimental-strip-types --test --test-concurrency=1 "tests/*.test.mjs"
+node tests/offline-run.mjs tests/offline-build.mjs --presentation-gate
+```
+
+The second command uses an allowlisted temporary snapshot, disables the actual
+environment loader/network, runs typegen + TypeScript + webpack build, includes a
+temporary browser packaging route, and removes its snapshot/junction in `finally`.
+Webpack dev/build scripts and the narrowly scoped PptxGenJS `node:fs/https` shim
+are intentional for this browser dependency; no dependency reinstall was needed.
+JSZip is now a direct test dependency rather than an accidental transitive import.
+High-fidelity PPTX/binary PPT import remains deferred: the existing bounded
+PDF/DOCX/PPTX **text-only** adapter retains its extraction limits, not source layout.
+Native desktop PowerPoint fidelity and connected Supabase/action-transport
+acceptance remain external gates, not local passes.
+
 ## 5 November 2026 — independent bounded LOCAL acceptance
 
 **29 distinct focused tests passed across the bounded runs**, not a new full-suite

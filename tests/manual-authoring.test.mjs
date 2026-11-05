@@ -34,6 +34,7 @@ sources["./lesson-preview"] = transpile("../src/components/lesson-preview.tsx");
 sources["./lesson-metadata"] = transpile("../src/components/lesson-metadata.tsx");
 sources["@/lib/curriculum"] = transpile("../src/lib/curriculum.ts");
 sources["@/lib/learning"] = transpile("../src/lib/learning.ts");
+sources["./presentation.ts"]=transpile("../src/lib/presentation.ts");
 sources["@/lib/demo-lessons"] = transpile("../src/lib/demo-lessons.ts");
 sources["@/lib/permissions"] = transpile("../src/lib/permissions.ts");
 sources.studio = transpile("../src/app/studio/page.tsx");
@@ -163,6 +164,7 @@ test("mounted real studio: manual creation, same-ID editing and retained uncerta
     function load(name) {
       if (name === "@/components/learning-controls") return load("editor");
       if (name === "@/components/create-lesson") return { SlideLessonEditor() { throw new Error("Slide authoring is covered by slide-authoring-ui.test.mjs"); } };
+      if (name === "@/components/presentation-editor") return {PresentationLessonEditor(){throw new Error("Native presentation authoring is covered by presentation-ui.test.mjs");}};
       if (name === "@/lib/slide-lesson") return {};
       if (name === "@/components/lesson-metadata") return load("./lesson-metadata");
       if (name === "@/components/lesson-generation") return { LessonGeneration: () => load("react").createElement("p", {}, "Saved generation remains available (not exercised here).") };

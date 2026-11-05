@@ -8,6 +8,7 @@ import ts from "typescript";
 const require = createRequire(import.meta.url);
 const sourcePaths = {
   "@/lib/learning": "src/lib/learning.ts",
+  "./presentation.ts":"src/lib/presentation.ts",
   "@/lib/diagnostic": "src/lib/diagnostic.ts", "@/lib/onboarding": "src/lib/onboarding.ts",
   "@/lib/onboarding-server": "src/lib/onboarding-server.ts",
   onboarding: "src/app/onboarding/actions.ts", diagnostic: "src/app/diagnostic/actions.ts",

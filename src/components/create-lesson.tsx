@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { lazy,Suspense,useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { extractLessonUpload } from "@/app/teaching/actions";
 import { createManualLesson, updateLesson, type ActionState } from "@/app/learning/actions";
 import { authorLessonSchema, emptyAuthorLesson, type AuthorLesson } from "@/lib/slide-lesson";
+const PresentationLessonEditor=lazy(()=>import("./presentation-editor").then(m=>({default:m.PresentationLessonEditor})));
 
 export function UploadLessonPage() {
   const [mode, setMode] = useState<"text" | "powerpoint">("text");
@@ -61,7 +62,7 @@ export function UploadLessonPage() {
       <button className="primary-button" type="submit" disabled={busy || saveLocked}>{busy ? "Reading file..." : "Preview slides"}</button>
     </form>
     {error && <p role="alert" className="form-notice notice-error">{error}</p>}
-    {draft && <SlideLessonEditor key={generation} initial={draft} onSaveLock={value => { locked.current = value; setSaveLocked(value); }} />}
+    {draft && <Suspense fallback={<p>Loading presentation editor…</p>}><PresentationLessonEditor key={generation} initialLegacy={draft} onSaveLock={value => { locked.current = value; setSaveLocked(value); }} /></Suspense>}
   </section>;
 }
 

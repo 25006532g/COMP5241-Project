@@ -29,6 +29,7 @@ const tables = [
   ["forge_interviews", "owner_id", "id"],
   ["forge_lesson_generations", "owner_id", "id"],
   ["forge_reflections", "owner_id", "id"],
+  ["forge_presentation_drafts","owner_id","id"],["forge_presentation_assets","owner_id","id"],
 ];
 
 function ownerRows(table, count = 1, owner = user.id) {
@@ -113,7 +114,8 @@ test("export GET returns every table and >1000 rows in stable owner-scoped pages
   assert.equal(response.headers.get("content-disposition"), "attachment; filename=forge-learning-data.json");
   assert.match(response.headers.get("content-type"), /^application\/json\b/);
   const body = await response.json();
-  assert.deepEqual(Object.keys(body).sort(), ["account", "exportedAt", "records"]);
+  assert.deepEqual(Object.keys(body).sort(), ["account", "exportedAt","presentationAssets", "records"]);
+  assert.match(body.presentationAssets,/binaries are excluded/);
   assert.ok(Date.parse(body.exportedAt) >= before && Date.parse(body.exportedAt) <= Date.now());
   assert.deepEqual(body.account, { email: user.email, createdAt: user.created_at, metadata: user.user_metadata });
   assert.deepEqual(body.records, expected);
@@ -291,6 +293,7 @@ const deletionStages = ["createClient", "getUser", "signInWithPassword", "adminC
 
 async function loadDeletion(overrides = {}) {
   const calls = [];
+  const assetCleanups=[];
   const writes = [];
   const chunks = [0, 1, 2].map(index => ({ name: `synthetic-session.${index}`, value: "", options: { maxAge: 0, httpOnly: true } }));
   function authClient(cookies) {
@@ -315,6 +318,10 @@ async function loadDeletion(overrides = {}) {
   const actions = await loadAccountModule("../src/app/profile/actions.ts", {
     "next/navigation": { redirect(location) { throw Object.assign(new Error("Synthetic redirect"), { location }); } },
     zod: { z }, sharp: {}, "next/cache": {}, "@/lib/public-config": {}, "@/lib/eligibility": {},
+    "@/lib/presentation-assets-server":{async cleanupPresentationAssets(id,all){
+      assert.equal(calls.at(-1)[0],"adminClient");assert.equal(id,user.id);assert.equal(all,true);
+      assetCleanups.push(id);if(overrides.assetCleanupFailure)throw new Error("PRIVATE cleanup failure");
+    }},
     "@/lib/supabase/server": { async createClient(options) {
       calls.push(["createClient", JSON.parse(JSON.stringify(options ?? {}))]);
       if (overrides.createClientFailure) throw new Error("Private auth configuration detail");
@@ -329,7 +336,7 @@ async function loadDeletion(overrides = {}) {
       } } } };
     } },
   }, overrides.env ?? { NEXT_PUBLIC_SUPABASE_URL: "https://example.test", SUPABASE_SERVICE_ROLE_KEY: "synthetic-service-key" });
-  return { deleteAccount: actions.deleteAccount, calls, writes, chunks };
+  return { deleteAccount: actions.deleteAccount, calls, writes, chunks,assetCleanups };
 }
 
 function deletionForm() {
@@ -355,6 +362,11 @@ function assertDeletionStages(fixture, count) {
   assert.deepEqual(fixture.calls.map(([method]) => method), deletionStages.slice(0, count));
   if (count) assert.deepEqual(fixture.calls[0], ["createClient", { requireCookieWrites: true }]);
 }
+test("deletion stops before auth deletion when private presentation blob cleanup is unconfirmed",async()=>{
+  const fixture=await loadDeletion({assetCleanupFailure:true});
+  await deletionRedirect(fixture,"/profile/delete",deletionMessages.uncertain);
+  assertDeletionStages(fixture,4);assert.deepEqual(fixture.assetCleanups,[user.id]);
+});
 
 for (const failCookieAt of [1, 2]) {
   test(`deletion actual adapter cleanup chunk ${failCookieAt} failure acknowledges one confirmed delete`, async () => {
