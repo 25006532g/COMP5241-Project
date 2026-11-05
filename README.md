@@ -6,6 +6,28 @@ For a presentation-ready overview of features, design choices and prototype scre
 
 Track remaining work, blockers, acceptance criteria and verification updates in [IMPLEMENTATION_TRACKER.md](IMPLEMENTATION_TRACKER.md).
 
+## 5 November 2026 — remaining CI fractional resize: exact UI publication readiness
+
+The original narrow test passed locally, but holding React's real scheduler
+callback reproduced the exact CI assertion **24 !== 26.9628**. Fabric and the
+captured run were already **26.9628**, with scale **1**, while the input showed
+`24`. This demonstrates a publication/read race, not incorrect scale baking.
+
+Only the font test and evidence docs changed. Exact-value Playwright assertions
+now synchronize coupled selection/resize/history UI boundaries; independent
+canonical checks retain full font precision. A deterministic scheduler-gated
+regression distinguishes attachment from publication. Prior pristine-draft and
+responsive repairs, invalid/Mixed, Tab/spinner, geometry/history and repeated-save
+assertions remain.
+
+Final offline font/UI pair: **17/17, exit 0**. Complete npm-test-equivalent glob:
+**413 passed / 2 failed, exit 1** (one out-of-scope 320px manual-authoring
+“Lesson created.” timeout plus its parent). Scoped test ESLint/whitespace passed.
+No production changes or full-suite retry. See newest tracker entry for commands,
+REDs and cleanup. **Independent Ubuntu/Node 24 QA requested**: Windows/Node
+25.2.1 and a controlled matching schedule do not certify the unobserved Linux CI
+schedule or release readiness.
+
 ## 5 November 2026 — remaining CI blur failure: responsive test synchronization
 
 The earlier pristine-draft repair was **incomplete as a CI resolution**: Ubuntu

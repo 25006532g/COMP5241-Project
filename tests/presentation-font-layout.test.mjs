@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import {mkdtemp} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
-import {chromium} from "@playwright/test";
+import {chromium,expect} from "@playwright/test";
 import JSZip from "jszip";
 import {harness,presentation as model} from "./slide-authoring-harness.mjs";
-import {mountPresentation} from "./presentation-browser-harness.mjs";
+import {mountPresentation,sources} from "./presentation-browser-harness.mjs";
 
 function draft(text="Editable 中文 text",patch={}){
   const value=model.blankPresentation();value.title="Font layout regression";
@@ -26,10 +26,14 @@ async function fixture(run){
   try{await run(page);assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);}
   finally{await context.close();await browser.close();}
 }
-async function select(page){
+async function select(page,size=24){
   await page.waitForFunction(()=>editCanvas.getObjects().length===1);
   await page.evaluate(()=>editCanvas.setActiveObject(editCanvas.getObjects()[0]));
-  await page.getByLabel("Font size",{exact:true}).waitFor();
+  await fontSizePublished(page,size);
+}
+async function fontSizePublished(page,size){
+  // Fabric publication and this field's draft effect are separate React work.
+  await expect(page.getByLabel("Font size",{exact:true})).toHaveValue(size===null?"":String(size));
 }
 async function applySize(page,value){
   const input=page.getByLabel("Font size",{exact:true});
@@ -80,7 +84,7 @@ test("font field accepts real sequential typing and saves/reloads actual Fabric 
     assert.match(await page.locator(".presentation-save-state").innerText(),/All changes saved/);
     assert.equal(await input.inputValue(),"13");
     await page.screenshot({path:join(artifacts,"after.png"),fullPage:true});
-    await mountPresentation(page,{initial:{...stored,document:{...stored.document,slides:rows[0].content.slides}}});await select(page);
+    await mountPresentation(page,{initial:{...stored,document:{...stored.document,slides:rows[0].content.slides}}});await select(page,13);
     assert.equal(await input.inputValue(),"13");
     assert.equal(await page.evaluate(()=>editCanvas.getActiveObject().fontSize),13);
   });}finally{await h.db.close();}
@@ -114,7 +118,7 @@ test("noninitial character range reports mixed styles, retains CJK/newlines, and
       {runs:[{...model.defaultRun,text:"Next",size:16,underline:true}]},
     ];
     await page.exposeFunction("persist",async(name,entries)=>{writes.push(entries);return {lessonId:crypto.randomUUID(),version:writes.length,success:"Saved."};});
-    await mountPresentation(page,{initial});await select(page);
+    await mountPresentation(page,{initial});await select(page,null);
     const input=page.getByLabel("Font size",{exact:true});
     assert.equal(await input.inputValue(),"","whole mixed textbox must not show the first character size");
     assert.equal(await input.getAttribute("placeholder"),"Mixed");
@@ -124,7 +128,8 @@ test("noninitial character range reports mixed styles, retains CJK/newlines, and
       const t=editCanvas.getActiveObject();t.enterEditing();t.selectionStart=5;t.selectionEnd=7;
       editCanvas.fire("text:selection:changed",{target:t});
     });
-    await page.waitForFunction(()=>document.querySelector('input[placeholder="Mixed"]')===null);
+    await fontSizePublished(page,18);
+    assert.equal(await input.getAttribute("placeholder"),null);
     assert.equal(await input.inputValue(),"18");
     await applySize(page,48);
     assert.equal(await input.evaluate(el=>document.activeElement===el),true);
@@ -141,13 +146,19 @@ test("noninitial character range reports mixed styles, retains CJK/newlines, and
     assert.equal(actual.text.paragraphs[1].runs[0].size,20);
     assert.equal(actual.text.paragraphs[2].runs[0].underline,true);
     assert.equal(model.textOf(actual.text),"Lead 中文 tail\n\nNext");
+    await expect(page.getByLabel("Height",{exact:true})).toHaveValue(String(Math.round(actual.height*100)/100));
     const grown=Number(await page.getByLabel("Height",{exact:true}).inputValue());
     assert.ok(grown>before&&grown>=actual.height);
     await page.getByRole("button",{name:"Undo",exact:true}).click();
-    await select(page);
+    await expect.poll(()=>page.evaluate(()=>editCanvas.getObjects()[0]?.styles[0][5].fontSize)).toBe(18);
+    await select(page,null);
+    await expect(page.getByLabel("Height",{exact:true})).toHaveValue(String(before));
     assert.equal(Number(await page.getByLabel("Height",{exact:true}).inputValue()),before);
     assert.equal(await page.evaluate(()=>editCanvas.getObjects()[0].styles[0][5].fontSize),18);
-    await page.getByRole("button",{name:"Redo",exact:true}).click();await select(page);
+    await page.getByRole("button",{name:"Redo",exact:true}).click();
+    await expect.poll(()=>page.evaluate(()=>editCanvas.getObjects()[0]?.styles[0][5].fontSize)).toBe(48);
+    await select(page,null);
+    await expect(page.getByLabel("Height",{exact:true})).toHaveValue(String(grown));
     assert.equal(Number(await page.getByLabel("Height",{exact:true}).inputValue()),grown);
     assert.equal(await page.evaluate(()=>editCanvas.getObjects()[0].styles[0][5].fontSize),48);
     await page.getByRole("button",{name:"Save",exact:true}).click();
@@ -302,10 +313,18 @@ test("mounted fractional drag resize bakes font scale once and saves fitting geo
     await page.exposeFunction("persist",async(name,entries)=>{writes.push(entries);return {lessonId:crypto.randomUUID(),version:writes.length,success:"Saved."};});
     await mountPresentation(page,{initial:draft("Wrapped 中文 text and words",{w:260.995,h:100})});await select(page);
     await page.getByText("Position & size",{exact:true}).click();
-    await page.evaluate(()=>{
+    const canonical=await page.evaluate(()=>{
       const t=editCanvas.getActiveObject();t.set({left:61.125,top:71.336,scaleX:1.12345,scaleY:1.12345});
       t.setCoords();editCanvas.fire("object:modified",{target:t});
+      return {size:t.fontSize,scaleX:t.scaleX,scaleY:t.scaleY,width:t.width,height:t.height};
     });
+    // Independent synchronous oracle: waiting for the UI cannot mask a failed
+    // scale bake (or baking it twice).
+    assert.equal(canonical.size,24*1.12345);
+    assert.equal(canonical.scaleX,1);assert.equal(canonical.scaleY,1);
+    await fontSizePublished(page,24*1.12345);
+    await expect(page.getByLabel("Width",{exact:true})).toHaveValue(String(canonical.width));
+    await expect(page.getByLabel("Height",{exact:true})).toHaveValue(String(Math.round(canonical.height*100)/100));
     const resized={
       width:Number(await page.getByLabel("Width",{exact:true}).inputValue()),
       height:Number(await page.getByLabel("Height",{exact:true}).inputValue()),
@@ -315,11 +334,19 @@ test("mounted fractional drag resize bakes font scale once and saves fitting geo
     assert.equal(await page.evaluate(()=>editCanvas.getActiveObject().scaleY),1);
     await applySize(page,48);
     assert.equal(await page.evaluate(()=>editCanvas.getActiveObject().fontSize),48,"font after resize must not be scaled again");
+    const canonicalHeight=await page.evaluate(()=>Math.round(editCanvas.getActiveObject().height*100)/100);
+    await expect(page.getByLabel("Height",{exact:true})).toHaveValue(String(canonicalHeight));
     const grown=Number(await page.getByLabel("Height",{exact:true}).inputValue());
-    await page.getByRole("button",{name:"Undo",exact:true}).click();await select(page);
+    await page.getByRole("button",{name:"Undo",exact:true}).click();
+    await expect.poll(()=>page.evaluate(()=>editCanvas.getObjects()[0]?.fontSize)).toBe(24*1.12345);
+    await select(page,resized.size);
+    await expect(page.getByLabel("Height",{exact:true})).toHaveValue(String(resized.height));
     assert.equal(Number(await page.getByLabel("Height",{exact:true}).inputValue()),resized.height);
     assert.equal(Number(await page.getByLabel("Font size",{exact:true}).inputValue()),resized.size);
-    await page.getByRole("button",{name:"Redo",exact:true}).click();await select(page);
+    await page.getByRole("button",{name:"Redo",exact:true}).click();
+    await expect.poll(()=>page.evaluate(()=>editCanvas.getObjects()[0]?.fontSize)).toBe(48);
+    await select(page,48);
+    await expect(page.getByLabel("Height",{exact:true})).toHaveValue(String(grown));
     assert.equal(Number(await page.getByLabel("Height",{exact:true}).inputValue()),grown);
     for(let version=1;version<=2;version++){
       await page.getByRole("button",{name:"Save",exact:true}).click();
@@ -332,6 +359,49 @@ test("mounted fractional drag resize bakes font scale once and saves fitting geo
     assert.equal(stored.x,61.13);assert.equal(stored.y,71.34);
     assert.equal(stored.paragraphs[0].runs[0].size,48);
     assert.ok(stored.h>=await page.evaluate(()=>editCanvas.getObjects()[0].calcTextHeight()));
+  });
+});
+
+test("font inspector waits for React publication after canonical fractional resize",async()=>{
+  await fixture(async page=>{
+    // Hold the real scheduler host callback, not Fabric scaling or input events.
+    // Only this mount receives the in-memory gate; no harness/product hook.
+    const scheduler=sources.scheduler,host="function performWorkUntilDeadline() {";
+    assert.ok(scheduler.includes(host));
+    sources.scheduler=scheduler.replace(host,`${host}
+      if(window.holdReactPublication){
+        window.releaseReactPublication=()=>{window.holdReactPublication=false;delete window.releaseReactPublication;performWorkUntilDeadline();};
+        return;
+      }`);
+    try{await mountPresentation(page,{initial:draft("Wrapped 中文 text and words",{w:260.995,h:100})});}
+    finally{sources.scheduler=scheduler;}
+    await select(page);
+    const canonical=await page.evaluate(()=>{
+      window.holdReactPublication=true;
+      const t=editCanvas.getActiveObject();t.set({left:61.125,top:71.336,scaleX:1.12345,scaleY:1.12345});
+      t.setCoords();editCanvas.fire("object:modified",{target:t});
+      return {size:t.fontSize,scaleX:t.scaleX,scaleY:t.scaleY};
+    });
+    assert.deepEqual(canonical,{size:24*1.12345,scaleX:1,scaleY:1});
+    await page.waitForFunction(()=>typeof window.releaseReactPublication==="function");
+    const input=page.getByLabel("Font size",{exact:true});
+    assert.equal(await input.inputValue(),"24","canonical resize can precede the font draft's publication");
+    let ready=false;
+    const publication=fontSizePublished(page,24*1.12345).then(()=>{ready=true;});
+    try{
+      // Complete the same attachment query as the old helper. Attachment is
+      // already observable, but the publication callback is still withheld.
+      await input.waitFor();
+      assert.equal(await input.inputValue(),"24");
+      assert.equal(ready,false,"an attached stale font field is not publication readiness");
+      await page.evaluate(()=>window.releaseReactPublication());
+      await publication;
+      assert.equal(await input.inputValue(),String(24*1.12345));
+      assert.equal(await page.evaluate(()=>editCanvas.getActiveObject().fontSize),24*1.12345,"publication must not scale again");
+    }finally{
+      await page.evaluate(()=>window.releaseReactPublication?.());
+      await publication;
+    }
   });
 });
 
@@ -488,7 +558,7 @@ test("mobile properties waits for the responsive callback before font focus and 
       {...model.defaultRun,text:"中文",size:120},
       {...model.defaultRun,text:" tail",size:24},
     ]}];
-    await mountPresentation(page,{initial});await select(page);
+    await mountPresentation(page,{initial});await select(page,null);
     await page.setViewportSize({width:320,height:900});
     await page.waitForFunction(()=>typeof window.deliverResponsive==="function");
     let ready=false;
@@ -532,7 +602,7 @@ for(const action of ["Tab","Save"])test(`untouched focused font draft cannot ove
       {...model.defaultRun,text:"中文",size:120,font:"Courier New"},
       {...model.defaultRun,text:" tail",size:24},
     ]}];
-    await mountPresentation(page,{initial});await select(page);
+    await mountPresentation(page,{initial});await select(page,null);
     await page.evaluate(()=>{
       const t=editCanvas.getActiveObject();t.enterEditing();t.selectionStart=0;t.selectionEnd=4;
       editCanvas.fire("text:selection:changed",{target:t});
@@ -590,7 +660,7 @@ test("temporary validation locks retain range-only correction, notice focus and 
         {...model.defaultRun,text:"中文",font:"Courier New",bold:true,underline:true},
         {...model.defaultRun,text:" tail",font:"Times New Roman",italic:true},
       ]}];
-      await mountPresentation(page,{initial});await select(page);
+      await mountPresentation(page,{initial});await select(page,model.defaultRun.size);
       await page.evaluate(()=>{
         const t=editCanvas.getActiveObject();t.enterEditing();t.selectionStart=5;t.selectionEnd=7;
         editCanvas.fire("text:selection:changed",{target:t});

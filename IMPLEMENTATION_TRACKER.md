@@ -2,6 +2,106 @@
 
 Last reviewed: 2026-11-05
 
+## 5 November 2026 — new fractional-resize CI failure: bounded publication repair
+
+**Owner: implementer; coordinator owns traceability/acceptance. Independent Ubuntu/Node 24 QA requested.**
+Initial Git status/owned diffs were clean; retained pristine-draft product and
+responsive matchMedia test repairs are preserved. Only
+`tests/presentation-font-layout.test.mjs`, README and this tracker changed.
+Loaded repository `.github/skills/forge-{delivery,verification}/SKILL.md`
+because the requested sibling files are absent. Git was absent from PATH
+(initial command exit 1, baseline did not run there); used existing GitHub
+Desktop Git without setup. No environment files were read.
+
+### Evidence and change
+
+Inspected the complete test, FontSizeInput's `[value]` draft effect, synchronous
+canvas capture/commit, redraw/history, harness and repository web-first assertion
+conventions before editing. Hypothesis: the input snapshot precedes React
+publication even though Fabric has already baked the exact fractional size.
+Chosen check: unchanged narrow baseline, then an in-memory controlled schedule
+on the original test, not a production scale change or repeated blind runs.
+
+The baseline passed on Windows. The first MessageChannel-only diagnostic did
+not hold the active scheduler transport and also passed; its same-stack trace
+already showed canonical/DOM divergence. Holding the **actual scheduler host
+callback** then failed the unchanged original line-314 assertion exactly:
+`24 !== 26.9628`. Immediately after capture, Fabric font **26.9628**, captured
+run **26.9628**, scaleY **1**, visible input **"24"**. This proves an admissible
+publication/read race matching the failure, not the uncontrolled Ubuntu order
+or which render/effect phase Linux delayed. FontSizeInput's own effect adds a
+publication hop; delaying root work is sufficient to reproduce the symptom.
+
+* `fontSizePublished` uses bounded Playwright `toHaveValue` for the **exact**
+  expected string (or empty Mixed), replacing attachment-only readiness.
+  Selection callers identify restored sizes, Mixed or the fixture's default
+  run size. No font rounding/tolerance, sleeps, action retries or forced events.
+* Resize immediately asserts canonical font `24*1.12345` and both scales `1`,
+  independently of UI readiness. Width/height publication is checked against
+  canonical geometry using the existing two-decimal geometry convention.
+  Coupled noninitial range/font-effect and Undo/Redo paths wait for exact
+  canonical history state and exact published height/font before snapshots.
+* New regression gates only the real scheduler callback in this mount's
+  in-memory module source, restoring the shared source in `finally`. It proves
+  canonical `26.9628`/scales `1` with visible `24`, completes an attachment
+  query, and checks that publication readiness is still pending. Explicit
+  callback release publishes the exact value without scaling again.
+  Its initial single-round-trip probe passed with the old helper and therefore
+  was insufficient; the completed-attachment barrier made it RED before repair.
+* Original invalid drafts/Mixed, untouched-focused regressions, responsive gate,
+  120-before-Tab/8-after-Tab, native spinner, history/geometry, exact saved
+  coordinates, font 48 and full two-save payload equality remain. No production,
+  harness, configuration, dependency, schema, action, CSS or migration edits.
+
+### Commands and actual outcomes
+
+All Node invocations used the existing OS-only/network-denying runner. Let
+`N = node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1`.
+No test skips/cancellations in these runs.
+
+| Command/scope | Result |
+| --- | --- |
+| `N --test-name-pattern="mounted fractional" tests\presentation-font-layout.test.mjs` (unchanged) | 1/1, exit 0; 3420.9691ms |
+| Two transient stdin diagnostics: `node tests\offline-run.mjs --experimental-strip-types --test-name-pattern="mounted fractional" --input-type=module -` | MessageChannel probe 1/1, exit 0; real host gate 0/1, exit 1, exact original 24/26.9628 RED |
+| `N --test-name-pattern="font inspector waits" tests\presentation-font-layout.test.mjs` before repair | Initial inadequate probe 1/1, exit 0; attachment barrier 0/1, exit 1 (“an attached stale font field is not publication readiness”) |
+| `N --test-name-pattern="mounted fractional\|font inspector waits\|noninitial character\|font field accepts\|mobile properties waits\|untouched focused" tests\presentation-font-layout.test.mjs` | Immediate GREEN 7/7, exit 0; 17996.9512ms |
+| `N tests\presentation-font-layout.test.mjs tests\presentation-ui.test.mjs` (first group) | 16 passed / 1 failed, exit 1; new helper assumed 24 for a fixture explicitly using defaultRun size 28 |
+| `N --test-name-pattern="temporary validation locks" tests\presentation-font-layout.test.mjs` after caller expectation correction | 1/1, exit 0; 4738.5763ms |
+| `N tests\presentation-font-layout.test.mjs tests\presentation-ui.test.mjs` (FINAL group) | **17/17, exit 0; 54511.2317ms** |
+| `node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 "tests/*.test.mjs"` (once) | **413 passed / 2 failed, exit 1; 313760.0884ms** |
+| `node tests\offline-run.mjs node_modules\eslint\bin\eslint.js tests\presentation-font-layout.test.mjs` | Exit 0, no diagnostics |
+| `git --no-pager diff --check -- tests/presentation-font-layout.test.mjs README.md IMPLEMENTATION_TRACKER.md` (existing Git absolute path) | Exit 0 |
+
+Before the full glob, classified all 47 matching files/imported harnesses:
+pure/static contracts, mocked service/AI clients, offline routed Chromium and
+in-memory PGlite. Setup's env loader is mocked; teaching-material's local
+server-only subprocess inherits the offline guard. Connected `e2e.mjs` and
+`instructor-e2e.mjs` are outside the glob and were not invoked.
+The full run's two failure counts are **one subtest plus its failed parent**:
+`manual-authoring.test.mjs:441` 320px activity formatting/create flow, timeout
+at line 469 awaiting status “Lesson created.”; parent “mounted real studio:
+manual creation, same-ID editing and retained uncertain-save contracts”.
+All font tests/prior repairs passed in the full run. This remains an
+out-of-scope blocker, not diagnosed or repaired here; no rerun to conceal it.
+
+### Cleanup and handoff limits
+
+Existing browser/context and PGlite `finally` cleanup ran on passing and failing
+paths. The regression releases the callback and awaits its publication promise
+in `finally`; per-mount sources are restored. Stdin diagnostics left no source
+files; no helper/server was started. No Node test process or Playwright browser
+remains; unrelated user Chrome processes were not touched. Synthetic screenshot
+artifacts from existing tests remain in OS Temp; no new visual approval claimed.
+Only JS tests/docs changed, so source types/build were not run.
+
+Local runtime is Windows/Node **25.2.1**; `wsl --list --quiet` found no installed
+distribution, Docker is unavailable, no Node 24 runtime was found in the
+inspected installation. No download/setup, connected check, remote write,
+commit or deployment. Request independent original-narrow/grouped
+**Ubuntu/Node 24 QA**, plus separate ownership/triage for the manual-authoring
+failure. Controlled matching scheduler evidence and local passes are **not**
+Linux CI observation, a full-suite pass or self-certified release approval.
+
 ## 5 November 2026 — remaining CI Tab/8 failure: proven responsive readiness hole
 
 **Owner: implementer; coordinator owns traceability/acceptance. Independent Ubuntu/Node 24 QA requested.**
