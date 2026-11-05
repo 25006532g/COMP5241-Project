@@ -57,7 +57,9 @@ test("new migration and actual actions: private/review/version/variable attempts
     await db.exec(`alter table forge_lessons drop constraint forge_lessons_content_check;
       alter table forge_lessons add constraint forge_lessons_content_check check(jsonb_array_length(content->'questions')=10);`);
     const rejected = await a.createManualLesson({},form());
-    assert.match(rejected.error,/23514.*20261105093000_slide_authoring_ran.sql/);
+    assert.match(rejected.error,/23514.*20261105093000_slide_authoring_ran\.sql/);
+    const recommendedMigration = rejected.error.match(/apply (\S+\.sql)/)[1];
+    assert.equal(readFileSync(new URL(`../supabase/migrations/${recommendedMigration}`, import.meta.url), "utf8"), migration);
     assert.equal(rejected.saveUncertain,undefined);
     await db.exec(migration);
     const standard = { ...slides.toStoredLesson(draft(10)), template: undefined, slides: Array(4).fill(slides.toStoredLesson(draft()).slides[0]) };
