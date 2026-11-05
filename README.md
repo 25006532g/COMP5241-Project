@@ -6,6 +6,31 @@ For a presentation-ready overview of features, design choices and prototype scre
 
 Track remaining work, blockers, acceptance criteria and verification updates in [IMPLEMENTATION_TRACKER.md](IMPLEMENTATION_TRACKER.md).
 
+## 5 November 2026 — remaining CI blur failure: responsive test synchronization
+
+The earlier pristine-draft repair was **incomplete as a CI resolution**: Ubuntu
+subsequently reported `[120,120]` instead of `[8,8]` after Tab. Its valid product
+behavior is retained; no production code changes in this follow-up.
+
+A controlled delayed **real matchMedia callback** reproduced that exact original
+assertion locally. After the test read desktop Properties as open, the callback
+closed it just after native font focus. Focus moved to BODY; pristine blur did
+not apply anything, and no font input/onChange received `8`. Canvas identity,
+range and 120-point styles stayed intact. This proves a responsive readiness
+hole, not a dirty-draft flush defect.
+
+The test now waits for observable responsive closure before reopening Properties.
+All original canonical/Tab/spinner/save assertions remain; native focus and
+typed-draft checks are added. A gated-callback regression failed before repair
+and passes after it. Final offline font/UI pair: **16/16, exit 0**; scoped
+component ESLint, direct TypeScript and owned whitespace checks passed.
+
+**Independent Ubuntu/Node 24 QA requested, not release approval.** Local runtime
+is Windows/Node 25.2.1, with no installed Linux runtime. The uncontrolled Linux
+schedule remains unobserved: this is a deterministic matching failure mechanism
+and bounded harness repair, not a claim that a Windows pass certifies CI.
+Commands, event ordering, failed runs and cleanup are in the newest tracker entry.
+
 ## 5 November 2026 — focused font draft lifecycle repair
 
 Confirmed a product defect: a focused, untouched `24` font draft could survive

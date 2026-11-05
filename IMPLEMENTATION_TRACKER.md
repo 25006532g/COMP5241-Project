@@ -2,6 +2,124 @@
 
 Last reviewed: 2026-11-05
 
+## 5 November 2026 — remaining CI Tab/8 failure: proven responsive readiness hole
+
+**Owner: implementer; coordinator owns traceability/acceptance. Independent Ubuntu/Node 24 QA requested.**
+The previous pristine-draft repair remains valid but **did not resolve CI**:
+the new reported failure was original line 432, actual `[120,120]`, expected
+`[8,8]`, “blur alone must confirm the inclusive minimum”. This is distinct from
+the earlier stale-24 writer. Initial owned diffs/status were clean. Only
+`tests/presentation-font-layout.test.mjs`, README and this tracker changed.
+
+### Hypothesis, causal evidence and bounded repair
+
+Before editing, inspected FontSizeInput, responsive `resizePanels`, canvas
+style/commit/redraw handling, browser harness and the complete failing flow.
+Falsifiable hypothesis: viewport completion precedes matchMedia delivery; the
+test reads stale desktop `.open=true`, skips reopening, then the delayed callback
+closes Properties between native focus and typing. Chose native/React/panel/
+canvas tracing in the **original complete flow**, not another draft-writer fix.
+
+The unchanged required baseline passed on Windows. An in-memory trace also
+passed: responsive closure occurred before the conditional read/reopen, then
+native input/onChange `8` and dirty blur/flush applied `[8,8]`.
+
+A second in-memory run held the real change callback and delivered it in a
+microtask immediately after native font focus. All original interactions and
+assertions were untouched. **Exact original RED**, line 432:
+`[120,120] !== [8,8]`, with the same assertion message. Relevant milliseconds
+from that browser's performance clock:
+
+| Time | Event / observed state |
+| --- | --- |
+| 2045.6 | Real mobile notification queued; Properties still open; canonical `[120,120]` |
+| 2073.8 | Range `[5,7)` publishes value 120; canvas object identity remains stable |
+| 2095.2 | Native font focus; input `"120"` |
+| 2096.5–2096.8 | Deliver actual resizePanels callback (`matches=false`); Properties closes |
+| 2102.7–2103.0 | Native blur to BODY; flush draft `"120"`, changed=false, focused=false |
+| Afterwards | No font native input/onChange `8`; canonical `[120,120]`; original Tab assertion fails |
+
+This establishes a **harness responsive ordering defect matching the reported
+failure**, not proof of the uncontrolled Ubuntu event order. There is no evidence
+here for changing dirty draft refs, font bounds, canvas source identity or
+product lifecycle. The unmodified Linux failure itself remains independently
+unobserved.
+
+* `openMobileProperties` now waits for `.presentation-properties.open===false`
+  after desktop→320px resize, then uses the existing normal summary click.
+  Observable state synchronization only: no sleep, retry, forced click, Enter,
+  synthetic blur, generic Tab handler or canonical/expected-value adjustment.
+* Original range, denied actions, width/move saves, paragraph preservation,
+  pre-Tab 120, post-Tab 8, native pointer spinner 9/Tab, ArrowDown 8/Tab,
+  version-3 saved sizes and geometry/height assertions remain intact.
+  Added native activeElement and typed `"8"` assertions strengthen diagnostics.
+* New regression holds the actual matchMedia listener notification. An ordered
+  browser round trip proves the helper cannot finish while stale desktop-open
+  state remains. The test explicitly delivers the callback, reopens normally,
+  types `8`, verifies canonical 120 before real Tab and 8 afterward, and verifies
+  the surrounding 24-point runs. No React/native focus/input/blur is mocked.
+  It failed with the old one-shot helper, then passed immediately with the wait.
+* Prior untouched-focused Tab/Save regressions and FontSizeInput product repair
+  are preserved. No TS, browser harness, CSS, model, config, action, dependency
+  or migration changes.
+
+### Commands and actual results
+
+All Node invocations below used the existing OS-only/network-denying runner;
+no environment file/loader, remote operation, nested agent, install or server.
+Repository `.github/skills/forge-{delivery,verification}/SKILL.md` were loaded
+because the requested sibling skills do not exist. Initial `git` PATH lookup
+failed (exit 1); found and used existing GitHub Desktop Git, without setup.
+Local runtime probe: Windows `win32`, Node `v25.2.1`. `wsl --list --quiet`
+returned no distributions; no Docker command exists. No Linux setup attempted.
+
+```powershell
+# Original unchanged baseline: 1/1, exit 0, 5096.1502ms.
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern="QA: noninitial" tests\presentation-font-layout.test.mjs
+
+# Two transient stdin diagnostic invocations with this exact Node argv:
+# (1) original flow trace: 1/1, exit 0, 3215.0785ms;
+# (2) delayed actual callback at native focus: 0/1, exit 1, 3019.5451ms,
+#     exact original line-432 blur/8 failure above.
+# Payloads patched only imported in-memory transpiled sources, attached console
+# tracing and imported the original test; no diagnostic source file retained.
+node tests\offline-run.mjs --experimental-strip-types --test-name-pattern="QA: noninitial" --input-type=module -
+
+# Permanent ordering regression, old one-shot helper:
+# 0/1, exit 1, 3108.9698ms; "an old desktop-open panel is not mobile readiness".
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern="mobile properties waits" tests\presentation-font-layout.test.mjs
+
+# Immediate GREEN after adding observable wait: 4/4, exit 0, 10055.3947ms.
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern="QA: noninitial|mobile properties waits|untouched focused" tests\presentation-font-layout.test.mjs
+
+# After adding native focus/typed-draft assertions: 2/2, exit 0, 6311.6582ms.
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern="QA: noninitial|mobile properties waits" tests\presentation-font-layout.test.mjs
+
+# FINAL grouped check: 16/16, exit 0, 65460.5063ms.
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\presentation-font-layout.test.mjs tests\presentation-ui.test.mjs
+
+# Both exit 0, no diagnostics. Components unchanged, checked as controlling code.
+node tests\offline-run.mjs node_modules\eslint\bin\eslint.js src\components\presentation-editor.tsx src\components\presentation-canvas.tsx
+node tests\offline-run.mjs node_modules\typescript\bin\tsc --noEmit --incremental false
+```
+
+All test runs had zero skips/cancellations. Scoped `git --no-pager diff --check`
+passed for all six owned paths. Browser contexts/browsers and PGlite use existing
+`finally` cleanup, including failed diagnostic/regression runs. The new gate is
+released and its opening promise awaited in `finally`; context disposal removes
+the test-only matchMedia wrapper. Transient tool trace file removed; stdin
+instrumentation left no source files or helper processes. Existing tests retain
+only synthetic screenshots in OS Temp; no new visual acceptance is claimed.
+Final grouped screenshot roots include `forge-font-layout-y8Bqm1`,
+`forge-font-errors-IIbMM1`, `forge-font-qa-9Kgsjx`, `forge-presentation-P3vuUY`.
+
+**Handoff / limitation:** run the original narrow command and grouped pair
+independently on Ubuntu/Node 24. A matching deterministic event-order failure
+and green bounded repair are implementation evidence, **not CI/release
+certification**. No full suite/build, connected tests, deployment or remote
+operation. Historical entries below are preserved, not reclassified as Linux
+passes.
+
 ## 5 November 2026 — CI font-range investigation: confirmed stale-draft product repair
 
 **Owner: implementer; coordinator owns traceability/acceptance. Independent Linux QA requested.**

@@ -38,6 +38,13 @@ async function applySize(page,value){
   assert.equal(await input.inputValue(),String(value),"intermediate digits must not snap back");
   await input.press("Enter");
 }
+async function openMobileProperties(page){
+  // CSS/viewport resizing can precede matchMedia's panel-closing callback.
+  // Wait for that observable transition before reopening, or it can steal
+  // native focus between focus() and typing into the still-mounted input.
+  await page.waitForFunction(()=>document.querySelector(".presentation-properties")?.open===false);
+  if(!await page.locator(".presentation-properties").evaluate(el=>el.open))await page.locator(".presentation-properties > summary").click();
+}
 
 test("font field accepts real sequential typing and saves/reloads actual Fabric sizes",async()=>{
   const h=await harness(),payloads=[];
@@ -423,10 +430,12 @@ test("QA: noninitial overflow selection survives denied actions, width/move reco
     assert.equal(moved.y,70);assert.equal(moved.w,150);
     assert.deepEqual(moved.paragraphs,wide.paragraphs,"the second save must preserve the recovered character styles");
     await page.setViewportSize({width:320,height:900});
-    if(!await page.locator(".presentation-properties").evaluate(el=>el.open))await page.locator(".presentation-properties > summary").click();
+    await openMobileProperties(page);
     await chooseRange();
     const input=page.getByLabel("Font size",{exact:true});
-    await input.focus();await input.press("ControlOrMeta+A");await input.press("Backspace");await input.pressSequentially("8");
+    await input.focus();assert.equal(await input.evaluate(el=>document.activeElement===el),true);
+    await input.press("ControlOrMeta+A");await input.press("Backspace");await input.pressSequentially("8");
+    assert.equal(await input.inputValue(),"8","mobile typing must reach the native font input");
     assert.deepEqual((await selection()).sizes,[120,120],"typing alone must retain the confirmed canonical size");
     await input.press("Tab");
     assert.deepEqual((await selection()).sizes,[8,8],"blur alone must confirm the inclusive minimum");
@@ -452,6 +461,64 @@ test("QA: noninitial overflow selection survives denied actions, width/move reco
     // Keep this exact assertion failing for the coordinator; recovery assertions
     // above still run so the retained selection defect cannot mask their result.
     assert.deepEqual(denials,denials.map(({action})=>({action,selection:overflow})),"denied actions must not discard the noninitial text selection");
+  });
+});
+
+test("mobile properties waits for the responsive callback before font focus and real Tab confirmation",async()=>{
+  await fixture(async page=>{
+    // Hold the real matchMedia notification, not focus/input/blur or React.
+    // setViewportSize can return while this notification is still pending.
+    await page.addInitScript(()=>{
+      const matchMedia=window.matchMedia.bind(window);
+      window.matchMedia=query=>{
+        const media=matchMedia(query);
+        if(query!=="(min-width: 1200px)")return media;
+        const add=media.addEventListener.bind(media);
+        media.addEventListener=(type,listener,...options)=>add(type,event=>{
+          const deliver=()=>typeof listener==="function"?listener.call(media,event):listener.handleEvent(event);
+          if(event.matches)deliver();
+          else window.deliverResponsive=()=>{delete window.deliverResponsive;deliver();};
+        },...options);
+        return media;
+      };
+    });
+    const initial=draft("Lead 中文 tail",{y:70,w:150,h:1});
+    initial.document.slides[0].elements[0].paragraphs=[{runs:[
+      {...model.defaultRun,text:"Lead ",size:24},
+      {...model.defaultRun,text:"中文",size:120},
+      {...model.defaultRun,text:" tail",size:24},
+    ]}];
+    await mountPresentation(page,{initial});await select(page);
+    await page.setViewportSize({width:320,height:900});
+    await page.waitForFunction(()=>typeof window.deliverResponsive==="function");
+    let ready=false;
+    const opening=openMobileProperties(page).then(()=>{ready=true;});
+    try{
+      // This ordered browser round trip follows the helper's first read.
+      // No timer/retry: the callback is explicitly still withheld.
+      assert.equal(await page.locator(".presentation-properties").evaluate(el=>el.open),true);
+      assert.equal(ready,false,"an old desktop-open panel is not mobile readiness");
+      await page.evaluate(()=>window.deliverResponsive());
+      await opening;
+      assert.equal(await page.locator(".presentation-properties").evaluate(el=>el.open),true);
+      await page.evaluate(()=>{
+        const t=editCanvas.getActiveObject();t.enterEditing();t.selectionStart=5;t.selectionEnd=7;
+        editCanvas.fire("text:selection:changed",{target:t});
+      });
+      const input=page.getByLabel("Font size",{exact:true});
+      await input.focus();assert.equal(await input.evaluate(el=>document.activeElement===el),true);
+      await input.press("ControlOrMeta+A");await input.press("Backspace");await input.pressSequentially("8");
+      assert.equal(await input.inputValue(),"8");
+      const sizes=()=>page.evaluate(()=>editCanvas.getActiveObject().getSelectionStyles(5,7,true).map(s=>s.fontSize));
+      assert.deepEqual(await sizes(),[120,120],"typing alone must retain the confirmed canonical size");
+      await input.press("Tab");
+      assert.deepEqual(await sizes(),[8,8],"blur alone must confirm the inclusive minimum");
+      const text=await page.evaluate(()=>presentationModules("@/lib/presentation-fabric").readText(editCanvas.getActiveObject(),{}));
+      assert.deepEqual(text.paragraphs[0].runs.map(r=>[r.text,r.size]),[["Lead ",24],["中文",8],[" tail",24]]);
+    }finally{
+      await page.evaluate(()=>window.deliverResponsive?.());
+      await opening;
+    }
   });
 });
 
