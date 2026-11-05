@@ -421,6 +421,7 @@ test("QA: noninitial overflow selection survives denied actions, width/move reco
     await page.getByRole("status").filter({hasText:"Version 2"}).waitFor();
     const moved=JSON.parse(new Map(writes[1]).get("content")).document.slides[0].elements[0];
     assert.equal(moved.y,70);assert.equal(moved.w,150);
+    assert.deepEqual(moved.paragraphs,wide.paragraphs,"the second save must preserve the recovered character styles");
     await page.setViewportSize({width:320,height:900});
     if(!await page.locator(".presentation-properties").evaluate(el=>el.open))await page.locator(".presentation-properties > summary").click();
     await chooseRange();
@@ -451,6 +452,62 @@ test("QA: noninitial overflow selection survives denied actions, width/move reco
     // Keep this exact assertion failing for the coordinator; recovery assertions
     // above still run so the retained selection defect cannot mask their result.
     assert.deepEqual(denials,denials.map(({action})=>({action,selection:overflow})),"denied actions must not discard the noninitial text selection");
+  });
+});
+
+for(const action of ["Tab","Save"])test(`untouched focused font draft cannot overwrite a newly published range on ${action}`,async()=>{
+  await fixture(async page=>{
+    const writes=[];
+    await page.exposeFunction("persist",async(name,entries)=>{writes.push(entries);return {lessonId:crypto.randomUUID(),version:writes.length,success:"Saved."};});
+    const initial=draft("Lead 中文 tail");
+    initial.document.slides[0].elements[0].paragraphs=[{runs:[
+      {...model.defaultRun,text:"Lead ",size:24},
+      {...model.defaultRun,text:"中文",size:120,font:"Courier New"},
+      {...model.defaultRun,text:" tail",size:24},
+    ]}];
+    await mountPresentation(page,{initial});await select(page);
+    await page.evaluate(()=>{
+      const t=editCanvas.getActiveObject();t.enterEditing();t.selectionStart=0;t.selectionEnd=4;
+      editCanvas.fire("text:selection:changed",{target:t});
+    });
+    const input=page.getByLabel("Font size",{exact:true});
+    await page.waitForFunction(()=>document.querySelector('input[min="8"]')?.value==="24");
+    await input.focus();
+    // Fabric is already editing: publishing another range does not focus its
+    // textarea. Exercise the selection-before-field-blur ordering directly,
+    // without a timing delay, replacing any data or bypassing field events.
+    await page.evaluate(()=>{
+      const t=editCanvas.getActiveObject();t.selectionStart=5;t.selectionEnd=7;
+      editCanvas.fire("text:selection:changed",{target:t});
+    });
+    const publishedFont=font=>page.waitForFunction(font=>Array.from(document.querySelectorAll("label")).find(el=>el.firstChild?.textContent==="Font")?.querySelector("select")?.value===font,font);
+    await publishedFont("Courier New");
+    assert.equal(await input.evaluate(el=>document.activeElement===el),true);
+    const sizes=()=>page.evaluate(()=>editCanvas.getActiveObject().getSelectionStyles(5,7,true).map(s=>s.fontSize));
+    assert.deepEqual(await sizes(),[120,120]);
+    if(action==="Tab")await input.press("Tab");
+    else{
+      await page.getByRole("button",{name:"Save",exact:true}).click();
+      await page.getByRole("status").filter({hasText:"Version 1"}).waitFor();
+    }
+    assert.deepEqual(await sizes(),[120,120],`${action} must not apply an untouched stale 24-point draft to the 120-point range`);
+    if(action==="Save"){
+      const saved=JSON.parse(new Map(writes.at(-1)).get("content")).document.slides[0].elements[0];
+      assert.deepEqual(saved.paragraphs,initial.document.slides[0].elements[0].paragraphs);
+    }else{
+      // Pristine synchronization must not become a snap-back for real typing,
+      // even if selection styles publish again before the draft is confirmed.
+      await input.focus();await input.press("ControlOrMeta+A");await input.press("Backspace");await input.pressSequentially("8");
+      for(const [start,end,font] of [[0,4,"Arial"],[5,7,"Courier New"]]){
+        await page.evaluate(({start,end})=>{
+          const t=editCanvas.getActiveObject();t.selectionStart=start;t.selectionEnd=end;
+          editCanvas.fire("text:selection:changed",{target:t});
+        },{start,end});
+        await publishedFont(font);assert.equal(await input.inputValue(),"8");
+        assert.deepEqual(await sizes(),[120,120],"style publication and typing alone cannot format text");
+      }
+      await input.press("Tab");assert.deepEqual(await sizes(),[8,8]);
+    }
   });
 });
 

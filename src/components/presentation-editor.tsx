@@ -14,10 +14,11 @@ type FontSizeHandle={flush:()=>boolean};
 function FontSizeInput({value,onApply,handle}:{value:number|null;onApply:(size:number)=>void;handle:RefObject<FontSizeHandle|null>}){
   const [draft,setDraft]=useState(value===null?"":String(value)),[error,setError]=useState("");
   const focused=useRef(false),changed=useRef(false);
-  useEffect(()=>{if(!focused.current){setDraft(value===null?"":String(value));setError("");changed.current=false;}},[value]);
+  useEffect(()=>{if(!focused.current||!changed.current){setDraft(value===null?"":String(value));setError("");changed.current=false;}},[value]);
   function flush(){
-    // An untouched mixed field is not a request to replace the selection.
-    if(value===null&&!draft&&!changed.current)return true;
+    // Selection/style publication can arrive while this field has focus.
+    // Only a user-edited draft may format that selection, never a stale value.
+    if(!changed.current)return true;
     const size=Number(draft);
     if(!draft.trim()||!Number.isFinite(size)||size<8||size>120){
       setError("Enter a font size from 8 to 120.");return false;

@@ -6,6 +6,25 @@ For a presentation-ready overview of features, design choices and prototype scre
 
 Track remaining work, blockers, acceptance criteria and verification updates in [IMPLEMENTATION_TRACKER.md](IMPLEMENTATION_TRACKER.md).
 
+## 5 November 2026 — focused font draft lifecycle repair
+
+Confirmed a product defect: a focused, untouched `24` font draft could survive
+publication of a `120`-point character range, then overwrite that range on blur
+or Save. Pristine fields now follow published styles even while focused; only
+user-edited drafts can apply formatting. Dirty typing still waits for confirmation.
+
+Two deterministic regressions reproduced **[24,24] instead of [120,120]**
+before the repair and pass afterwards. The original QA interaction/assertions
+remain intact, with an additional second-save style-preservation check.
+Final offline font-layout/UI pair: **15/15 passed**, exit 0; scoped ESLint,
+direct TypeScript and whitespace checks passed.
+
+**Limitation:** the exact reported Linux CI schedule did not reproduce locally
+(Windows: four unchanged narrow passes and an unchanged 13/13 grouped pass).
+This fixes the demonstrated product corruption path, not a proven harness
+synchronization fault. Independent Linux QA of the original flow is requested;
+the coordinator owns acceptance, not this implementation report.
+
 ## 5 November 2026 — bounded denied-action selection repair
 
 Save/Export validation denial now retains Fabric editing and the original

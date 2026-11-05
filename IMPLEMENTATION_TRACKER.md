@@ -2,6 +2,86 @@
 
 Last reviewed: 2026-11-05
 
+## 5 November 2026 — CI font-range investigation: confirmed stale-draft product repair
+
+**Owner: implementer; coordinator owns traceability/acceptance. Independent Linux QA requested.**
+Initial Git status and owned-file diffs were clean. Loaded repository
+`.github/skills/forge-{delivery,verification}/SKILL.md` because sibling skills
+were absent. No environment files were opened; all Node checks used the existing
+OS-only/network-denying runner. No nested agents or remote operations.
+
+### Diagnosis and bounded change
+
+The original reported Linux failure did **not** reproduce unchanged on Windows:
+four narrow runs passed, as did the original grouped 13-test suite. In-memory
+font-flush/redraw tracing and one 6× browser CPU-throttled narrow run also passed.
+Those traces do not establish the exact Linux interleaving or implicate
+`drawSlide`/source identity as the corrupting writer.
+
+Falsifiable hypothesis before the repair: publishing a new range while the font
+field retains focus leaves its untouched draft stale; subsequent blur or Save
+applies that old size. Deterministic regressions confirmed this independently
+for Tab and Save: **[120,120] became [24,24] without any field edit**.
+`FontSizeInput` suppressed all focused style synchronization and its `flush`
+only exempted an untouched *empty mixed* field, not untouched numeric fields.
+Thus this is a demonstrated **product lifecycle defect**, not evidence that
+the expected 120 or user interactions should be weakened or retried.
+
+* `src/components/presentation-editor.tsx`: pristine drafts follow style
+  publication even while focused; `flush` formats only a user-edited draft.
+  Existing dirty-input, validation, Enter/blur and native spinner behavior stays.
+* `tests/presentation-font-layout.test.mjs`: two deterministic tests publish a
+  120-point CJK range while an untouched 24-point input retains native focus.
+  An observable Font select value confirms publication before real Tab/Save.
+  They verify canonical sizes and saved paragraphs. Additional dirty-8 coverage
+  verifies style republication cannot snap back typing or commit before Tab.
+  Original QA assertions/typing/spinner interactions are preserved; an added
+  second-save assertion checks all character styles against the first save.
+* Only these two files and README/tracker changed. Canvas, browser harness,
+  adapter, actions/models/export, CSS, configuration and dependencies did not.
+
+### Commands and actual evidence
+
+From repository cwd; every test had zero skips/cancellations:
+
+```powershell
+# Before product edits: 1/1, exit 0, 6624.7177ms; three further bounded
+# unchanged runs also 1/1, exit 0. In-memory diagnostics: 1/1 each,
+# including CPU throttling; no diagnostic source files retained.
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern="QA: noninitial" tests\presentation-font-layout.test.mjs
+
+# Deterministic RED: first single regression 0/1, exit 1, 3594.0048ms.
+# Split into independent Tab/Save cases: 0/2, exit 1, 6291.5589ms.
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern="untouched focused" tests\presentation-font-layout.test.mjs
+
+# Immediate GREEN after repair: 3/3, exit 0, 8178.6715ms.
+# After strengthening saved-style/dirty-typing coverage: 3/3,
+# exit 0, 7942.7487ms.
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern="QA: noninitial|untouched focused" tests\presentation-font-layout.test.mjs
+
+# Unchanged baseline: 13/13, exit 0, 59305.882ms.
+# FINAL: 15/15, exit 0, 57705.4806ms.
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\presentation-font-layout.test.mjs tests\presentation-ui.test.mjs
+
+# Both exit 0, no diagnostics:
+node tests\offline-run.mjs node_modules\eslint\bin\eslint.js src\components\presentation-canvas.tsx src\components\presentation-editor.tsx
+node tests\offline-run.mjs node_modules\typescript\bin\tsc --noEmit --incremental false
+```
+
+Scoped `git --no-pager diff --check` passed for all six authorized source/test/doc
+paths. Browser contexts/browsers and PGlite close in existing `finally` blocks;
+in-memory diagnostic runs used the same fixture cleanup. No server/helper
+remains. Existing tests retained synthetic screenshots under OS Temp; no new
+visual acceptance is claimed for this nonvisual change.
+
+**Remaining limit / QA handoff:** no Linux runtime was available here, so the
+exact original GitHub Actions scheduling remains unverified. Run the original
+narrow command and grouped pair independently on Linux; distinguish this
+confirmed stale-draft writer from any further race if failure persists.
+No full npm suite, build, connected tests, installs, schema work or deployment.
+Existing PowerPoint/empty-paragraph limitations remain. This is implementation
+evidence, **not release approval**; historical reports below are unchanged.
+
 ## 5 November 2026 — surgical denied Save/Export range repair (implementation)
 
 **Owner: implementer; independent narrow QA requested, coordinator owns acceptance.**
