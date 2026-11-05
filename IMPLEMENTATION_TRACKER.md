@@ -2,6 +2,444 @@
 
 Last reviewed: 2026-11-05
 
+## 5 November 2026 — surgical denied Save/Export range repair (implementation)
+
+**Owner: implementer; independent narrow QA requested, coordinator owns acceptance.**
+Scope was only the retained selection/editing defect following the font fix.
+No nested agents or release certification.
+
+### Cause, repair and owned inventory
+
+Falsifiable hypothesis before editing: the disabled effect calls Fabric
+`exitEditing()`, whose implementation assigns `selectionEnd=selectionStart`.
+The original retained probe reproduced Save and Export **[5,7), editing:true →
+[5,5), editing:false**; preview retained the range.
+
+* `src/components/presentation-canvas.tsx`: suspend Fabric's native textarea
+  with `disabled` during the existing action lock instead of exiting editing.
+  The actual editing session, styles, range or collapsed caret remain intact.
+  Pointer/target/group-selection locks remain; unlocking never calls focus.
+  Unknown-save locks keep the textarea disabled indefinitely. No new async
+  recovery callback or stale/unmount path was introduced.
+* `src/components/presentation-editor.tsx`: clear the quiet canvas-error marker
+  when Save/Export starts. Otherwise their preflight flush can mark the same
+  eventual validation error quiet and suppress accessible notice focus.
+  Save/version/private/unknown-outcome handling and live guards are unchanged.
+* `tests/presentation-font-layout.test.mjs`: append two focused tests only.
+  The original file through its final assertion is byte-identical:
+  SHA256 `3C07AD2E3044249514A136511051A0A345822654565A59E66A3AA3C5D6EA1501`.
+  The first new test gates real validation for both actions, attempts native
+  input while disabled, verifies notice focus/range/editing and identical
+  rendered text, then changes only the original range to 18 without reselection.
+  Full runs/fonts/marks, undo/redo and saved paragraphs agree; other characters
+  remain unchanged. The second gates synthetic action responses and checks
+  actual text/styles/transforms during pending, collapsed caret, multiselect
+  and persistent unknown-outcome locking.
+* `README.md`, `IMPLEMENTATION_TRACKER.md`: current implementation evidence;
+  historical implementation/QA entries are preserved.
+
+No model, export, layout, dependencies, schema, action, migration or tagged
+`*_ran` file changed. All pre-existing dirty files were preserved, including
+the library/font/UI work. Before/after protected inventory: **201 files** in
+src/tests/supabase/scripts/.github and root source/config/docs, excluding the
+five owned files; aggregate SHA256
+`62FDF89A43C3C7C5F9681762413A46BBC56B3DF5B3C1EF4129C33948324340DB`.
+
+### Commands and actual results
+
+All Node invocations used the existing OS-only/network-denying runner from
+repository cwd. The sibling skills were absent; loaded repository
+`.github/skills/forge-{delivery,verification}/SKILL.md`. Before tests, a stdin
+assertion probe verified the OS-only child environment and synchronous denial
+of fetch/HTTP/HTTPS/net/TLS/Socket.connect. Its first command had PowerShell
+quoting errors; the second needed Windows-injected `LOGONSERVER` added to the
+OS identity allowlist; the corrected probe passed. No config values printed.
+
+```powershell
+# RED before editing: 0 pass / 1 fail, exit 1, 4716.8458ms.
+# GREEN immediately after canvas repair: 1/1, exit 0, 4923.0378ms.
+# Retained assertions unchanged.
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern="QA: noninitial" tests\presentation-font-layout.test.mjs
+
+# New probes initially 0/2, exit 1, 5534.6796ms:
+# one fixture adapter-input error; one real quiet-error focus interaction.
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern="temporary validation|pending requests lock" tests\presentation-font-layout.test.mjs
+
+# After fixture correction + quiet-marker coordination: 3/3,
+# exit 0, 10480.982ms.
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern="QA: noninitial|temporary validation|pending requests lock" tests\presentation-font-layout.test.mjs
+
+# First grouped pass: 13/13, exit 0, 55405.0946ms.
+# Added rendered-pixel equality to the new range test only.
+# Immediate focused check: 1/1, exit 0, 5546.3239ms.
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern="temporary validation" tests\presentation-font-layout.test.mjs
+
+# FINAL grouped check: 13/13, exit 0, 59846.918ms.
+# Original 11 plus two new tests; no failures/skips/cancellations.
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\presentation-font-layout.test.mjs tests\presentation-ui.test.mjs
+
+# Both exit 0; no warnings/diagnostics.
+node tests\offline-run.mjs node_modules\eslint\bin\eslint.js src\components\presentation-canvas.tsx src\components\presentation-editor.tsx
+node tests\offline-run.mjs node_modules\typescript\bin\tsc --noEmit --incremental false
+```
+
+Final original QA output for Save, Export and preview was exactly
+`{start:5,end:7,editing:true,text:"Lead 中文 tail",sizes:[120,120]}`.
+No denied-action writes/downloads/dialogs. Existing grouped checks still cover
+24→48→12, CJK/Mixed/empty text, reserved height, real negative bounds,
+scale-once geometry, real save/PGlite reopen, native OOXML, IME, guarded saves,
+foreign-owner denial and unknown acknowledgement. These are bounded regression
+results, not a renewed broad permissions/release audit.
+
+### Visual evidence, safety, cleanup and remaining limits
+
+Opened grouped-run `forge-font-qa-7tOXNZ\denied-range.png` and
+`recovered-mobile-size8.png`, plus `forge-font-layout-G9PVwe\after.png`, under
+`C:\Users\SOLUSER\AppData\Local\Temp\`. Full-page canvas captures were inconsistent,
+so were not used to certify text rendering. Additional stdin-only offline
+diagnostic probes compared object geometry and pixels across denial; the first
+two used PowerShell-lossy literal CJK, then the encoding-safe `\u4e2d\u6587`
+fixture confirmed unchanged coordinates/pixels. A final assertion probe
+verified identical lower-canvas PNGs after both actions, exit 0, and captured
+the settled viewport. Actually opened:
+`C:\Users\SOLUSER\AppData\Local\Temp\forge-selection-lock-ftGW8E\denied-export-viewport.png`.
+Text/range, overflow notice and size control are visible there. Pixel equality
+is also persisted in the new regression. Screenshot scheduling was not redesigned.
+
+All fixtures were synthetic. Chromium contexts were offline, service workers
+blocked, unexpected routes aborted; harness HTML/image routes were in-memory.
+PGlite was disposable memory only; existing tests closed it in `finally`.
+Browsers/contexts and gated promises were released in `finally`; process check
+found **0 Playwright Chromium processes**. No helper/service remains; synthetic
+screenshots retained. Owned-file `git diff --check` passed.
+
+No environment files/setup loader, server, remote Supabase/storage/provider,
+connected tests, installs, external migration operation, commit, full suite,
+Next build/typegen or deployment. Direct TypeScript was run as listed above.
+Native desktop PowerPoint/font substitution and empty-paragraph caret formatting
+remain unverified prior limitations. No implementation blocker remains for this
+bounded repair; independent QA should rerun the retained failed-range probe and
+font file. This entry is implementation evidence, **not independent acceptance**.
+
+## 5 November 2026 — independent bounded font/height acceptance: selection defect open
+
+**QA only; coordinator owns acceptance.** Independently verified the original
+24→48 input and fitting-stale-height fixes against current sources. The
+unchanged requested pair passed **9/9**. Added only two essential focused probes;
+final same-pair invocation is **10 passed / 1 failed, 11 distinct tests**, no
+skips/cancellations. **Not unconditional acceptance or global release approval.**
+Implementer evidence below remains historical, not independent QA evidence.
+
+### Safety and ownership
+
+Requested sibling skills were absent; loaded repository
+`.github/skills/forge-{delivery,security,verification}/SKILL.md`. Read current
+README/tracker, package, both requested tests, browser/authoring harnesses and
+offline runner/preload before execution. Existing Node v25.2.1, Chromium,
+Fabric and disposable in-memory PGlite only. No nested agents, environment-file
+reads, setup loader, server, remote service, connected e2e/instructor tests,
+dependency installation, migration operation, build/types/full suite, commit
+or deployment.
+
+Before application tests, a stdin assertion probe through
+`node tests\offline-run.mjs --input-type=module -` verified the OS-only child
+environment and synchronous pre-I/O denial of fetch, HTTP, HTTPS, net, TLS and
+Socket.connect. Its first attempt rejected five Windows-injected OS identity
+keys; the corrected allowlist passed, exit 0. No application configuration
+values were printed. Browser contexts were offline, service workers blocked,
+unexpected routes aborted; `https://forge.test/` and synthetic image routes were
+fulfilled in memory. PGlite schema/SQL execution was confined to its disposable
+memory database; nothing was applied to an external database.
+
+### Commands and exact accounting
+
+All commands below ran from repository cwd through the existing network-denying
+runner. No full suite, build, typecheck or lint was added to this bounded retest.
+
+```powershell
+# Before QA additions: 9/9 passed, exit 0, 43018.1429ms.
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\presentation-font-layout.test.mjs tests\presentation-ui.test.mjs
+
+# Two added probes: 1 pass / 1 fail, exit 1, 10968.7966ms.
+# After deferring the SAME selection assertion until recovery checks finish:
+# 1 pass / 1 fail, exit 1, 11245.9543ms.
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern="QA:" tests\presentation-font-layout.test.mjs
+
+# Pointer-spinner addition initially hit CSS padding, not the native arrow:
+# 0 pass / 1 fail, exit 1, 4824.7034ms (test-coordinate error).
+# Corrected hit target subtracts computed paddingRight, without changing bounds
+# or assertions: spinner/recovery pass; retained selection assertion fails.
+# 0 pass / 1 fail, exit 1, 4648.0911ms.
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern="QA: noninitial" tests\presentation-font-layout.test.mjs
+
+# FINAL current QA source: 10 pass / 1 fail, exit 1, 53614.7051ms.
+# Original six font tests, three UI tests and new stale-PGlite test all pass.
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\presentation-font-layout.test.mjs tests\presentation-ui.test.mjs
+```
+
+Iterations are not additional distinct passes. The failing test deliberately
+executes and asserts denial/recovery/minimum/spinner checks before its final
+unchanged selection equality assertion, so that one defect does not hide them.
+
+### Independently verified passes
+
+* Trusted keyboard clear/sequential **24→48→12**, Enter, ArrowUp→13/blur;
+  actual Fabric sizes, saved payload, real learning action/PGlite readback,
+  reopen and native `sz="1300"` agree. Invalid blank/7/121 retain drafts,
+  leave actual size unchanged and prevent writes.
+* Noninitial CJK range **[5,7)** 18→48, Mixed object value, unselected runs,
+  Arial/Times New Roman/Courier New, marks, empty paragraph and original
+  newlines survive. Undo/redo restores size **and height**. Empty text retains
+  saved 42/Courier New without invented text; native empty shape/size checked.
+* Fitting stale height draws an actual Fabric textbox. Added real-action
+  save/PGlite reopen/native OOXML fixture: text length 64, font **24**,
+  width **210**, required height **121.49759999999996**, saved height **121.50**,
+  rotation **7°**, position **(80,70)**. Reopened Fabric equals pre-save fitted
+  geometry/content. Native 24pt runs, 420000 rotation, translated origin,
+  EMU width/height and complete concatenated text agree; no picture fallback.
+  Foreign-owner direct `updateLesson` returns **You cannot edit this lesson.**,
+  with no write and unchanged database content.
+* Canonical-width ±.01 wrap threshold yields **2 vs 1 lines**; required height
+  is contained after rounding. Native editable soft breaks equal browser wraps.
+  Fractional resize bakes scale once, then font 48 is actually 48; two saves
+  have identical payloads. Width/rotation and larger reserved height survive;
+  only required growth increases height.
+* Real bottom and rotated overflow denied. New range-120 case produced **zero
+  writes/downloads/dialogs** during denial; text and 120pt styles survive.
+  Size reduction recovers in the original regression. Independently, widening
+  **150→800** at y=370 recovers/save; narrowing recreates overflow and moving
+  **y=370→70** recovers/save. At 320px, sequential typed **8** confirms by Tab
+  blur only; actual range sizes are 8. Trusted pointer click on the native
+  spinner gives **9**, ArrowDown/blur returns 8. Saved selected range is 8,
+  surrounding runs remain 24, reserved height **373.18** remains intact.
+* Existing related UI tests pass: IME, history, guarded/deduplicated saves,
+  unknown acknowledgement lock, native PPTX, synthetic image failure/recovery,
+  retained drafts and 320px keyboard workflow. This is not a fresh broad
+  permissions or responsive-polish audit.
+
+### Reproducible product defect — coordinator/implementer follow-up
+
+**Open: denied Save/export collapses a character range.** Fixture: `"Lead 中文
+tail"`, font 24, x=60, y=370, w=150, initial h=1 (fitted in memory). Enter
+Fabric editing, select characters **[5,7)**, confirm size 120 to produce genuine
+overflow, then click Save or Export editable PPTX.
+
+Expected: no write/export and the same `[5,7)` editing selection available for
+range-only correction. Actual for **both** actions:
+`{start:5,end:5,editing:false,text:"Lead 中文 tail",sizes:[120,120]}`.
+Fullscreen preview denial instead retains `{start:5,end:7,editing:true}`.
+Repeated independently in the narrow probes and final grouped invocation.
+
+Cause localized to `src/components/presentation-canvas.tsx:142–149`, especially
+**line 145**, which calls `exitEditing()` under the disabled/action lock.
+Save sets pending at `presentation-editor.tsx:225`; export sets uploading at
+line 252. Object selection survives, but **character-range** selection does
+not. Text is not lost and no forbidden write/export occurs; the user must
+reselect before range-only correction. Otherwise formatting uses the
+whole-textbox branch at `presentation-canvas.tsx:100–102` (source-derived impact).
+
+Retained failing regression:
+`tests/presentation-font-layout.test.mjs:382`, final equality at line 453.
+No product repair attempted. Coordinator/implementer must decide/resolve this
+acceptance gap; the original visible fontsize/stale-height fix itself passes.
+
+### Opened evidence, preservation and cleanup
+
+Actually opened these fresh final-run files (synthetic fixtures only):
+
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-font-layout-hIPj9A\before.png`
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-font-layout-hIPj9A\after.png`
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-font-errors-yIyN42\overflow.png`
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-font-qa-EFDFzk\recovered-mobile-size8.png`
+
+These show 24 before/13 after saved export, the genuine clipped-bottom error,
+and visible unobscured mobile size-8 control/native arrows. Also opened baseline
+`forge-font-layout-VGr5oE\{before,after}.png`,
+`forge-font-errors-6dCbdg\{invalid-size,overflow}.png`,
+`forge-presentation-9tfL4T\editor320.png` and intermediate
+`forge-font-qa-cnuAj3\{denied-range,recovered-mobile-size8}.png` under the same
+Temp root. Other generated files are not claimed visually inspected.
+
+Initial working tree already contained four modified product files and the
+modified UI test, plus README/tracker and the untracked font test. QA changed **only**
+`tests/presentation-font-layout.test.mjs` (two appended tests), README and this
+tracker. All **191 other protected files** under src/tests/supabase plus seven
+root manifests/config/type files have identical before/after SHA-256 inventory:
+`851df1368a3c6240e076a8cf0b7c5d83a94b5ad31d1f3c2dc41b88709e552132`.
+Inventory is sorted relative slash paths, then SHA256 of each
+`path + NUL + SHA256(contents) + LF`. Original six-test prefix is unchanged
+modulo LF normalization: restoring CRLF gives original SHA-256
+`0c9fca3405deb17d83d6f632eb66153a1779e5164a886499176a3c468e5fed3f`.
+Final font test SHA-256:
+`3c07ad2e3044249514a136511051a0a345822654565a59e66a3aa3c5d6ea1501`.
+Existing UI test, product/config/schema and historical `*_ran` files preserved.
+Scoped Git whitespace check passed; no full source diff/reread was performed.
+
+All test/browser contexts and browsers closed; PGlite closed in finally,
+including failed assertions. All QA command sessions completed; no server or
+helper remains. Synthetic screenshots retained as evidence; no remote fixture
+or storage cleanup was needed, and no cleanup failure was reported.
+
+**Not verified:** full native PowerPoint desktop fidelity/font substitution,
+post-edit native reflow, PptxGenJS empty-paragraph caret font family, actual
+mobile hardware/IME, remote database RLS/storage/provider behavior, other
+permissions or global release requirements. No content was added to conceal
+empty-text export limitations. Screenshot evidence is not a native-PPTX proxy.
+
+## 5 November 2026 — bounded presentation font/height functional fix (QA requested)
+
+**Ownership:** implementation only; ParentCoordinator retains planning and
+acceptance. No nested agents or release certification. Initial Git working tree
+was clean; prior polished sources preserved. Sibling skills were absent; loaded
+repository `.github/skills/forge-{delivery,verification,security}/SKILL.md`,
+README/tracker, package, controlling editor/canvas/model/adapter/export/view and
+the current browser/authoring/offline harnesses before edits.
+
+### Reproduction, causes and chosen contract
+
+Added `tests/presentation-font-layout.test.mjs` and ran it against unchanged
+product sources through the OS-only network-denying runner. **0/2 passed**:
+
+* Actual keyboard clear + sequential `48` left `24`, not `48`. The controlled
+  field discarded blank/first-digit states, then rebound to the first run.
+* A textbox containing `"Wrapped 中文 text ".repeat(9)`, width 210, height 1,
+  at (60,70), rendered **0 objects**, although its measured text fits the slide.
+  Fabric ignored canonical `h` and measured intrinsic text height, while draw
+  and save/export rejected the stale stored height outright. Plain replacement
+  and numeric width edits did not update that height.
+
+The falsifiable hypothesis was that input draft rejection and stale layout,
+not containment of the textbox rectangle alone, caused the report. Fresh
+Fabric measurements also demonstrate **real** bottom/rotated overflow, so those
+cases are not treated as false positives.
+
+**Height policy:** canonical `h` is a minimum reserved height. The one Fabric
+textbox factory measures the required height at the canonical width; fitting
+edits grow `h` with ceiling-to-two-decimals, preserve larger reserved space,
+and show that space in the canvas outline. Font shrinking does not implicitly
+discard it. Explicit Height may shrink spare space, but not below required
+text. Font/text/width edits commit height with content in the same history
+change. Legacy fitting stale heights recover in memory and remain unsaved until
+explicit save. Required geometry that cannot fit, including rotated corners,
+keeps text/style input editable with an error; save/export/preview are blocked.
+No font reduction, dropped text, invisible-character or raster fallback.
+
+Capture measures **after** rounding width, bakes transforms back to scale 1, and
+reconstructs from that same width/font size. Repeated capture/save no longer
+multiplies the reserved height or leaves a scale that multiplies the next font
+edit. Empty paragraphs use their object/paragraph style rather than default 28.
+Canvas capture uses schema-normalized data to avoid key-order-only dirty saves.
+Rejected transform restoration now handles promise rejection explicitly.
+
+Font size has a local string draft, Enter/blur confirmation, native number-key
+stepping and explicit 8–120 validation without focus stealing. Invalid drafts
+also block save/export/preview. Selection font/size are read from Fabric;
+nonuniform selections report Mixed. Formatting stays grapheme/range-specific.
+Save/export/preview flush the canvas first. Save/export lock no longer discards
+the selection, so a failed action can be corrected immediately.
+
+Native PPTX uses the validated fitting geometry and the **same Fabric visual
+lines**, exported as editable soft breaks with line-height 1.16 and automatic
+native rewrapping disabled. Original paragraph breaks remain paragraphs.
+This intentionally preserves current browser wrapping, not automatic reflow
+after later edits in desktop PowerPoint.
+
+### Exact changed files
+
+* `src/lib/presentation-fabric.ts` — shared measurement/minimum-height policy,
+  recoverable draw, capture/scale/roundtrip and empty styles, export visual lines.
+* `src/components/presentation-canvas.tsx` — measured commits, selection style,
+  restore rejection handling, retained selection under action locks.
+* `src/components/presentation-editor.tsx` — editable font-size draft/Mixed/error
+  control, inspector measurement, action flush/validation and normalized save.
+* `src/lib/presentation-export.ts` — normalized geometry and editable measured wraps.
+* `tests/presentation-font-layout.test.mjs` — six focused real-browser regressions.
+* `tests/presentation-ui.test.mjs` — replace the old `h=1`-alone rejection with a
+  **real required-text bottom overflow** (`y=535,h=1,rotation=0`). Fitting stale
+  `h=1` recovery has separate new coverage; missing-image failure still passes.
+* `README.md`, `IMPLEMENTATION_TRACKER.md` — current behavior/evidence only.
+
+No model schema, global layout/CSS, upload, actions, authorization, AI, assets,
+dependency/configuration or historical `*_ran` file changed.
+
+### Commands, results and iterations
+
+All commands ran from repository cwd; existing Node/Chromium/PGlite only.
+
+```powershell
+# Initial reproduction: 0/2 passed, 2 expected failures, exit 1, 14056.688ms.
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\presentation-font-layout.test.mjs
+
+# Grouped current-source related checks: 18/19 passed, exit 1, 228364.4184ms.
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\presentation-font-layout.test.mjs tests\presentation-ui.test.mjs tests\presentation-layout.test.mjs tests\presentation-model.test.mjs tests\presentation-upload.test.mjs tests\presentation-workspace-qa.test.mjs tests\presentation-compatibility.test.mjs
+
+# Final six focused regressions: 6/6 passed, no skips/cancellations, exit 0.
+# 135349.9785ms; same product source as grouped run.
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\presentation-font-layout.test.mjs
+
+# Direct TypeScript and scoped ESLint: passed, exit 0.
+node tests\offline-run.mjs node_modules\typescript\bin\tsc --noEmit --incremental false
+node tests\offline-run.mjs node_modules\eslint\bin\eslint.js src\components\presentation-editor.tsx src\components\presentation-canvas.tsx src\lib\presentation-fabric.ts src\lib\presentation-export.ts tests\presentation-font-layout.test.mjs tests\presentation-ui.test.mjs
+```
+
+**Result accounting:** all **13 existing related tests passed** in the grouped
+run. Its one failure was an additional new assertion that an entirely empty
+native textbox would contain a Courier New run. Inspection showed PptxGenJS
+emits only `endParaRPr sz="4200"`, not a run/family, for empty text. The focused
+test now verifies the retained saved family/size and native empty shape/size
+with **no invented text**; this library limitation is explicitly retained below,
+not represented as repaired. Final **6/6 new tests pass**; no product source
+changed after the grouped run. These are 19 distinct checked tests, not a claimed
+single 19/19 final invocation.
+
+Other intermediate checks caught and fixed: TypeScript optional selection size;
+lint ref writes during render; error text accidentally changing the field's
+accessible name; action locks clearing selection; key-order-only dirty state;
+and repeated transform capture. A separate native-wrap red check showed **0
+soft breaks vs 4 required** before export was fixed. One fractional-coordinate
+fixture used a binary `.005` tie and was changed to an unambiguous `.006`;
+rounding behavior was not loosened.
+
+Measured coverage includes sequential **24→48→12**, ArrowUp→13/blur, invalid
+blank/7/121 retention with no writes, noninitial CJK range 18→48 preserving
+unselected Arial/Times/Courier/marks/newlines, Mixed state, empty object 42,
+reserved Height/movement, plain replacement/width recovery, fitting stale vs
+real bottom/rotated overflow, exact width boundary (2 lines vs 1), fractional
+uniform resize, repeated capture/save and font+height undo/redo. Actual Fabric
+sizes/heights are asserted. Real learning actions save into disposable PGlite;
+readback/reload retains size 13 and text. Downloaded native OOXML proves 13/48
+point runs, CJK/styles, canonical EMU geometry, three original paragraphs
+including the blank one, measured soft breaks and line-height percentage.
+Missing image still blocks native export. Existing dialogs/320px keyboard,
+responsive widths, upload placement/disclosure and scope isolation passed.
+
+### Safety, screenshots, cleanup and remaining limits
+
+A stdin-only probe through `tests/offline-run.mjs` confirmed application
+configuration absent and fetch/socket/HTTP/HTTPS denied synchronously before
+I/O. Browser contexts used offline mode, blocked service workers and aborted
+unexpected requests; all final error/request assertions were empty. Synthetic
+page content was fulfilled in memory, not served by a dev server.
+
+Actually opened final `before.png` / `after.png` in
+`C:\Users\SOLUSER\AppData\Local\Temp\forge-font-layout-DFoeUs\` and
+`invalid-size.png` / `overflow.png` in
+`C:\Users\SOLUSER\AppData\Local\Temp\forge-font-errors-RZXvRo\`.
+Size 13/selection and saved state are visible; invalid 121 and the genuine
+overflow error do not overlap the properties. Also opened the original red
+before screenshot. Browser contexts/browsers and PGlite close in `finally`;
+synthetic screenshots are retained for independent QA. No helper/server remains.
+Whitespace diff check passed using the installed Visual Studio Git binary.
+
+**Independent QA requested, not release approval.** No environment/secrets,
+remote DB/storage/provider/quota, connected e2e/instructor suite, server startup,
+install, migration, full suite/build, deployment or commit was used. Native
+PowerPoint/font substitution and subsequent desktop text reflow are unverified.
+PptxGenJS does not fully represent **empty-paragraph caret formatting** in native
+OOXML; saved editor styles remain intact, and no content is inserted to fake it.
+Coordinator should assess that known export boundary separately from the fixed
+font input/stale-height failure.
+
 ## 5 November 2026 — independent narrow upload-placement retest (passed)
 
 **Scope/ownership:** one fresh bounded post-fix QA, no nested agents, product
@@ -3430,3 +3868,106 @@ Status focus outlines, success-versus-refresh-failure wording, old/latest page l
 Both owned copies `forge-t25-final-local-ESDpUL` and `forge-t25-final-local-b4PzaG`, plus owned scripts `forge-t25-final-qa-runner.mjs` and `forge-t25-final-ui.mjs`, were removed; absence verified. Removed only this run's duplicate captures `forge-task25-qa-4DtEcm`, `forge-task25-qa-1X8hwy` and incidental `forge-auth-CwTzHk`; absence verified. Retained final synthetic evidence and previous work. Browser contexts and PGlite instances closed through test cleanup. No remote fixtures existed; no cleanup failures.
 
 **Open/untested, not passing:** new migration remains unapplied; connected grants/RPC/PostgREST, real multi-session concurrency and transport/hosting timeouts, authenticated routing/current live rights, connected owner export/account cascade, live eligible free-provider availability/quality, provider/backup/log retention, privacy/region eligibility and deployment gates. No environment-file inspection/modification, Supabase/mail/provider calls, setup/AI probes, connected E2E/instructor suites, dev server, migration application, installs, commits or deployment. Task24 coding runtime and broader Group A remain open and were not implemented by this work. No unresolved product defect was found within this narrow local repair scope.
+
+## 5 November 2026 — final independent narrow font/height/denied-range acceptance
+
+**Owner: independent QA. Scope: only the requested unchanged font-layout/UI pair.**
+Read the current repair entry and harnesses; loaded the repository delivery,
+security and verification skills (the requested sibling skill paths are absent).
+Prior implementation/QA results above are historical, not this run's evidence.
+No agents, product edits, test edits, temporary probes or expanded review.
+
+### Safety and actual command
+
+Repository cwd: `C:\Ken\PolyU\COMP5241\Project\COMP5241-Project`.
+Before execution, inspected `offline-run.mjs` (OS-only child environment, no
+application environment loader) and its network-denial import (fetch,
+HTTP/HTTPS/net/TLS/Socket.connect denied). Browser contexts are offline,
+service workers blocked, unexpected routes aborted; HTML/image routes are
+fulfilled in memory. Fixtures are synthetic; PGlite uses disposable memory,
+with database/browser/context and request gates released by harness cleanup.
+No environment-file contents read or application server started.
+
+Exactly one test invocation, unchanged:
+
+```powershell
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\presentation-font-layout.test.mjs tests\presentation-ui.test.mjs
+```
+
+**Actual: 13 tests, 13 passed, 0 failed/cancelled/skipped/todo; exit 0;
+duration 53591.1506ms.** No additional test/build/lint/type commands ran.
+
+### Accepted checks and retained assertion
+
+- Original sequential font drafts **24 -> 48 -> 12**, Enter, blur, keyboard
+  arrows and native pointer spinner pass, including mobile minimum 8 and
+  increment to 9. Mixed/noninitial ranges, CJK, empty text and newlines remain
+  asserted against actual Fabric styles and saved/native editable text.
+- Stale height, wrapping/autogrow, reserved height on shrinking, fractional
+  resize/scale-once, repeat-save drift and rotated/real bounds remain meaningful.
+  Real action/PGlite reopen/native OOXML fixture reported required height
+  **121.49759999999996**, saved **121.5**, width **210**, rotation **7**, font **24**.
+  Foreign-owner update was denied without writes or content changes.
+- Retained `QA: noninitial overflow selection...` assertion remains intact.
+  Actual denial output for **both Save and Export** (and preview) was
+  `{start:5,end:7,editing:true,text:"Lead 中文 tail",sizes:[120,120]}`.
+  The original probe chooses the range before each independent action, then
+  reads it immediately after denial without reselection; its final deep
+  equality checks the complete selection/editing state for every action.
+  Denials cause no writes/downloads/preview dialog.
+- Added `temporary validation locks...` loops over Save and Export separately:
+  no reselection or enterEditing occurs between denial and size-18 correction.
+  Complete paragraphs/fonts/marks prove only the original Chinese characters
+  change; other characters remain intact. Rendered pixels match before/after
+  denial; accessible alert retains focus. Undo/redo and saved paragraphs agree.
+- Real validation and pending request gates prevent native text/style/geometry
+  mutations. Denied-request caret/multiselect recovery and persistent unknown
+  save locking pass. Desktop IME and 320px keyboard/overflow workflows reran.
+
+No product failures reproduced; no implementer escalation needed. These are
+local bug acceptance passes, not a fresh broad permissions or release audit.
+
+### Evidence, preservation and cleanup
+
+Retained **8 synthetic PNGs**, two in each directory under
+`C:\Users\SOLUSER\AppData\Local\Temp\`:
+`forge-font-layout-y1CvAJ`, `forge-font-errors-Djj469`,
+`forge-font-qa-2uYpCt`, `forge-presentation-ucMn6Q`.
+Independently opened only `forge-font-qa-2uYpCt\denied-range.png` and
+`recovered-mobile-size8.png`: desktop overflow notice/size and 320px size/spinner
+controls are visible. Full-page canvas captures are not desktop PowerPoint or
+complete rendering certification; actual object/style/pixel assertions supply
+the range/rendering evidence. Other six captures were not visually inspected.
+
+Only this evidence was appended to README/tracker. Before/after SHA-256
+inventories hash sorted relative paths plus each file's SHA-256, with counts:
+
+| Protected inventory | Files | Identical aggregate SHA-256 |
+| --- | ---: | --- |
+| src | 111 | `69c3204c8c6463a65ed060858134d0994387c31d7ddcac0cc529ae3c7931588a` |
+| supabase | 17 | `0e7bba2aa21c603c40a62244091e40c3e2f7c93d063224ba350e8da7fe909691` |
+| scripts | 3 | `6344ca06ce5c3ccd75bd504d73d51f297a2ed433d05e95cff06d7db430ee7e75` |
+| tests | 57 | `2eb29d4cf9af731bda9c64c29898ab31404f3875d5d38588b7ba502cc50dc1d8` |
+| .github | 8 | `4154ed66f0bc3a98df591e6bcfc722fc898c3c5a15836a15f3bd49a93d2b6936` |
+| Root non-Markdown/PDF/environment files | 8 | `95dded88d919b256d05766ca0442c1a5a0aa30ac0ff66281fb4066c24302c722` |
+
+Total **204 unchanged protected files**, including every test/harness and
+product/schema/config file in those inventories. No Git diff claim: Git is
+unavailable on this shell's PATH. Existing changes were not reverted.
+The post-document metadata command verified all fingerprints, then initially
+failed its heading lookup because PowerShell's stdin encoding replaced an em
+dash. An ASCII-only marker retry verified both appended sections and no new
+trailing whitespace; this was not a test/product failure or another test run.
+Test process exited successfully after finally cleanup; post-run process check
+found **0 Playwright Chromium profiles and 0 matching test processes**. No helper
+or remote fixture exists; no cleanup failure. Synthetic PNG evidence retained.
+
+### Untested limits, separate from passes
+
+Connected Next routing/action transport, live Supabase authorization/storage,
+full permissions/accessibility/release gates, and native desktop PowerPoint,
+font substitution and empty-paragraph caret formatting were not certified.
+No environment files/setup loader, connected E2E/instructor tests, remote
+DB/storage/provider/quota use, server startup, install, migration application,
+full suite/build/lint/types, commit or deployment. Historical unrelated open
+requirements remain open. **Local font/height/denied-range acceptance passes.**

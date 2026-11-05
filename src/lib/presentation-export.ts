@@ -2,9 +2,8 @@ import { presentationSchema, type Presentation } from "./presentation";
 
 // All coordinates are native slide units (72px/in at 960x540). Never screenshots.
 export async function presentationPptx(document:Presentation,resolve:(id:string)=>Promise<string>) {
-  const doc=presentationSchema.parse(document);
-  const {validateTextLayout}=await import("@/lib/presentation-fabric");
-  await validateTextLayout(doc);
+  const {validateTextLayout,textLinesForExport}=await import("@/lib/presentation-fabric");
+  const doc=await validateTextLayout(presentationSchema.parse(document));
   const {default:PptxGenJS}=await import("pptxgenjs");
   const pptx=new PptxGenJS();
   pptx.defineLayout({name:"FORGE",width:960/72,height:540/72});pptx.layout="FORGE";
@@ -25,11 +24,16 @@ export async function presentationPptx(document:Presentation,resolve:(id:string)
         y:(e.y+Math.sin(radians)*e.w/2+Math.cos(radians)*e.h/2-e.h/2)/72,
         w:e.w/72,h:e.h/72,rotate:((e.rotation%360)+360)%360};
       if(e.type==="text"){
-        const runs=e.paragraphs.flatMap((p,index)=>[
-          ...p.runs.map(r=>({text:r.text,options:{fontFace:r.font,fontSize:r.size,color:r.color.slice(1),bold:r.bold,italic:r.italic,underline:r.underline?{style:"sng" as const}:undefined}})),
-          ...(index<e.paragraphs.length-1?[{text:"\n",options:{}}]:[]),
-        ]);
-        slide.addText(runs,{...bounds,margin:0,align:e.align,valign:"top",breakLine:false,paraSpaceAfter:0,lang:"zh-CN"});
+        // Export Fabric's visual wraps as editable shift-enter breaks. Native
+        // word-wrapping must not reflow our grapheme-wrapped text into more lines.
+        // Original paragraph breaks remain paragraphs, including empty lines.
+        const {lines,lineHeight}=textLinesForExport(e);
+        const runs=lines.flatMap((line,index)=>line.runs.map((r,run)=>({text:r.text,options:{
+          fontFace:r.font,fontSize:r.size,color:r.color.slice(1),bold:r.bold,italic:r.italic,underline:r.underline?{style:"sng" as const}:undefined,
+          softBreakBefore:index>0&&!lines[index-1].paragraphEnd&&run===0,
+          breakLine:line.paragraphEnd&&index<lines.length-1&&run===line.runs.length-1,
+        }})));
+        slide.addText(runs,{...bounds,margin:0,align:e.align,valign:"top",wrap:false,lineSpacingMultiple:lineHeight,paraSpaceAfter:0,lang:"zh-CN"});
       } else if(e.type==="image")slide.addImage({...bounds,data:images.get(e.assetId)!,altText:e.alt});
       else {
         const shape={rect:pptx.ShapeType.rect,roundedrect:pptx.ShapeType.roundRect,ellipse:pptx.ShapeType.ellipse,line:pptx.ShapeType.line,arrow:pptx.ShapeType.rightArrow}[e.shape];

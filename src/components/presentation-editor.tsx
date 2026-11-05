@@ -1,14 +1,38 @@
 "use client";
 
-import {useCallback,useEffect,useRef,useState,type KeyboardEvent} from "react";
+import {useCallback,useEffect,useImperativeHandle,useRef,useState,type KeyboardEvent,type RefObject} from "react";
 import {useRouter} from "next/navigation";
 import {createManualLesson,updateLesson,type ActionState} from "@/app/learning/actions";
 import {beginPresentationDraft,uploadPresentationImage,discardPresentationDraft,cleanExpiredPresentationUploads} from "@/app/presentation/actions";
 import {PresentationHistory,blankPresentation,defaultRun,duplicateSlide,legacyPresentation,newSlide,newText,paragraphs,
   elementSchema,presentationAuthorSchema,presentationSchema,PRESENTATION_FONTS,textOf,type PresentationAuthor,type PresentationElement,type PresentationSlide,type RunStyle} from "@/lib/presentation";
 import type {AuthorLesson} from "@/lib/slide-lesson";
-import {PresentationCanvasEditor,type CanvasHandle} from "./presentation-canvas";
+import {PresentationCanvasEditor,type CanvasHandle,type CanvasTextStyle} from "./presentation-canvas";
 import {assetUrl,PresentationView} from "./presentation-view";
+
+type FontSizeHandle={flush:()=>boolean};
+function FontSizeInput({value,onApply,handle}:{value:number|null;onApply:(size:number)=>void;handle:RefObject<FontSizeHandle|null>}){
+  const [draft,setDraft]=useState(value===null?"":String(value)),[error,setError]=useState("");
+  const focused=useRef(false),changed=useRef(false);
+  useEffect(()=>{if(!focused.current){setDraft(value===null?"":String(value));setError("");changed.current=false;}},[value]);
+  function flush(){
+    // An untouched mixed field is not a request to replace the selection.
+    if(value===null&&!draft&&!changed.current)return true;
+    const size=Number(draft);
+    if(!draft.trim()||!Number.isFinite(size)||size<8||size>120){
+      setError("Enter a font size from 8 to 120.");return false;
+    }
+    setError("");changed.current=false;if(size!==value)onApply(size);return true;
+  }
+  useImperativeHandle(handle,()=>({flush}));
+  return <><label>Font size<input type="number" min={8} max={120} step={1} value={draft} placeholder={value===null?"Mixed":undefined}
+    aria-invalid={Boolean(error)} aria-describedby={error?"presentation-font-error":undefined}
+    onFocus={()=>{focused.current=true;}} onChange={event=>{changed.current=true;setDraft(event.target.value);setError("");}}
+    onBlur={()=>{focused.current=false;flush();}}
+    onKeyDown={event=>{if(event.key==="Enter"){event.preventDefault();flush();}}}/></label>
+    {error&&<span id="presentation-font-error" role="alert">{error}</span>}
+  </>;
+}
 
 export function PresentationLessonEditor({lessonId="",version=1,initial,initialLegacy,onSaveLock}:{
   lessonId?:string;version?:number;initial?:PresentationAuthor;initialLegacy?:AuthorLesson;onSaveLock?:(locked:boolean)=>void;
@@ -18,6 +42,7 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
   const [draft,setDraft]=useState(history.value);
   const [slideId,setSlideId]=useState(history.value.document.slides[0].id);
   const [selection,setSelection]=useState<string[]>([]);
+  const [textStyle,setTextStyle]=useState<CanvasTextStyle|null>(null);
   const [ack,setAck]=useState({id:lessonId,version});
   const [draftId,setDraftId]=useState("");
   const [pending,setPending]=useState(false),[uploading,setUploading]=useState(false),[uncertain,setUncertain]=useState(false);
@@ -29,6 +54,7 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
   const [positionOpen,setPositionOpen]=useState(false),[arrangeOpen,setArrangeOpen]=useState(false),[contentOpen,setContentOpen]=useState(false);
   const inFlight=useRef(false),blocked=useRef(false),live=useRef(true);
   const canvas=useRef<CanvasHandle|null>(null),notice=useRef<HTMLParagraphElement>(null),dialog=useRef<HTMLDialogElement>(null);
+  const fontSize=useRef<FontSizeHandle|null>(null),quietError=useRef("");
   const panelNotice=useRef<HTMLParagraphElement>(null);
   const panelDialog=useRef<HTMLDialogElement>(null),panelTrigger=useRef<HTMLButtonElement|null>(null);
   const slidesPanel=useRef<HTMLDetailsElement>(null),propertiesPanel=useRef<HTMLDetailsElement>(null);
@@ -39,11 +65,14 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
   const selected=slide.elements.filter(e=>selection.includes(e.id));
   const primary=selected[0];
   const locked=pending||uncertain||uploading;
-  const reportError=useCallback((message:string)=>setError(message),[]);
+  const reportError=useCallback((message:string)=>{quietError.current=message;setError(message);},[]);
   // Source identity changes only on a real draft/lesson scope change, not typing.
   const source=useCallback((id:string)=>assetUrl(id,{draftId:draftId||undefined,lessonId:ack.id}),[draftId,ack.id]);
   useEffect(()=>{live.current=true;return()=>{live.current=false;};},[]);
-  useEffect(()=>{if(error||success)(panelDialog.current?.open?panelNotice:notice).current?.focus();},[error,success]);
+  useEffect(()=>{
+    if(error&&error===quietError.current){quietError.current="";return;}
+    if(error||success)(panelDialog.current?.open?panelNotice:notice).current?.focus();
+  },[error,success]);
   useEffect(()=>{
     if(saved===JSON.stringify(draft)&&!uncertain)return;
     const prevent=(event:BeforeUnloadEvent)=>event.preventDefault();
@@ -109,7 +138,8 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
   },[commit,history]);
   function patchSlide(patch:Partial<PresentationSlide>,group=""){changeSlide({...slide,...patch},group);}
   function patchElements(fn:(element:PresentationElement)=>PresentationElement,group=""){
-    const next={...slide,elements:slide.elements.map(e=>selection.includes(e.id)?fn(e):e)};
+    const next=canvas.current?.layout({...slide,elements:slide.elements.map(e=>selection.includes(e.id)?fn(e):e)});
+    if(!next)return;
     const parsed=presentationSchema.safeParse({...draft.document,slides:draft.document.slides.map(s=>s.id===slide.id?next:s)});
     if(!parsed.success){setError(parsed.error.issues[0]?.message??"Invalid object properties.");return;}
     changeSlide(next,group);
@@ -189,14 +219,17 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
   }
   async function save(intent:"save"|"publish"){
     if(inFlight.current||blocked.current||uploading)return;
+    if((fontSize.current&&!fontSize.current.flush())||!canvas.current?.flush())return;
     const parsed=presentationAuthorSchema.safeParse(history.value);
     if(!parsed.success){setError(`${parsed.error.issues[0]?.path.join(".")}: ${parsed.error.issues[0]?.message}`);return;}
-    inFlight.current=true;setPending(true);onSaveLock?.(true);setError("");setSuccess("");
-    const form=new FormData();
-    for(const [k,v] of Object.entries({template:"slides",format:"presentation",content:JSON.stringify(parsed.data),intent,lessonId:ack.id,version:String(ack.version),draftId}))form.set(k,v);
+    inFlight.current=true;setPending(true);onSaveLock?.(true);quietError.current="";setError("");setSuccess("");
     let dispatched=false;
     try{
-      const {validateTextLayout}=await import("@/lib/presentation-fabric");await validateTextLayout(parsed.data.document);
+      const {validateTextLayout}=await import("@/lib/presentation-fabric");
+      const normalized={...parsed.data,document:await validateTextLayout(parsed.data.document)};
+      history.commit(normalized);setDraft(history.value);
+      const form=new FormData();
+      for(const [k,v] of Object.entries({template:"slides",format:"presentation",content:JSON.stringify(normalized),intent,lessonId:ack.id,version:String(ack.version),draftId}))form.set(k,v);
       dispatched=true;
       const result:ActionState=ack.id?await updateLesson({},form):await createManualLesson({},form);
       if(!live.current)return;
@@ -205,7 +238,7 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
       }else if(result.error)setError(result.error);
       else{
         setAck({id:result.lessonId!,version:result.version!});
-        setSaved(JSON.stringify(parsed.data));setSuccess(`${result.success} Version ${result.version}.`);router.refresh();
+        setSaved(JSON.stringify(normalized));setSuccess(`${result.success} Version ${result.version}.`);router.refresh();
       }
     }catch(e){if(live.current){
       if(dispatched){blocked.current=true;setUncertain(true);setError("Save outcome is unknown. Keep this tab and reconcile Your lessons before retrying.");}
@@ -215,7 +248,10 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
   }
   async function exportPptx(){
     if(locked)return;
-    setUploading(true);setError("");
+    if((fontSize.current&&!fontSize.current.flush())||!canvas.current?.flush())return;
+    // Explicit action failures must focus the notice, even when flush just
+    // reported the same layout error quietly during canvas editing.
+    setUploading(true);quietError.current="";setError("");
     try{
       const {presentationPptx,fetchAssetData}=await import("@/lib/presentation-export");
       const blob=await presentationPptx(history.value.document,id=>fetchAssetData(source(id)));
@@ -224,6 +260,15 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
       setSuccess("Native editable PPTX exported. Review font and wrapping fidelity in PowerPoint.");
     }catch(e){setError(e instanceof Error?e.message:"Export failed. No partial PPTX was produced.");}
     finally{if(live.current)setUploading(false);}
+  }
+  async function openPreview(){
+    if(locked)return;
+    if((fontSize.current&&!fontSize.current.flush())||!canvas.current?.flush())return;
+    try{
+      const {validateTextLayout}=await import("@/lib/presentation-fabric");
+      await validateTextLayout(history.value.document);
+      setPreviewError("");setPreviewIndex(index);setPreview(true);
+    }catch(error){setError(error instanceof Error?error.message:"Slide validation failed. Preview was not opened.");}
   }
   async function discard(){
     if(locked||!window.confirm("Discard unsaved input and undo history? Saved lesson images remain; unused draft images will be removed."))return;
@@ -257,7 +302,7 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
         <label className="presentation-upload">Insert PNG/JPEG<input type="file" accept="image/png,image/jpeg" onChange={e=>{void image(e.target.files?.[0]);e.target.value="";}}/></label>
       </fieldset>
       <fieldset disabled={locked} className="presentation-toolbar" aria-label="Preview and export">
-        <button ref={previewTrigger} type="button" onClick={()=>{setPreviewError("");setPreviewIndex(index);setPreview(true);}}>Fullscreen preview</button>
+        <button ref={previewTrigger} type="button" onClick={()=>void openPreview()}>Fullscreen preview</button>
         <button type="button" onClick={()=>void exportPptx()}>Export editable PPTX</button>
       </fieldset>
       <div className="presentation-toolbar presentation-utilities">
@@ -288,7 +333,7 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
           <label>Background<input type="color" value={slide.background} onChange={e=>patchSlide({background:e.target.value})}/></label>
         </fieldset>
         <div className="presentation-stage">
-          <PresentationCanvasEditor slide={slide} source={source} onChange={changeSlide} onSelect={setSelection} onError={reportError} handle={canvas} selection={selection} disabled={locked}/>
+          <PresentationCanvasEditor slide={slide} source={source} onChange={changeSlide} onSelect={setSelection} onTextStyle={setTextStyle} onError={reportError} handle={canvas} selection={selection} disabled={locked}/>
         </div>
         <fieldset disabled={locked} className="presentation-toolbar presentation-slide-navigation">
           <span>Slide {index+1} / {draft.document.slides.length} · {slide.elements.length} objects · 16:9</span>
@@ -326,8 +371,9 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
             {primary.type==="text"&&<>
               <h3>Text style</h3>
               <div className="presentation-toolbar">{(["bold","italic","underline"] as const).map(mark=><button type="button" key={mark} onMouseDown={e=>e.preventDefault()} onClick={()=>canvas.current?.toggle(mark)}>{mark}</button>)}</div>
-              <label>Font<select value={style.font} onChange={e=>font({font:e.target.value as RunStyle["font"]})}>{PRESENTATION_FONTS.map(f=><option key={f}>{f}</option>)}</select></label>
-              <label>Font size<input type="number" min={8} max={120} value={style.size} onChange={e=>{const size=Number(e.target.value);if(size>=8&&size<=120)font({size});}}/></label>
+              <label>Font<select value={textStyle?textStyle.font??"":style.font} onChange={e=>font({font:e.target.value as RunStyle["font"]})}>
+                {textStyle?.font===null&&<option value="" disabled>Mixed</option>}{PRESENTATION_FONTS.map(f=><option key={f}>{f}</option>)}</select></label>
+              <FontSizeInput key={selection.join()} value={textStyle?textStyle.size:style.size} onApply={size=>font({size})} handle={fontSize}/>
               <label>Text colour<input type="color" value={style.color} onChange={e=>font({color:e.target.value})}/></label>
               <label>Text alignment<select value={primary.align} onChange={e=>patchElements(o=>o.type==="text"?{...o,align:e.target.value as "left"|"center"|"right"}:o)}><option>left</option><option>center</option><option>right</option></select></label>
               <details className="presentation-text-content" open={contentOpen}><summary onClick={e=>{e.preventDefault();setContentOpen(v=>!v);}}>Text content &amp; formatting help</summary>

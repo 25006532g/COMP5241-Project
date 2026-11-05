@@ -6,6 +6,97 @@ For a presentation-ready overview of features, design choices and prototype scre
 
 Track remaining work, blockers, acceptance criteria and verification updates in [IMPLEMENTATION_TRACKER.md](IMPLEMENTATION_TRACKER.md).
 
+## 5 November 2026 — bounded denied-action selection repair
+
+Save/Export validation denial now retains Fabric editing and the original
+character range **[5,7)**. Temporary locks disable the native textarea instead
+of exiting editing; pending requests still reject input, and unknown-save locks
+remain locked. Explicit action errors focus the accessible notice, not the
+textarea. Range-only correction needs no reselection and preserves other runs.
+
+The retained QA probe passed unchanged after first reproducing its failure.
+Added two focused regressions for correction/history, notice focus, actual
+rendered text, pending-data immutability, caret/multiselect and unknown locks.
+Final offline font-layout/UI pair: **13/13 passed**, no skips/cancellations;
+scoped component ESLint, direct TypeScript and whitespace checks passed.
+Only canvas/editor coordination, appended font tests and these two documents
+changed; **201 other files fingerprint identically**. Browsers/PGlite closed.
+
+**Independent narrow QA requested; not release approval.** No server, connected
+services, dependencies, migrations, full suite/build or deployment. Existing
+desktop PowerPoint/empty-paragraph limitations remain. Exact commands, failures,
+cleanup and screenshot limitations are in the newest tracker entry below.
+The prior open-defect entry is retained as historical QA evidence.
+
+## 5 November 2026 — independent font/height retest: one selection gap
+
+Original keyboard **24→48→12** and fitting stale-height regressions pass
+independently. The unchanged requested pair passed **9/9**; after two bounded
+QA additions, the final pair is **10 passed / 1 failed** (no skips/cancellations,
+exit 1, 53.6147051s):
+
+```powershell
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\presentation-font-layout.test.mjs tests\presentation-ui.test.mjs
+```
+
+Canonical sizes, actual Fabric measurements, real save/PGlite reopen and native
+editable OOXML agree. A stale-height fixture measured **121.4976**, saved
+**121.50**, and preserved width 210/rotation 7°. Real overflow blocks writes and
+downloads; font reduction, widening and movement recover. Range/Mixed/CJK,
+empty text/newlines/fonts, undo/redo, scale-once resize, reserved height,
+invalid input, inclusive 8–120, mobile blur and a real spinner click are checked.
+
+**Open defect for coordinator/implementer:** Save/export denial exits text
+editing and collapses character selection **[5,7)→[5,5)** at
+`src/components/presentation-canvas.tsx:145`; preview denial retains it.
+Text/styles survive, but range-only correction requires reselecting.
+The failing QA regression is retained; no product code was changed.
+
+Opened final before/after screenshots in
+`C:\Users\SOLUSER\AppData\Local\Temp\forge-font-layout-hIPj9A\`,
+`forge-font-errors-yIyN42\overflow.png` and
+`forge-font-qa-EFDFzk\recovered-mobile-size8.png` (same Temp root).
+Desktop error/size and mobile size controls are visible/unobscured.
+Only the focused font test and README/tracker changed in QA; **191 other
+protected files fingerprint identically**. Browsers/PGlite closed, no helper
+remains; synthetic screenshots retained.
+
+**Bounded local acceptance with an open selection defect, not release approval.**
+Coordinator owns acceptance. OS-only/network-denying fixtures; no remote
+services, server, full suite/build/types, install or migration. Native desktop
+PowerPoint fidelity and empty-paragraph caret formatting remain unverified
+limitations. Exact iterations, defect repro, fingerprints and cleanup are in
+the latest tracker entry; prior implementation reports below are not QA passes.
+
+## 5 November 2026 — presentation font-size / text-height functional fix
+
+Reproduced both bugs in real offline React/Fabric: sequentially typing `48`
+snapped back to `24`, and a fitting textbox with stale stored height rendered
+no objects. Font size now accepts draft input, confirms on **Enter or blur**,
+retains invalid input with an **8–120** error, and reports the applied character
+selection (or **Mixed**) rather than always the first run.
+
+Textbox Height is a **minimum reserved height**: Fabric measures at the saved
+width and grows it upwards to two decimals when needed. Larger boxes survive
+movement/font shrinking; explicit Height can reduce spare space, not clip text.
+Font/text/width edits and resize capture use the same measurement. Legacy stale
+heights recover in memory; only an explicit save persists them. Actual text
+outside the slide, including rotated corners, still blocks save/export/preview
+and retains the text and selection for correction. Native PPTX exports editable
+runs with browser-measured soft line breaks, not screenshots or reduced fonts.
+
+**6/6 new browser regressions passed; 13/13 related existing checks passed**,
+including UI, layout, native export, model and prior upload/workspace coverage.
+Direct TypeScript, scoped ESLint and whitespace checks passed. PGlite saves and
+reloads, native OOXML sizes/geometry/wraps, undo/redo and opened screenshots are
+recorded in the tracker, including intermediate failures.
+
+**Independent QA requested; coordinator owns acceptance.** No connected services,
+server, dependencies, migrations, global CSS, full suite/build or deployment
+changed/run. Desktop PowerPoint/font substitution is unverified. PptxGenJS does
+not emit text runs for empty paragraphs: saved editor styles survive, but native
+empty-paragraph caret formatting is limited; no invisible characters are added.
+
 ## 5 November 2026 — independent narrow upload retest: passed
 
 Independently ran only the two requested files, unchanged, together:
@@ -1128,3 +1219,33 @@ A temporary, external in-memory extension of the unchanged UI harness added inde
 Only README/tracker QA evidence was appended in the repository. A SHA-256 snapshot of **102 source/config/test/schema/script files** was unchanged across both isolated executions; no Git diff claim. Both owned temporary copies and two QA scripts were removed with absence verified; duplicate current-run interview/auth capture directories were removed, retained evidence and prior work preserved. Browser contexts and in-memory databases closed through harness cleanup; no remote fixtures or cleanup failures.
 
 **Untested/open, not passes:** the new migration is unapplied; connected grants/RPC/PostgREST, real multi-session concurrency, authenticated routing/action transport/live rights, owner export/account cascade, live eligible free-provider behavior, provider/backup/log retention and deployment/privacy acceptance. No setup/AI probes, E2E/instructor suites, Supabase/mail calls, migration applies, commits or deployment ran. Task24 coding runtime and broader Group A requirements remain open, not implemented by this repair or QA.
+
+## 5 November 2026 — final independent narrow font/height/range retest
+
+Ran the unchanged requested pair once from the repository root:
+
+```powershell
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\presentation-font-layout.test.mjs tests\presentation-ui.test.mjs
+```
+
+**Actual independent result: 13/13 passed**, exit 0, 53.5911506s; no failures,
+skips, cancellations or todos. Font draft/keyboard/spinner, text-height/geometry,
+real save/PGlite reopen and native editable OOXML acceptance passed. The retained
+probe verified Save and Export both preserve **[5,7), editing=true** immediately
+after denial. The added regression corrected only those original characters
+without reselection, preserved other runs/marks/fonts, and passed undo/redo/save.
+Validation/pending input exclusion, accessible error focus and unknown-save
+locking passed.
+
+Only README/tracker evidence was appended; **204 source/schema/config/test/script/
+instruction files** fingerprinted identically before/after. No product/test edits,
+additional probes or other test commands. Harness cleanup closed browsers and
+PGlite; post-run checks found zero matching test/Playwright Chromium processes.
+Eight synthetic PNGs were retained; two independently inspected. Exact evidence,
+fingerprints and screenshot limits are in the final tracker entry.
+
+**Local acceptance for these bugs passes; not global release approval.** Offline
+actual-component tests are not connected Next/Supabase certification, a full
+permissions/accessibility audit, or desktop PowerPoint/font-substitution and
+empty-paragraph caret-formatting certification. No environment files, services,
+installs, migrations, full suite/build/lint/types, commits or deployment used.

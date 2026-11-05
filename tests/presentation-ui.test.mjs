@@ -71,8 +71,9 @@ test("mounted presentation: real Fabric IME, properties/history/slides, native e
       const c=document.createElement("canvas");c.width=2;c.height=2;c.getContext("2d").fillRect(0,0,2,2);
       const blob=await load("@/lib/presentation-export").presentationPptx(doc,async()=>c.toDataURL("image/png"));
       let failed=false;try{await load("@/lib/presentation-export").presentationPptx(doc,async()=>{throw new Error("Missing image");});}catch{failed=true;}
-      const overflow=structuredClone(doc);overflow.slides[0].elements[0].h=1;
-      let overflowFailed=false;try{await load("@/lib/presentation-export").presentationPptx(overflow,async()=>c.toDataURL("image/png"));}catch(e){overflowFailed=e.message.includes("exceeds its height");}
+      const overflow=structuredClone(doc);
+      Object.assign(overflow.slides[0].elements[0],{y:535,h:1,rotation:0});
+      let overflowFailed=false;try{await load("@/lib/presentation-export").presentationPptx(overflow,async()=>c.toDataURL("image/png"));}catch(e){overflowFailed=e.message.includes("outside the slide");}
       return {data:Array.from(new Uint8Array(await blob.arrayBuffer())),failed,slides,overflowFailed};
     });
     assert.equal(native.slides,2);assert.equal(native.failed,true);
