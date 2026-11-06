@@ -1,0 +1,748 @@
+{
+  "profile": "frontend_engineer",
+  "questions": [
+    {
+      "key": "fe-01",
+      "kind": "primary",
+      "prompt": "Why frontend engineering, and why this team’s product?",
+      "sampleAnswer": "Explain attraction to user-facing quality: accessibility, performance, design systems. Cite a product UX detail you admire and a frontend challenge it implies (state, i18n, offline).\n\nAlign with the stack in the job description without pretending expertise you lack.",
+      "keywords": [
+        "motivation",
+        "fit",
+        "frontend",
+        "engineering",
+        "team",
+        "product"
+      ],
+      "relatedKeys": [
+        "fe-37"
+      ]
+    },
+    {
+      "key": "fe-02",
+      "kind": "primary",
+      "prompt": "Tell me about a UI project where requirements changed mid-way. How did you adapt?",
+      "sampleAnswer": "STAR: changing specs, how you protected UX consistency, refactored components, communicated trade-offs, and shipped incremental value.\n\nFrontend roles face frequent design iteration—show calm adaptability.",
+      "keywords": [
+        "behavioural",
+        "STAR",
+        "tell",
+        "project",
+        "requirements",
+        "changed"
+      ],
+      "relatedKeys": [
+        "fe-03",
+        "fe-33",
+        "fe-40"
+      ]
+    },
+    {
+      "key": "fe-03",
+      "kind": "primary",
+      "prompt": "Describe a disagreement with a designer or PM about UX vs engineering constraints.",
+      "sampleAnswer": "Explain constraints (performance, a11y, time), alternatives you proposed (progressive enhancement, phased rollout), and the user-centered outcome.\n\nRespect for design craft + engineering realism.",
+      "keywords": [
+        "behavioural",
+        "STAR",
+        "describe",
+        "disagreement",
+        "designer",
+        "engineering"
+      ],
+      "relatedKeys": [
+        "fe-02",
+        "fe-33",
+        "fe-40"
+      ]
+    },
+    {
+      "key": "fe-04",
+      "kind": "primary",
+      "prompt": "Explain the differences between var, let, and const.",
+      "sampleAnswer": "var is function-scoped and hoisted; let/const are block-scoped. const prevents rebinding (not deep immutability). Prefer const by default, let when reassignment needed, avoid var in modern code.\n\nGive a short temporal-dead-zone example.",
+      "keywords": [
+        "JavaScript",
+        "fundamentals",
+        "explain",
+        "differences",
+        "between",
+        "var"
+      ],
+      "relatedKeys": [
+        "fe-05",
+        "fe-06",
+        "fe-07"
+      ]
+    },
+    {
+      "key": "fe-05",
+      "kind": "primary",
+      "prompt": "What is hoisting in JavaScript?",
+      "sampleAnswer": "Hoisting is the behaviour where declarations are processed before execution. var declarations are initialized undefined; let/const are in TDZ; function declarations are fully hoisted.\n\nShow a small example and why relying on hoisting hurts readability.",
+      "keywords": [
+        "JavaScript",
+        "fundamentals",
+        "hoisting"
+      ],
+      "relatedKeys": [
+        "fe-04",
+        "fe-06",
+        "fe-07"
+      ]
+    },
+    {
+      "key": "fe-06",
+      "kind": "primary",
+      "prompt": "Explain closures with a practical example.",
+      "sampleAnswer": "A closure lets an inner function access an outer function’s variables after the outer has returned—e.g., a counter factory or private state in modules.\n\nMention common interview uses: debouncing, partial application. Warn about accidental retention of large memory via closures.",
+      "keywords": [
+        "JavaScript",
+        "fundamentals",
+        "explain",
+        "closures",
+        "practical",
+        "example"
+      ],
+      "relatedKeys": [
+        "fe-05",
+        "fe-07",
+        "fe-04"
+      ]
+    },
+    {
+      "key": "fe-07",
+      "kind": "primary",
+      "prompt": "What is the difference between == and === ?",
+      "sampleAnswer": "== coerces types; === compares without coercion. Prefer === to avoid surprising equality (e.g., 0 == \"\"). Mention Object.is for edge cases like NaN.\n\nShort and precise.",
+      "keywords": [
+        "JavaScript",
+        "fundamentals",
+        "difference",
+        "between"
+      ],
+      "relatedKeys": [
+        "fe-06",
+        "fe-08",
+        "fe-05"
+      ]
+    },
+    {
+      "key": "fe-08",
+      "kind": "primary",
+      "prompt": "How does the this keyword work in JavaScript?",
+      "sampleAnswer": "this depends on call site: default/global, method, call/apply/bind, constructor, and arrow functions inheriting lexical this. Give one example of bind fixing a callback.\n\nAvoid overclaiming; offer to discuss event handlers.",
+      "keywords": [
+        "JavaScript",
+        "fundamentals",
+        "keyword",
+        "work"
+      ],
+      "relatedKeys": [
+        "fe-07",
+        "fe-09",
+        "fe-06"
+      ]
+    },
+    {
+      "key": "fe-09",
+      "kind": "primary",
+      "prompt": "Explain promises and async/await. How do you handle errors?",
+      "sampleAnswer": "Promises represent eventual fulfillment/rejection. async/await syntax pauses for settlement; wrap in try/catch. Discuss Promise.all vs allSettled for parallelism.\n\nMention avoiding unhandled rejections.",
+      "keywords": [
+        "JavaScript",
+        "fundamentals",
+        "explain",
+        "promises",
+        "async",
+        "await"
+      ],
+      "relatedKeys": [
+        "fe-08",
+        "fe-10",
+        "fe-07"
+      ]
+    },
+    {
+      "key": "fe-10",
+      "kind": "primary",
+      "prompt": "What is the event loop? How do microtasks differ from macrotasks?",
+      "sampleAnswer": "JS runs on a single-threaded event loop: call stack, then microtasks (promise jobs), then macrotasks (setTimeout, I/O). Explain why promise then runs before setTimeout(0).\n\nKeep diagram-level clarity.",
+      "keywords": [
+        "JavaScript",
+        "fundamentals",
+        "event",
+        "loop",
+        "microtasks",
+        "differ"
+      ],
+      "relatedKeys": [
+        "fe-09",
+        "fe-11",
+        "fe-08"
+      ]
+    },
+    {
+      "key": "fe-11",
+      "kind": "primary",
+      "prompt": "Implement or explain debounce and throttle. When would you use each?",
+      "sampleAnswer": "Debounce: wait until calls stop (search autocomplete). Throttle: ensure regular intervals (scroll handlers). Sketch timer-based implementations using closures.\n\nDiscuss leading vs trailing edges briefly.",
+      "keywords": [
+        "JavaScript",
+        "fundamentals",
+        "implement",
+        "explain",
+        "debounce",
+        "throttle"
+      ],
+      "relatedKeys": [
+        "fe-10",
+        "fe-12",
+        "fe-09"
+      ]
+    },
+    {
+      "key": "fe-12",
+      "kind": "primary",
+      "prompt": "Explain event bubbling and capturing. How do you stop propagation?",
+      "sampleAnswer": "Capturing goes window→target; bubbling target→window. stopPropagation prevents further propagation; mention stopImmediatePropagation and when preventing default differs.\n\nRelate to delegated event listeners.",
+      "keywords": [
+        "JavaScript",
+        "fundamentals",
+        "explain",
+        "event",
+        "bubbling",
+        "capturing"
+      ],
+      "relatedKeys": [
+        "fe-11",
+        "fe-13",
+        "fe-10"
+      ]
+    },
+    {
+      "key": "fe-13",
+      "kind": "primary",
+      "prompt": "How would you polyfill Array.map / filter / reduce at a high level?",
+      "sampleAnswer": "Describe iterating this, building a new array (map/filter) or accumulator (reduce), invoking callback with element/index/array. Check for existing native methods first.\n\nShows deep array-method understanding.",
+      "keywords": [
+        "JavaScript",
+        "fundamentals",
+        "polyfill",
+        "array.map",
+        "filter",
+        "reduce"
+      ],
+      "relatedKeys": [
+        "fe-12",
+        "fe-11",
+        "fe-10"
+      ]
+    },
+    {
+      "key": "fe-14",
+      "kind": "primary",
+      "prompt": "What is React, and why use it for UI?",
+      "sampleAnswer": "React is a library for building UIs via components and declarative rendering; it efficiently updates the DOM when state changes. Benefits: composition, ecosystem, unidirectional data patterns.\n\nAcknowledge alternatives exist; tailor to the company’s stack.",
+      "keywords": [
+        "frontend",
+        "tech",
+        "react",
+        "use"
+      ],
+      "relatedKeys": [
+        "fe-15",
+        "fe-16",
+        "fe-17"
+      ]
+    },
+    {
+      "key": "fe-15",
+      "kind": "primary",
+      "prompt": "Explain useState and immutable state updates.",
+      "sampleAnswer": "useState returns state and setter; updates queue re-renders. Never mutate arrays/objects in place—copy with spread/map. Functional updates when depending on prior state.\n\nGive a counter and a todo-list example.",
+      "keywords": [
+        "frontend",
+        "tech",
+        "explain",
+        "usestate",
+        "immutable",
+        "state"
+      ],
+      "relatedKeys": [
+        "fe-14",
+        "fe-16",
+        "fe-17"
+      ]
+    },
+    {
+      "key": "fe-16",
+      "kind": "primary",
+      "prompt": "How does useEffect work? Discuss dependencies and cleanup.",
+      "sampleAnswer": "useEffect runs side effects after paint; dependency array controls re-runs; empty array ≈ mount; omitted deps re-run each render (usually a smell). Cleanup clears timers/subscriptions.\n\nMention exhaustive-deps lint rule philosophy.",
+      "keywords": [
+        "frontend",
+        "tech",
+        "useeffect",
+        "work",
+        "discuss",
+        "dependencies"
+      ],
+      "relatedKeys": [
+        "fe-15",
+        "fe-17",
+        "fe-14"
+      ]
+    },
+    {
+      "key": "fe-17",
+      "kind": "primary",
+      "prompt": "When would you use useRef or useReducer instead of useState?",
+      "sampleAnswer": "useRef holds mutable values without re-render (DOM nodes, previous values). useReducer suits complex state transitions/action-based updates.\n\nSketch a form wizard with useReducer.",
+      "keywords": [
+        "frontend",
+        "tech",
+        "use",
+        "useref",
+        "usereducer",
+        "instead"
+      ],
+      "relatedKeys": [
+        "fe-16",
+        "fe-18",
+        "fe-15"
+      ]
+    },
+    {
+      "key": "fe-18",
+      "kind": "primary",
+      "prompt": "What are custom hooks, and when should you write one?",
+      "sampleAnswer": "Custom hooks extract reusable stateful logic (e.g., useFetch, useKeyboard). Rules of hooks still apply. Avoid premature abstraction until duplication is clear.\n\nDescribe testing a custom hook briefly.",
+      "keywords": [
+        "frontend",
+        "tech",
+        "custom",
+        "hooks",
+        "write",
+        "one"
+      ],
+      "relatedKeys": [
+        "fe-17",
+        "fe-19",
+        "fe-16"
+      ]
+    },
+    {
+      "key": "fe-19",
+      "kind": "primary",
+      "prompt": "Explain reconciliation and keys in React lists.",
+      "sampleAnswer": "React diffs virtual trees to update the DOM. Keys help identify list items across renders—stable IDs beat array indices when order changes.\n\nDiscuss bugs from index keys (state misassociation).",
+      "keywords": [
+        "frontend",
+        "tech",
+        "explain",
+        "reconciliation",
+        "keys",
+        "react"
+      ],
+      "relatedKeys": [
+        "fe-18",
+        "fe-20",
+        "fe-17"
+      ]
+    },
+    {
+      "key": "fe-20",
+      "kind": "primary",
+      "prompt": "Controlled vs uncontrolled components in React forms?",
+      "sampleAnswer": "Controlled: input value driven by React state—predictable validation. Uncontrolled: DOM holds state via refs—simpler for quick forms/file inputs.\n\nPrefer controlled for complex UX; know both.",
+      "keywords": [
+        "frontend",
+        "tech",
+        "controlled",
+        "uncontrolled",
+        "components",
+        "react"
+      ],
+      "relatedKeys": [
+        "fe-19",
+        "fe-18",
+        "fe-17"
+      ]
+    },
+    {
+      "key": "fe-21",
+      "kind": "primary",
+      "prompt": "Explain Flexbox vs CSS Grid. When do you pick each?",
+      "sampleAnswer": "Flexbox: one-dimensional alignment (nav rows). Grid: two-dimensional layouts (page structure). They compose well.\n\nMention responsive breakpoints and gap properties.",
+      "keywords": [
+        "CSS",
+        "layout",
+        "explain",
+        "flexbox",
+        "grid",
+        "pick"
+      ],
+      "relatedKeys": [
+        "fe-22",
+        "fe-23",
+        "fe-35"
+      ]
+    },
+    {
+      "key": "fe-22",
+      "kind": "primary",
+      "prompt": "How do you create a responsive layout? Discuss mobile-first approaches.",
+      "sampleAnswer": "Mobile-first media queries, fluid units (%, rem, clamp), flexible images, and testing real devices. Avoid hiding critical content only on mobile.\n\nMention container queries where relevant.",
+      "keywords": [
+        "CSS",
+        "layout",
+        "create",
+        "responsive",
+        "discuss",
+        "mobile-first"
+      ],
+      "relatedKeys": [
+        "fe-21",
+        "fe-23",
+        "fe-35"
+      ]
+    },
+    {
+      "key": "fe-23",
+      "kind": "primary",
+      "prompt": "What is the CSS box model, and how does box-sizing: border-box help?",
+      "sampleAnswer": "Content + padding + border (+ margin outside). border-box includes padding/border in width calculations—more intuitive layouts.\n\nRelate to debugging overflow issues.",
+      "keywords": [
+        "CSS",
+        "layout",
+        "box",
+        "model",
+        "box-sizing",
+        "border-box"
+      ],
+      "relatedKeys": [
+        "fe-22",
+        "fe-21",
+        "fe-35"
+      ]
+    },
+    {
+      "key": "fe-24",
+      "kind": "primary",
+      "prompt": "How do you diagnose and fix a slow web page?",
+      "sampleAnswer": "Use Lighthouse/Web Vitals (LCP, INP, CLS), waterfall networks, and React profilers. Fixes: code-split, image optimization, cache, reduce JS main-thread work, defer non-critical scripts.\n\nPrioritize user-centric metrics.",
+      "keywords": [
+        "performance",
+        "accessibility",
+        "diagnose",
+        "fix",
+        "slow",
+        "web"
+      ],
+      "relatedKeys": [
+        "fe-25",
+        "fe-26",
+        "fe-36"
+      ]
+    },
+    {
+      "key": "fe-25",
+      "kind": "primary",
+      "prompt": "What are practical steps to improve accessibility (a11y) in a React app?",
+      "sampleAnswer": "Semantic HTML, keyboard navigation, focus management for modals, ARIA only when needed, colour contrast, labels for inputs, and screen-reader testing.\n\nAccessibility is a quality bar, not a polish phase.",
+      "keywords": [
+        "performance",
+        "accessibility",
+        "practical",
+        "steps",
+        "improve",
+        "a11y"
+      ],
+      "relatedKeys": [
+        "fe-24",
+        "fe-26",
+        "fe-36"
+      ]
+    },
+    {
+      "key": "fe-26",
+      "kind": "primary",
+      "prompt": "Explain critical rendering path and how CSS/JS can block it.",
+      "sampleAnswer": "Browser parses HTML, builds DOM/CSSOM, render tree, layout, paint. Blocking CSS/JS delays first paint—mitigate with defer/async, critical CSS, and minimizing payloads.\n\nShows browser-internals literacy.",
+      "keywords": [
+        "performance",
+        "accessibility",
+        "explain",
+        "critical",
+        "rendering",
+        "path"
+      ],
+      "relatedKeys": [
+        "fe-25",
+        "fe-24",
+        "fe-36"
+      ]
+    },
+    {
+      "key": "fe-27",
+      "kind": "primary",
+      "prompt": "How does client-side routing work in SPAs, and what SEO/a11y caveats exist?",
+      "sampleAnswer": "History API / hash routing updates UI without full reload. Caveats: initial load SEO (SSR/SSG help), focus management on route change, and hosting fallbacks to index.html.\n\nDiscuss Next.js-style SSR if relevant.",
+      "keywords": [
+        "web",
+        "architecture",
+        "client-side",
+        "routing",
+        "work",
+        "spas"
+      ],
+      "relatedKeys": [
+        "fe-28",
+        "fe-29",
+        "fe-38"
+      ]
+    },
+    {
+      "key": "fe-28",
+      "kind": "primary",
+      "prompt": "REST vs GraphQL from a frontend consumer’s perspective?",
+      "sampleAnswer": "REST: multiple endpoints, caching via HTTP semantics. GraphQL: flexible queries, risk of complex client caching and over-fetching solutions like persisted queries.\n\nChoose based on product needs and team skills.",
+      "keywords": [
+        "web",
+        "architecture",
+        "rest",
+        "graphql",
+        "frontend",
+        "consumer"
+      ],
+      "relatedKeys": [
+        "fe-27",
+        "fe-29",
+        "fe-38"
+      ]
+    },
+    {
+      "key": "fe-29",
+      "kind": "primary",
+      "prompt": "How do you manage authentication tokens securely in a browser app?",
+      "sampleAnswer": "Prefer httpOnly secure cookies for session tokens when possible; if using localStorage, understand XSS risk. Discuss refresh rotation, CSRF for cookies, and short expiries.\n\nNever hardcode secrets in frontend bundles.",
+      "keywords": [
+        "web",
+        "architecture",
+        "manage",
+        "authentication",
+        "tokens",
+        "securely"
+      ],
+      "relatedKeys": [
+        "fe-28",
+        "fe-27",
+        "fe-38"
+      ]
+    },
+    {
+      "key": "fe-30",
+      "kind": "primary",
+      "prompt": "How do you test React components? Distinguish unit, integration, and e2e.",
+      "sampleAnswer": "Unit: pure logic/hooks. Integration: React Testing Library user flows. E2E: Playwright/Cypress for critical paths. Prefer testing behaviour over implementation details.\n\nMention avoiding brittle snapshot overuse.",
+      "keywords": [
+        "testing",
+        "tooling",
+        "test",
+        "react",
+        "components",
+        "distinguish"
+      ],
+      "relatedKeys": [
+        "fe-31",
+        "fe-39"
+      ]
+    },
+    {
+      "key": "fe-31",
+      "kind": "primary",
+      "prompt": "What bundlers/build tools have you used, and what problems do they solve?",
+      "sampleAnswer": "Webpack/Vite/esbuild: module bundling, transpilation, code splitting, asset pipelines. Discuss cold start DX (Vite) and production optimizations.\n\nRelate to a slow-build improvement story if possible.",
+      "keywords": [
+        "testing",
+        "tooling",
+        "bundlers",
+        "build",
+        "tools",
+        "have"
+      ],
+      "relatedKeys": [
+        "fe-30",
+        "fe-39"
+      ]
+    },
+    {
+      "key": "fe-32",
+      "kind": "primary",
+      "prompt": "Explain prototypal inheritance vs class syntax in JavaScript.",
+      "sampleAnswer": "JS objects delegate via [[Prototype]] chains; class syntax is sugar over constructor functions + prototypes. Object.create and prototype methods still matter under the hood.\n\nGive a small inheritance example.",
+      "keywords": [
+        "JavaScript",
+        "fundamentals",
+        "explain",
+        "prototypal",
+        "inheritance",
+        "class"
+      ],
+      "relatedKeys": [
+        "fe-13",
+        "fe-12",
+        "fe-11"
+      ]
+    },
+    {
+      "key": "fe-33",
+      "kind": "primary",
+      "prompt": "Tell me about a time you improved frontend performance or Core Web Vitals.",
+      "sampleAnswer": "STAR with baseline metrics, changes (lazy routes, image CDN, memoization with care), and after metrics. Mention monitoring regressions.\n\nImpact talk > buzzwords.",
+      "keywords": [
+        "behavioural",
+        "STAR",
+        "tell",
+        "time",
+        "improved",
+        "frontend"
+      ],
+      "relatedKeys": [
+        "fe-40",
+        "fe-03",
+        "fe-02"
+      ]
+    },
+    {
+      "key": "fe-34",
+      "kind": "primary",
+      "prompt": "How do you prevent unnecessary re-renders in React?",
+      "sampleAnswer": "Correct state placement, memoization (React.memo, useMemo, useCallback) when measured necessary, stable keys, and avoiding inline unstable objects in props.\n\nWarn against premature optimization.",
+      "keywords": [
+        "frontend",
+        "tech",
+        "prevent",
+        "unnecessary",
+        "re-renders",
+        "react"
+      ],
+      "relatedKeys": [
+        "fe-20",
+        "fe-19",
+        "fe-18"
+      ]
+    },
+    {
+      "key": "fe-35",
+      "kind": "primary",
+      "prompt": "How do stacking contexts and z-index work at a high level?",
+      "sampleAnswer": "z-index applies within a stacking context created by positioning/opacity/transform etc. Unexpected overlays often mean a new stacking context, not a bigger z-index number.\n\nDebugging tip: isolate in DevTools.",
+      "keywords": [
+        "CSS",
+        "layout",
+        "stacking",
+        "contexts",
+        "z-index",
+        "work"
+      ],
+      "relatedKeys": [
+        "fe-23",
+        "fe-22",
+        "fe-21"
+      ]
+    },
+    {
+      "key": "fe-36",
+      "kind": "primary",
+      "prompt": "What is XSS, and how do you prevent it in frontend apps?",
+      "sampleAnswer": "XSS injects malicious scripts into pages. Prevent via output encoding, avoiding dangerous HTML APIs, CSP, and careful Markdown rendering. Frameworks help but are not magic.\n\nRelate to user-generated content.",
+      "keywords": [
+        "performance",
+        "accessibility",
+        "xss",
+        "prevent",
+        "frontend",
+        "apps"
+      ],
+      "relatedKeys": [
+        "fe-26",
+        "fe-25",
+        "fe-24"
+      ]
+    },
+    {
+      "key": "fe-37",
+      "kind": "primary",
+      "prompt": "Which frontend craft are you strongest in—CSS architecture, JS systems, or design-system work—and evidence?",
+      "sampleAnswer": "Pick one with a portfolio story and metrics. Acknowledge growth areas and how you collaborate with specialists.\n\nSelf-awareness beats claiming all strengths.",
+      "keywords": [
+        "motivation",
+        "fit",
+        "frontend",
+        "craft",
+        "strongest",
+        "css"
+      ],
+      "relatedKeys": [
+        "fe-01"
+      ]
+    },
+    {
+      "key": "fe-38",
+      "kind": "primary",
+      "prompt": "Explain CORS at a high level from the browser’s perspective.",
+      "sampleAnswer": "Browsers restrict cross-origin requests; servers opt in via Access-Control-* headers. Preflight OPTIONS for non-simple requests. Frontend cannot “fix” CORS safely—correct server config.\n\nDebugging tip: distinguish network failure vs CORS error.",
+      "keywords": [
+        "web",
+        "architecture",
+        "explain",
+        "cors",
+        "high",
+        "level"
+      ],
+      "relatedKeys": [
+        "fe-29",
+        "fe-28",
+        "fe-27"
+      ]
+    },
+    {
+      "key": "fe-39",
+      "kind": "primary",
+      "prompt": "How do you approach cross-browser and device testing?",
+      "sampleAnswer": "Define supported browser matrix, use automated e2e on key browsers, real-device checks for mobile gestures, and progressive enhancement.\n\nDocument known gaps.",
+      "keywords": [
+        "testing",
+        "tooling",
+        "approach",
+        "cross-browser",
+        "device"
+      ],
+      "relatedKeys": [
+        "fe-31",
+        "fe-30"
+      ]
+    },
+    {
+      "key": "fe-40",
+      "kind": "primary",
+      "prompt": "Describe shipping a design system component used by multiple teams.",
+      "sampleAnswer": "STAR: API design, accessibility, documentation, versioning, migration support, and adoption metrics. Discuss backwards compatibility.\n\nShows senior FE product thinking.",
+      "keywords": [
+        "behavioural",
+        "STAR",
+        "describe",
+        "shipping",
+        "design",
+        "system"
+      ],
+      "relatedKeys": [
+        "fe-33",
+        "fe-03",
+        "fe-02"
+      ]
+    }
+  ]
+}

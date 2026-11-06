@@ -1,0 +1,758 @@
+{
+  "profile": "cs_master",
+  "questions": [
+    {
+      "key": "ms-01",
+      "kind": "primary",
+      "prompt": "Why pursue a master's degree in Computer Science now?",
+      "sampleAnswer": "Explain the gap between your current skills and the problems you want to solve—advanced systems, ML engineering, research methods, or specialized coursework not covered deeply in your bachelor's.\n\nDistinguish MS goals from a second bachelor's: greater depth, research or industry specialization, and readiness for ambiguous problems. Time the decision with evidence (projects, work experience, academic record) rather than only credential chasing.",
+      "keywords": [
+        "motivation",
+        "fit",
+        "pursue",
+        "master",
+        "degree",
+        "computer"
+      ],
+      "relatedKeys": [
+        "ms-02",
+        "ms-03",
+        "ms-32"
+      ]
+    },
+    {
+      "key": "ms-02",
+      "kind": "primary",
+      "prompt": "Why this master's programme, and how does it match your intended specialization?",
+      "sampleAnswer": "Map programme tracks/courses/labs to your plan (e.g., systems, AI, security). Cite specific faculty themes or course sequences you reviewed, and prerequisites you already satisfy or will fill.\n\nIf the programme allows coursework-only vs research distinction, say which path you intend and why. Specificity beats flattery.",
+      "keywords": [
+        "motivation",
+        "fit",
+        "master",
+        "programme",
+        "match",
+        "intended"
+      ],
+      "relatedKeys": [
+        "ms-01",
+        "ms-03",
+        "ms-32"
+      ]
+    },
+    {
+      "key": "ms-03",
+      "kind": "primary",
+      "prompt": "How will you contribute to the graduate cohort and department community?",
+      "sampleAnswer": "Mention peer collaboration in advanced courses, reading groups, mentoring juniors, sharing industry experience, or organizing technical talks. Give evidence from prior leadership.\n\nShow you understand graduate culture: seminars, office hours, collaborative problem sets, and respectful debate.",
+      "keywords": [
+        "motivation",
+        "fit",
+        "contribute",
+        "graduate",
+        "cohort",
+        "department"
+      ],
+      "relatedKeys": [
+        "ms-02",
+        "ms-01",
+        "ms-32"
+      ]
+    },
+    {
+      "key": "ms-04",
+      "kind": "primary",
+      "prompt": "Do you have a CS bachelor's? If not, how have you built quantitative and programming foundations?",
+      "sampleAnswer": "If CS major: summarize core completed (DSA, OS, networks, databases, discrete maths) and grades/projects as proof. If non-CS: list bridge courses, MOOCs with projects, work experience, and a coherent progression—not scattered certificates.\n\nStanford-style messaging: CS bachelor’s not always required, but strong quantitative/analytical skills are. Show a plan for any remaining gaps.",
+      "keywords": [
+        "academic",
+        "preparation",
+        "have",
+        "bachelor",
+        "built",
+        "quantitative"
+      ],
+      "relatedKeys": [
+        "ms-05",
+        "ms-06",
+        "ms-29"
+      ]
+    },
+    {
+      "key": "ms-05",
+      "kind": "primary",
+      "prompt": "Which undergraduate courses most prepared you for graduate-level CS, and which were hardest?",
+      "sampleAnswer": "Pick 2–3 demanding courses; explain concepts retained (e.g., amortized analysis, concurrency bugs, relational algebra). For hardest courses, show how you adapted study methods.\n\nConnect preparation to the MS courses you want next. Honesty about struggle plus recovery is stronger than claiming everything was easy.",
+      "keywords": [
+        "academic",
+        "preparation",
+        "undergraduate",
+        "courses",
+        "most",
+        "prepared"
+      ],
+      "relatedKeys": [
+        "ms-04",
+        "ms-06",
+        "ms-29"
+      ]
+    },
+    {
+      "key": "ms-06",
+      "kind": "primary",
+      "prompt": "How would you assess whether you are ready for graduate algorithms or systems courses?",
+      "sampleAnswer": "Reference foundation checklists: data structures, proof-based reasoning, probability, systems programming, and ability to complete substantial projects independently.\n\nDescribe a recent self-test (re-implementing a textbook algorithm; reading a systems paper and summarizing). Show metacognitive readiness, not just GPA.",
+      "keywords": [
+        "academic",
+        "preparation",
+        "assess",
+        "whether",
+        "ready",
+        "graduate"
+      ],
+      "relatedKeys": [
+        "ms-05",
+        "ms-04",
+        "ms-29"
+      ]
+    },
+    {
+      "key": "ms-07",
+      "kind": "primary",
+      "prompt": "Describe a research or substantial independent project you completed. What was your contribution?",
+      "sampleAnswer": "State problem, related work at a high level, method, your personal contribution, and evaluation metrics. Distinguish your work from teammates’.\n\nDiscuss what did not work and how you iterated. Even for coursework MS paths, research-like projects signal graduate readiness.",
+      "keywords": [
+        "research",
+        "thesis",
+        "describe",
+        "substantial",
+        "independent",
+        "project"
+      ],
+      "relatedKeys": [
+        "ms-08",
+        "ms-09",
+        "ms-10"
+      ]
+    },
+    {
+      "key": "ms-08",
+      "kind": "primary",
+      "prompt": "How do you formulate a research question from a vague real-world problem?",
+      "sampleAnswer": "Describe a process: survey literature, identify a measurable gap, define scope and success metrics, choose a method (empirical, systems, theoretical), and plan threats to validity.\n\nGive a mini example from your domain. Faculty interviewers look for taste in problem selection and feasibility.",
+      "keywords": [
+        "research",
+        "thesis",
+        "formulate",
+        "question",
+        "vague",
+        "real-world"
+      ],
+      "relatedKeys": [
+        "ms-07",
+        "ms-09",
+        "ms-10"
+      ]
+    },
+    {
+      "key": "ms-09",
+      "kind": "primary",
+      "prompt": "Tell us about a paper you read recently. What was the claim, method, and limitation?",
+      "sampleAnswer": "Summarize in three layers: claim, evidence/method, and a critique (assumptions, baselines, scalability). Avoid name-dropping without understanding.\n\nExplain what experiment you would run next. This probes research literacy for thesis-oriented MS tracks.",
+      "keywords": [
+        "research",
+        "thesis",
+        "tell",
+        "paper",
+        "read",
+        "recently"
+      ],
+      "relatedKeys": [
+        "ms-08",
+        "ms-10",
+        "ms-07"
+      ]
+    },
+    {
+      "key": "ms-10",
+      "kind": "primary",
+      "prompt": "Are you aiming for industry after the MS, a PhD later, or still exploring? How does the MS help either path?",
+      "sampleAnswer": "Be coherent: industry path → advanced engineering depth, systems/ML electives, internships; PhD path → research methods, faculty alignment, publications. If exploring, show how first-year coursework/research rotations will inform the decision.\n\nAcknowledge that MS admission is not a guaranteed PhD bridge where that is true.",
+      "keywords": [
+        "research",
+        "thesis",
+        "aiming",
+        "industry",
+        "after",
+        "phd"
+      ],
+      "relatedKeys": [
+        "ms-09",
+        "ms-11",
+        "ms-08"
+      ]
+    },
+    {
+      "key": "ms-11",
+      "kind": "primary",
+      "prompt": "How would you choose a faculty advisor or research group?",
+      "sampleAnswer": "Criteria: problem fit, advising style, publication/engineering norms, funding/timeline realism, and group culture. Describe how you would read recent papers, attend talks, and ask current students about mentoring.\n\nShow respect for faculty time with informed questions.",
+      "keywords": [
+        "research",
+        "thesis",
+        "choose",
+        "faculty",
+        "advisor",
+        "group"
+      ],
+      "relatedKeys": [
+        "ms-10",
+        "ms-09",
+        "ms-08"
+      ]
+    },
+    {
+      "key": "ms-12",
+      "kind": "primary",
+      "prompt": "Explain time and space complexity for a graph algorithm you know well (e.g., BFS).",
+      "sampleAnswer": "Define BFS on adjacency lists: O(V+E) time, O(V) auxiliary space for queue/visited. Mention when adjacency matrices change costs.\n\nDiscuss applications (shortest path in unweighted graphs) and pitfalls (disconnected graphs). Speak precisely; offer to deepen with a whiteboard example.",
+      "keywords": [
+        "algorithms",
+        "complexity",
+        "explain",
+        "time",
+        "space",
+        "graph"
+      ],
+      "relatedKeys": [
+        "ms-13",
+        "ms-14",
+        "ms-15"
+      ]
+    },
+    {
+      "key": "ms-13",
+      "kind": "primary",
+      "prompt": "Compare hashing and balanced trees for dictionary ADTs. When do you prefer each?",
+      "sampleAnswer": "Average O(1) hash table ops vs O(log n) balanced trees; trees keep ordered iteration and worse-case bounds; hashing needs good hash functions and load-factor management.\n\nDiscuss memory, cache behaviour, and key types. Graduate interviews expect trade-off language, not memorized APIs.",
+      "keywords": [
+        "algorithms",
+        "complexity",
+        "compare",
+        "hashing",
+        "balanced",
+        "trees"
+      ],
+      "relatedKeys": [
+        "ms-12",
+        "ms-14",
+        "ms-15"
+      ]
+    },
+    {
+      "key": "ms-14",
+      "kind": "primary",
+      "prompt": "What is dynamic programming, and when is it appropriate?",
+      "sampleAnswer": "DP solves overlapping subproblems with optimal substructure by memoization or tabulation. Contrast with plain recursion that recomputes.\n\nExample outline: coin change or edit distance—define state, transition, base cases, complexity. Mention when greedy suffices instead.",
+      "keywords": [
+        "algorithms",
+        "complexity",
+        "dynamic",
+        "programming",
+        "appropriate"
+      ],
+      "relatedKeys": [
+        "ms-13",
+        "ms-15",
+        "ms-12"
+      ]
+    },
+    {
+      "key": "ms-15",
+      "kind": "primary",
+      "prompt": "How do you reason about correctness for an algorithm (invariants, induction, testing)?",
+      "sampleAnswer": "Describe loop invariants or inductive arguments for simple algorithms, plus empirical testing with edge cases and randomized tests.\n\nFor distributed/systems algorithms, mention model assumptions. Showing multiple lenses signals graduate maturity.",
+      "keywords": [
+        "algorithms",
+        "complexity",
+        "reason",
+        "correctness",
+        "algorithm",
+        "invariants"
+      ],
+      "relatedKeys": [
+        "ms-14",
+        "ms-13",
+        "ms-12"
+      ]
+    },
+    {
+      "key": "ms-16",
+      "kind": "primary",
+      "prompt": "Explain processes vs threads and when you would use concurrency.",
+      "sampleAnswer": "Processes isolate address spaces; threads share memory within a process, enabling cheaper context sharing but requiring synchronization.\n\nDiscuss race conditions, locks/deadlocks at a conceptual level, and when async IO or message passing is preferable. Tie to a project if possible.",
+      "keywords": [
+        "systems",
+        "architecture",
+        "explain",
+        "processes",
+        "threads",
+        "use"
+      ],
+      "relatedKeys": [
+        "ms-17",
+        "ms-18",
+        "ms-19"
+      ]
+    },
+    {
+      "key": "ms-17",
+      "kind": "primary",
+      "prompt": "What happens when you type a URL into a browser? Go as deep as you can responsibly.",
+      "sampleAnswer": "Cover DNS resolution, TCP/TLS handshake at a high level, HTTP request/response, caching, and rendering. Offer to deep-dive one layer (TLS or CDN) based on interviewer interest.\n\nClarify assumptions (cache cold/warm). Depth with humility beats fake precision.",
+      "keywords": [
+        "systems",
+        "architecture",
+        "happens",
+        "type",
+        "url",
+        "browser"
+      ],
+      "relatedKeys": [
+        "ms-16",
+        "ms-18",
+        "ms-19"
+      ]
+    },
+    {
+      "key": "ms-18",
+      "kind": "primary",
+      "prompt": "Compare SQL and NoSQL stores. Give a scenario for each.",
+      "sampleAnswer": "SQL: relational schema, joins, strong consistency/transactions—good for financial ledgers. NoSQL families differ (document, KV, wide-column) and often optimize scale/flexible schemas—good for high-throughput event logs with known access patterns.\n\nEmphasize access patterns drive choice. Avoid dogma.",
+      "keywords": [
+        "systems",
+        "architecture",
+        "compare",
+        "sql",
+        "nosql",
+        "stores"
+      ],
+      "relatedKeys": [
+        "ms-17",
+        "ms-19",
+        "ms-16"
+      ]
+    },
+    {
+      "key": "ms-19",
+      "kind": "primary",
+      "prompt": "How would you design a simple URL shortener at a high level?",
+      "sampleAnswer": "Clarify requirements (read-heavy, unique codes, redirect latency). Sketch API, key generation, persistent store, caching, and analytics. Discuss collisions, idempotency, and scaling reads.\n\nState bottlenecks and monitoring. Classic systems design warm-up for graduate interviews.",
+      "keywords": [
+        "systems",
+        "architecture",
+        "design",
+        "simple",
+        "url",
+        "shortener"
+      ],
+      "relatedKeys": [
+        "ms-18",
+        "ms-17",
+        "ms-16"
+      ]
+    },
+    {
+      "key": "ms-20",
+      "kind": "primary",
+      "prompt": "Tell me about a time you owned a technically ambiguous project end-to-end.",
+      "sampleAnswer": "STAR with emphasis on imposing structure: clarifying goals, reducing uncertainty with spikes, stakeholder updates, and delivery metrics.\n\nGraduate admissions and industry alike value ambiguity management.",
+      "keywords": [
+        "behavioural",
+        "STAR",
+        "tell",
+        "time",
+        "owned",
+        "technically"
+      ],
+      "relatedKeys": [
+        "ms-21",
+        "ms-22",
+        "ms-23"
+      ]
+    },
+    {
+      "key": "ms-21",
+      "kind": "primary",
+      "prompt": "Describe a conflict on a research or engineering team and how you resolved it.",
+      "sampleAnswer": "Focus on data-driven resolution: prototypes, benchmarks, or user evidence. Acknowledge other perspectives and the decision rule you used.\n\nResult + relationship repair. Maturity is the signal.",
+      "keywords": [
+        "behavioural",
+        "STAR",
+        "describe",
+        "conflict",
+        "research",
+        "engineering"
+      ],
+      "relatedKeys": [
+        "ms-20",
+        "ms-22",
+        "ms-23"
+      ]
+    },
+    {
+      "key": "ms-22",
+      "kind": "primary",
+      "prompt": "Tell me about a time you had to learn a new technical area quickly.",
+      "sampleAnswer": "Explain learning plan: curated readings, minimal viable experiment, expert questions, and teaching-back. Quantify ramp-up (days/weeks) and outcome.\n\nMS study requires rapid acquisition of unfamiliar material.",
+      "keywords": [
+        "behavioural",
+        "STAR",
+        "tell",
+        "time",
+        "had",
+        "learn"
+      ],
+      "relatedKeys": [
+        "ms-21",
+        "ms-23",
+        "ms-20"
+      ]
+    },
+    {
+      "key": "ms-23",
+      "kind": "primary",
+      "prompt": "Describe a failure in a project or research attempt. What changed afterward?",
+      "sampleAnswer": "Own the miss (flawed evaluation, overscope, ignored reviewer feedback). Detail postmortem actions and a later success using the new practice.\n\nResilience matters for thesis risk.",
+      "keywords": [
+        "behavioural",
+        "STAR",
+        "describe",
+        "failure",
+        "project",
+        "research"
+      ],
+      "relatedKeys": [
+        "ms-22",
+        "ms-21",
+        "ms-20"
+      ]
+    },
+    {
+      "key": "ms-24",
+      "kind": "primary",
+      "prompt": "What kind of problems do you want to be working on 3–5 years after graduation?",
+      "sampleAnswer": "Name problem class (reliable large-scale services, applied ML systems, security, HCI) and why your MS specialization enables it. Include skills + domain.\n\nKeep ambitions grounded in a skill trajectory.",
+      "keywords": [
+        "career",
+        "goals",
+        "kind",
+        "problems",
+        "want",
+        "working"
+      ],
+      "relatedKeys": [
+        "ms-25",
+        "ms-37"
+      ]
+    },
+    {
+      "key": "ms-25",
+      "kind": "primary",
+      "prompt": "How do internships or industry experience shape what you want from the MS?",
+      "sampleAnswer": "If experienced: cite production lessons (on-call, code review, requirements churn) that motivated deeper study. If not: explain how MS projects/internships will supply that.\n\nShow reflective practice, not résumé recitation.",
+      "keywords": [
+        "career",
+        "goals",
+        "internships",
+        "industry",
+        "experience",
+        "shape"
+      ],
+      "relatedKeys": [
+        "ms-24",
+        "ms-37"
+      ]
+    },
+    {
+      "key": "ms-26",
+      "kind": "primary",
+      "prompt": "How do you handle authorship, data integrity, and citation in collaborative research?",
+      "sampleAnswer": "Discuss early agreement on contributions, never fabricating results, documenting preprocessing, and citing code/data/models. Mention plagiarism includes unattributed paraphrasing and code.\n\nPropose using contribution statements. Integrity is non-negotiable in graduate study.",
+      "keywords": [
+        "ethics",
+        "academic",
+        "integrity",
+        "handle",
+        "authorship",
+        "data"
+      ],
+      "relatedKeys": [
+        "ms-27",
+        "ms-28"
+      ]
+    },
+    {
+      "key": "ms-27",
+      "kind": "primary",
+      "prompt": "What ethical issues arise in your intended research area (e.g., AI, data, security)?",
+      "sampleAnswer": "Identify harms (bias, privacy leakage, dual use), affected groups, and mitigation (dataset documentation, differential privacy, responsible disclosure).\n\nShow you can anticipate review boards and social impact—not only model metrics.",
+      "keywords": [
+        "ethics",
+        "academic",
+        "integrity",
+        "ethical",
+        "issues",
+        "arise"
+      ],
+      "relatedKeys": [
+        "ms-26",
+        "ms-28"
+      ]
+    },
+    {
+      "key": "ms-28",
+      "kind": "primary",
+      "prompt": "Where is the line between using AI coding assistants productively and academic misconduct in graduate coursework?",
+      "sampleAnswer": "Policy-first: follow course rules. Default practice: use assistants for boilerplate/explanation, personally understand and can defend every submitted line, disclose when asked, and never outsource graded reasoning.\n\nCompare to improper collaboration norms.",
+      "keywords": [
+        "ethics",
+        "academic",
+        "integrity",
+        "line",
+        "between",
+        "using"
+      ],
+      "relatedKeys": [
+        "ms-27",
+        "ms-26"
+      ]
+    },
+    {
+      "key": "ms-29",
+      "kind": "primary",
+      "prompt": "Walk us through a challenging systems or algorithms assignment and how you validated your solution.",
+      "sampleAnswer": "Describe requirements, design alternatives, complexity analysis, tests (unit, property, fuzz), and performance measurement. Mention a bug that taught you something.\n\nEvidence of rigorous validation predicts graduate success.",
+      "keywords": [
+        "academic",
+        "preparation",
+        "walk",
+        "through",
+        "challenging",
+        "systems"
+      ],
+      "relatedKeys": [
+        "ms-36",
+        "ms-06",
+        "ms-05"
+      ]
+    },
+    {
+      "key": "ms-30",
+      "kind": "primary",
+      "prompt": "Explain caching: where it helps, and what consistency problems it introduces.",
+      "sampleAnswer": "Caching reduces latency/load for read-heavy workloads. Discuss eviction, TTL, stampede, and stale reads. Strategies: cache-aside, invalidation on write, stale-while-revalidate.\n\nGive a concrete example from web or DB query caching.",
+      "keywords": [
+        "systems",
+        "architecture",
+        "explain",
+        "caching",
+        "helps",
+        "consistency"
+      ],
+      "relatedKeys": [
+        "ms-35",
+        "ms-19",
+        "ms-18"
+      ]
+    },
+    {
+      "key": "ms-31",
+      "kind": "primary",
+      "prompt": "What is NP-completeness at an intuitive level? Why does it matter in practice?",
+      "sampleAnswer": "Intuition: many important decision problems have no known polynomial algorithms; if any NP-complete problem has one, all do. In practice we use approximations, heuristics, or constrain inputs.\n\nExample: exact combinatorial optimization vs greedy/ILP heuristics. Shows theoretical literacy for MS theory/AI tracks.",
+      "keywords": [
+        "algorithms",
+        "complexity",
+        "np-completeness",
+        "intuitive",
+        "level",
+        "matter"
+      ],
+      "relatedKeys": [
+        "ms-38",
+        "ms-15",
+        "ms-14"
+      ]
+    },
+    {
+      "key": "ms-32",
+      "kind": "primary",
+      "prompt": "What questions do you have about research opportunities, course load, or advising?",
+      "sampleAnswer": "Ask about typical first-quarter course load, how students find research, funding for RAships, or industrial affiliate projects. Avoid easily Googled logistics only.\n\nThoughtful questions signal serious graduate intent.",
+      "keywords": [
+        "motivation",
+        "fit",
+        "questions",
+        "have",
+        "research",
+        "opportunities"
+      ],
+      "relatedKeys": [
+        "ms-39",
+        "ms-03",
+        "ms-02"
+      ]
+    },
+    {
+      "key": "ms-33",
+      "kind": "primary",
+      "prompt": "Tell me about a time you gave or received hard feedback on technical work.",
+      "sampleAnswer": "STAR focusing on specificity of feedback (benchmarks, code review comments), emotional professionalism, and measurable improvement afterward.\n\nGraduate labs depend on candid critique.",
+      "keywords": [
+        "behavioural",
+        "STAR",
+        "tell",
+        "time",
+        "gave",
+        "received"
+      ],
+      "relatedKeys": [
+        "ms-23",
+        "ms-22",
+        "ms-21"
+      ]
+    },
+    {
+      "key": "ms-34",
+      "kind": "primary",
+      "prompt": "How do you manage time across courses, research, and personal wellbeing in a demanding graduate term?",
+      "sampleAnswer": "Describe planning cadence (weekly goals, milestone demos), saying no to low-value commitments, and early escalation when blocked. Mention sustainable hours and help-seeking.\n\nBurnout awareness is a maturity signal.",
+      "keywords": [
+        "research",
+        "thesis",
+        "manage",
+        "time",
+        "across",
+        "courses"
+      ],
+      "relatedKeys": [
+        "ms-40",
+        "ms-11",
+        "ms-10"
+      ]
+    },
+    {
+      "key": "ms-35",
+      "kind": "primary",
+      "prompt": "Explain CAP theorem trade-offs at a practical level for a distributed key-value store.",
+      "sampleAnswer": "Under partition, systems lean toward availability or consistency. Give examples: shopping cart soft-state vs bank ledger strong consistency. Mention that “CA without P” is misleading in real networks.\n\nStay practical; avoid buzzword fog.",
+      "keywords": [
+        "systems",
+        "architecture",
+        "explain",
+        "cap",
+        "theorem",
+        "trade-offs"
+      ],
+      "relatedKeys": [
+        "ms-30",
+        "ms-19",
+        "ms-18"
+      ]
+    },
+    {
+      "key": "ms-36",
+      "kind": "primary",
+      "prompt": "How have letters of recommendation or mentors shaped your readiness for graduate study?",
+      "sampleAnswer": "Without inventing claims, explain what recommenders observed (research independence, performance in hard courses) and how mentorship changed your standards.\n\nShows reflective understanding of evaluation criteria Stanford FAQ-style applications emphasize.",
+      "keywords": [
+        "academic",
+        "preparation",
+        "have",
+        "letters",
+        "recommendation",
+        "mentors"
+      ],
+      "relatedKeys": [
+        "ms-29",
+        "ms-06",
+        "ms-05"
+      ]
+    },
+    {
+      "key": "ms-37",
+      "kind": "primary",
+      "prompt": "If your first-choice specialization is full, how would you adapt your MS plan?",
+      "sampleAnswer": "Show flexibility: adjacent specializations, prerequisite strengthening, or research group pivots that still serve long-term goals. Demonstrates resilience and genuine interest in CS broadly.\n\nAvoid sounding indifferent; show a reasoned plan B.",
+      "keywords": [
+        "career",
+        "goals",
+        "first-choice",
+        "specialization",
+        "full",
+        "adapt"
+      ],
+      "relatedKeys": [
+        "ms-25",
+        "ms-24"
+      ]
+    },
+    {
+      "key": "ms-38",
+      "kind": "primary",
+      "prompt": "How would you detect a cycle in a linked list, and what are the complexity trade-offs?",
+      "sampleAnswer": "Discuss Floyd’s tortoise-hare O(1) extra space vs hashing node identities O(n) space. Explain correctness intuition and edge cases (empty, single node).\n\nClean algorithmic communication expected in technical MS interviews.",
+      "keywords": [
+        "algorithms",
+        "complexity",
+        "detect",
+        "cycle",
+        "linked",
+        "list"
+      ],
+      "relatedKeys": [
+        "ms-31",
+        "ms-15",
+        "ms-14"
+      ]
+    },
+    {
+      "key": "ms-39",
+      "kind": "primary",
+      "prompt": "What does success in your first year of the MS look like for you?",
+      "sampleAnswer": "Define academic success (mastery in core courses), research/engineering milestones, professional network, and wellbeing metrics. Include a feedback loop for adjusting course load.\n\nConcrete success criteria beat vague “do well.”",
+      "keywords": [
+        "motivation",
+        "fit",
+        "success",
+        "first",
+        "year",
+        "look"
+      ],
+      "relatedKeys": [
+        "ms-32",
+        "ms-03",
+        "ms-02"
+      ]
+    },
+    {
+      "key": "ms-40",
+      "kind": "primary",
+      "prompt": "How would you evaluate whether an empirical result in systems/ML is believable?",
+      "sampleAnswer": "Check baselines, ablations, data leakage, variance across seeds/workloads, statistical significance where relevant, and reproducibility artifacts. Ask what would falsify the claim.\n\nCritical evaluation skill is central to graduate research interviews.",
+      "keywords": [
+        "research",
+        "thesis",
+        "evaluate",
+        "whether",
+        "empirical",
+        "result"
+      ],
+      "relatedKeys": [
+        "ms-34",
+        "ms-11",
+        "ms-10"
+      ]
+    }
+  ]
+}
