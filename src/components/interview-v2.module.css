@@ -255,32 +255,33 @@
 }
 .bubbleWrap {
   position: absolute;
-  top: 14px;
-  left: 31%;
-  right: 12px;
+  top: 5%;
+  left: 31.5%;
   z-index: 7;
-  width: auto;
+  width: 60%;
+  height: 34%;
   transform: none;
 }
 .bubbleCard {
   position: relative;
+  height: 100%;
   border-radius: 12px;
 }
 .bubbleCard:focus-visible { outline: 3px solid var(--v2-focus); outline-offset: 3px; }
 .bubble, .bubbleMuted {
-  min-height: 132px;
-  max-height: 250px;
+  height: 100%;
   margin: 0;
-  padding: 16px 52px 16px 18px;
+  padding: 18px 56px 18px 20px;
   overflow: auto;
   border: 1px solid rgba(23, 32, 29, 0.12);
   border-radius: 12px;
   background: #fffefa;
   box-shadow: 0 14px 28px rgba(23, 32, 29, 0.16);
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(1.05rem, 1.6vw, 1.28rem);
-  line-height: 1.4;
+  font-size: clamp(1.55rem, 1.8vw, 1.9rem);
+  line-height: 1.35;
   overflow-wrap: anywhere;
+  box-sizing: border-box;
 }
 .bubbleCard::before {
   content: "";
@@ -311,7 +312,7 @@
 .speaker svg { width: 18px; height: 18px; display: block; }
 .speaker:hover:not(:disabled) { background: var(--v2-ink); color: white; }
 .speaker:disabled { opacity: .55; cursor: not-allowed; }
-.bubbleMuted { color: var(--v2-muted); font-size: 1.05rem; box-shadow: none; }
+.bubbleMuted { color: var(--v2-muted); font-size: 1.45rem; box-shadow: none; }
 
 .controls, .actions {
   display: flex;
@@ -535,8 +536,8 @@
   .interviewer { width: 54%; height: 58%; bottom: 16%; }
   .table { left: -8%; width: 118%; bottom: -58%; }
   .interviewee { right: -12%; bottom: -24%; width: 62%; height: 70%; }
-  .bubbleWrap { top: 12px; left: 8%; right: 10px; width: auto; }
-  .bubble, .bubbleMuted { min-height: 96px; max-height: 160px; font-size: 1.05rem; }
+  .bubbleWrap { top: 6%; left: 22%; width: 72%; height: 32%; }
+  .bubble, .bubbleMuted { font-size: 1.25rem; }
   .desk { grid-template-columns: 1fr; }
   .answerMain textarea { min-height: 140px; }
   .composer { width: 100%; }
