@@ -218,16 +218,17 @@ test("actual dashboard integrates shared version-specific progress after onboard
   await f.load("onboarding").saveOnboarding(input());
   const { renderToStaticMarkup } = require("react-dom/server");
   const html = async () => renderToStaticMarkup(await f.load("dashboard").default());
-  assert.match(await html(), /<strong>Version 2 · Continue<\/strong>/);
+  assert.match(await html(), /<small>Version 2 · Not yet reviewed<\/small>/);
+  assert.match(await html(), /class="dashboard-continue">Continue lesson/);
   assert.match(await html(), /1 passed \(any version\)/);
   enrollment.progress_evidence = { 1: { reviewed_at: stamp, attended_at: stamp } };
-  assert.match(await html(), /<strong>Version 2 · Continue<\/strong>/);
+  assert.match(await html(), /<small>Version 2 · Not yet reviewed<\/small>/);
   enrollment.progress_evidence[2] = { reviewed_at: stamp };
-  assert.match(await html(), /<strong>Version 2 · Reviewed · Continue<\/strong>/);
+  assert.match(await html(), /<small>Version 2 · Reviewed<\/small>/);
   enrollment.progress_evidence[2].attended_at = stamp;
-  assert.match(await html(), /<strong>Version 2 · Attended · Continue<\/strong>/);
+  assert.match(await html(), /<small>Version 2 · Attended<\/small>/);
   records.attempts.push({ ...oldPass, lesson_version: 2, score: 6 });
-  assert.match(await html(), /<strong>Version 2 · Passed<\/strong>/);
+  assert.match(await html(), /<small>Version 2 · Passed<\/small>/);
 });
 
 test("actual middleware protects both new routes without onboarding-gating profile/recovery", async () => {

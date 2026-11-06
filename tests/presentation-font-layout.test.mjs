@@ -502,6 +502,7 @@ test("QA: noninitial overflow selection survives denied actions, width/move reco
     await page.setViewportSize({width:320,height:900});
     await openMobileProperties(page);
     await chooseRange();
+    await fontSizePublished(page,120);
     const input=page.getByLabel("Font size",{exact:true});
     await input.focus();assert.equal(await input.evaluate(el=>document.activeElement===el),true);
     await input.press("ControlOrMeta+A");await input.press("Backspace");await input.pressSequentially("8");
