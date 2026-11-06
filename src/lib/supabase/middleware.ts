@@ -6,7 +6,7 @@ export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
   const settings = publicConfig(process.env);
   const pathname = request.nextUrl.pathname;
-  const privatePath = pathname === "/" || ["/dashboard", "/onboarding", "/diagnostic", "/profile", "/progress", "/catalog", "/courses", "/studio", "/reports", "/paths", "/interviews", "/reflections", "/teaching", "/admin", "/api"].some(path => pathname === path || pathname.startsWith(`${path}/`));
+  const privatePath = pathname === "/" || ["/dashboard", "/onboarding", "/diagnostic", "/profile", "/progress", "/catalog", "/courses", "/studio", "/reports", "/paths", "/interviews-v2", "/interviews", "/reflections", "/teaching", "/admin", "/api"].some(path => pathname === path || pathname.startsWith(`${path}/`));
   if (!settings) {
     if (!privatePath) return response;
     if (pathname === "/api" || pathname.startsWith("/api/")) {

@@ -10,7 +10,7 @@ export const v2Profiles = {
 } as const;
 export const profileIdSchema = z.enum(Object.keys(v2Profiles) as [keyof typeof v2Profiles, ...Array<keyof typeof v2Profiles>]);
 export type ProfileId = z.infer<typeof profileIdSchema>;
-export const introBubble = "Please introduce yourself. About one minute.";
+export const introBubble = "First, please introduce yourself in about one minute.";
 export const introWordTarget = 130;
 export const sessionItemCap = 11;
 export const v2DailyAiLimit = 20;
@@ -28,6 +28,7 @@ export const v2Notices = {
   aiDenied: "Rating and related-question selection need a recorded adult age (18+) and administrator-approved AI access. Keyword follow-ups still work.",
   empty: "Nothing was sent, so there is nothing to rate.",
   unrated: "The session is saved. AI rating was unavailable, so no score was invented.",
+  noAlternate: "There is no other question to switch to.",
 } as const;
 export type V2Code = keyof typeof v2Notices;
 
@@ -113,6 +114,48 @@ export function chooseNext(input: {
   if (!input.keywordMatched && fresh.length) return { type: "ai", candidates: fresh };
   const next = input.plannedRemaining.find(id => !input.askedIds.includes(id));
   return next ? { type: "ask", id: next, reason: "planned" } : { type: "rate" };
+}
+
+export function chooseReplacement(input: {
+  currentId: string;
+  relatedIds: readonly string[];
+  askedIds: readonly string[];
+  poolIds: readonly string[];
+  random?: () => number;
+}) {
+  const random = input.random ?? Math.random;
+  const pool = new Set(input.poolIds);
+  const asked = new Set(input.askedIds);
+  const pick = (ids: string[]) => {
+    if (!ids.length) return null;
+    const index = Math.min(ids.length - 1, Math.floor(random() * ids.length));
+    return ids[index] ?? null;
+  };
+  const related = [...new Set(input.relatedIds)].filter(id => id !== input.currentId && pool.has(id) && !asked.has(id));
+  const relatedPick = pick(related);
+  if (relatedPick) return relatedPick;
+  const fresh = [...new Set(input.poolIds.filter(id => id !== input.currentId && !asked.has(id)))];
+  const freshPick = pick(fresh);
+  if (freshPick) return freshPick;
+  return pick([...new Set(input.poolIds.filter(id => id !== input.currentId))]);
+}
+
+export function localFeedback(answer: string, sample: string, keywords: readonly string[]) {
+  const tokens = (value: string) => value.toLocaleLowerCase().split(/[^\p{L}\p{N}]+/u).filter(word => word.length > 3);
+  const answerWords = tokens(answer);
+  const sampleWords = new Set(tokens(sample));
+  const overlap = answerWords.filter(word => sampleWords.has(word)).length;
+  const hit = keywords.length > 0 && keywordHit(answer, keywords);
+  if (answerWords.length < 8) {
+    return { band: "missed" as const, comment: "This answer is too short to show the idea. Expand it using the suggested answer as a guide." };
+  }
+  if ((hit && overlap >= 1) || overlap >= 3) {
+    return { band: "strong" as const, comment: "The answer covers the main idea. Check the suggested answer for any point you skipped." };
+  }
+  if (hit || overlap >= 1 || answerWords.length >= 25) {
+    return { band: "partial" as const, comment: "Part of the expected point is there. The suggested answer shows what to add." };
+  }
+  return { band: "missed" as const, comment: "This does not cover the expected point yet. Read the suggested answer and explain it in your own words." };
 }
 
 export function chooseAfterSkip(input: { presentedAfter: number; askedIds: readonly string[]; plannedRemaining: readonly string[] }): Advance {
