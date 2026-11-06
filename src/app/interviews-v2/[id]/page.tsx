@@ -14,7 +14,7 @@ export default async function InterviewV2SessionPage({ params }: { params: Promi
   return <LearnerShell active="/interviews-v2" name={await displayName(user)} admin={isAdmin(user)} instructor={isInstructor(user)}>
     <div className="portal-page">
       <header className="portal-heading"><div><span className="eyebrow">SIMULATOR V2</span><h1>Interview room</h1></div></header>
-      {result.view ? <InterviewV2Room key={`${result.view.session.id}-${result.view.session.revision}`} initial={result.view} /> : <>
+      {result.view ? <InterviewV2Room key={result.view.session.id} initial={result.view} /> : <>
         <p role="alert">{v2Notices[result.code]}</p>
         <Link href="/interviews-v2">Back to simulator v2</Link>
       </>}

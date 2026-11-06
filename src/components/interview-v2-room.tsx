@@ -55,8 +55,16 @@ function TurnList({ turns }: { turns: V2View["turns"] }) {
   </li>)}</ul>;
 }
 
+function newerView(current: V2View, incoming: V2View) {
+  if (incoming.session.id !== current.session.id) return incoming;
+  return incoming.session.revision >= current.session.revision ? incoming : current;
+}
+
 export function InterviewV2Room({ initial }: { initial: V2View }) {
   const [view, setView] = useState(initial);
+  useEffect(() => {
+    setView(current => newerView(current, initial));
+  }, [initial]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<V2Code | null>(null);
@@ -185,7 +193,11 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
     try {
       const result = await action();
       setNotice(result.code === "ok" ? null : result.code);
-      if (result.view) { setView(result.view); setDraft(""); }
+      if (result.view) {
+        const incoming = result.view;
+        setView(current => newerView(current, incoming));
+        setDraft("");
+      }
     } catch { setNotice("unavailable"); }
     finally { setBusy(false); }
   }
