@@ -258,7 +258,7 @@ test("mounted author/upload/player: same-tick guard, versions, uncertainty, styl
     await upload.keyboard.press("Enter");
     await upload.getByRole("textbox",{name:"Lesson title",exact:true}).waitFor();
     await upload.getByLabel("Lesson title",{exact:true}).fill("Uploaded accepted lesson");
-    await upload.getByRole("button",{name:"Save and publish",exact:true}).focus();
+    await upload.getByRole("button",{name:"Save & request approval",exact:true}).focus();
     await upload.keyboard.press("Enter");
     await upload.getByRole("status").filter({hasText:"Version 1"}).waitFor();
     const imported = (await h.db.query("select * from forge_lessons where title='Uploaded accepted lesson'")).rows[0];

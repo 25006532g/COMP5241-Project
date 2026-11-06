@@ -70,7 +70,7 @@ test("presentation geometry in the portal shell, responsive panels, unclipped pr
         assert.ok(geometry.canvas.w>=minCanvas,`Canvas below ${minCanvas}px: ${JSON.stringify(geometry)}`);
         assert.ok(geometry.workspace.bottom<=height,JSON.stringify(geometry));
         assert.ok(geometry.canvas.bottom<=height);
-        for(const name of ["Save","Save and publish","Export editable PPTX","Fullscreen preview","Undo","Redo","Add text","Add slide","AI Slide Assistant","Lesson settings","Quiz","Help"]){
+        for(const name of ["Save","Save & request approval","Export editable PPTX","Fullscreen preview","Undo","Redo","Add text","Add slide","AI Slide Assistant","Lesson settings","Quiz","Help"]){
           const button=page.getByRole("button",{name,exact:true});
           const r=await button.boundingBox();
           assert.ok(r&&r.y>=0&&r.y+r.height<=height,`${width}: ${name} outside initial viewport`);
@@ -202,7 +202,7 @@ test("enlarged editor text and 320px dialogs keep controls reachable without hor
     await page.addStyleTag({content:".presentation-editor {font-size:20px} .presentation-editor :is(button,input,select,summary,label), .presentation-editor .presentation-upload {font-size:20px}"});
     await settled(page);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-    for(const name of ["Save","Save and publish","Export editable PPTX","Fullscreen preview","Add text","Lesson settings","Quiz","Help"]){
+    for(const name of ["Save","Save & request approval","Export editable PPTX","Fullscreen preview","Add text","Lesson settings","Quiz","Help"]){
       const button=page.getByRole("button",{name,exact:true});
       await button.scrollIntoViewIfNeeded();
       const bounds=await button.boundingBox();

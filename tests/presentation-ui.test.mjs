@@ -100,7 +100,7 @@ test("mounted presentation: real Fabric IME, properties/history/slides, native e
     await page.getByRole("button",{name:"Save",exact:true}).evaluate(button=>{button.click();button.click();});
     await page.waitForTimeout(100);assert.equal(payloads.length,1);release();gate=null;
     await page.getByRole("status").filter({hasText:"Version 1"}).waitFor();
-    await page.getByRole("button",{name:"Save and publish",exact:true}).click();
+    await page.getByRole("button",{name:"Save & request approval",exact:true}).click();
     await page.getByRole("status").filter({hasText:"Version 2"}).waitFor();
     assert.equal(new Map(payloads[1]).get("version"),"1");assert.ok(new Map(payloads[1]).get("lessonId"));
     const content=JSON.parse(new Map(payloads[1]).get("content"));

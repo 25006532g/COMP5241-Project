@@ -13,7 +13,7 @@ export type CanvasHandle={
   flush:()=>boolean;
   layout:(slide:PresentationSlide)=>PresentationSlide;
 };
-export type CanvasTextStyle={size:number|null;font:RunStyle["font"]|null};
+export type CanvasTextStyle={size:number|null;font:RunStyle["font"]|null;bold:boolean|"mixed";italic:boolean|"mixed";underline:boolean|"mixed"};
 export function PresentationCanvasEditor({slide,source,onChange,onSelect,onTextStyle,onError,handle,selection,disabled=false}:{
   slide:PresentationSlide;source:AssetSource;onChange:(slide:PresentationSlide,group?:string)=>void;
   onSelect:(ids:string[])=>void;onTextStyle:(style:CanvasTextStyle|null)=>void;onError:(message:string)=>void;handle:RefObject<CanvasHandle|null>;selection:string[];disabled?:boolean;
@@ -39,20 +39,41 @@ export function PresentationCanvasEditor({slide,source,onChange,onSelect,onTextS
       const canvas=new fabric.Canvas(ref.current,{width:960,height:540,preserveObjectStacking:true,selection:true,uniformScaling:true,uniScaleKey:undefined});
       canvasRef.current=canvas;
       let restoring=false;
-      function textStyle(){
-        const styles=canvas.getActiveObjects().flatMap(o=>{
+      function selectedStyles(caret=true){
+        return canvas.getActiveObjects().flatMap(o=>{
           if(!(o instanceof fabric.Textbox))return [];
           const length=fabric.util.string.graphemeSplit(o.text).length;
-          const start=o.isEditing?Math.min(o.selectionStart,Math.max(0,length-1)):0,end=o.isEditing?o.selectionEnd:length;
+          const range=o.isEditing&&(caret||o.selectionEnd>o.selectionStart);
+          const start=range?Math.min(o.selectionStart,Math.max(0,length-1)):0,end=range?o.selectionEnd:length;
           return length?o.getSelectionStyles(start,Math.max(start+1,end),true):[o];
         });
+      }
+      function markValue(style:ReturnType<typeof selectedStyles>[number],mark:"bold"|"italic"|"underline"){
+        return mark==="bold"?style.fontWeight==="bold"||style.fontWeight===700:mark==="italic"?style.fontStyle==="italic":Boolean(style.underline);
+      }
+      function textStyle(){
+        const styles=selectedStyles(),marks=selectedStyles(false);
+        const markState=(mark:"bold"|"italic"|"underline")=>{
+          const values=marks.map(s=>markValue(s,mark));
+          return values.every(v=>v===values[0])?values[0]:"mixed" as const;
+        };
         const sizes=styles.map(s=>s.fontSize),fonts=styles.map(s=>s.fontFamily);
         live.current.onTextStyle(styles.length?{
           size:sizes.every(v=>v===sizes[0])?sizes[0]??null:null,
           font:fonts.every(v=>v===fonts[0])?fonts[0] as RunStyle["font"]:null,
+          bold:markState("bold"),italic:markState("italic"),underline:markState("underline"),
         }:null);
       }
-      function selected(){live.current.onSelect(canvas.getActiveObjects().map(adapter.objectId).filter((id):id is string=>Boolean(id)));textStyle();}
+      function selected(){
+        for(const o of canvas.getObjects())if(o instanceof fabric.Textbox){
+          // Fabric normally consumes Tab and collapses the character range.
+          // Let native Tab reach the outline/properties without ending editing.
+          o.keysMap={...o.keysMap};delete o.keysMap[9];
+          o.keysMapRtl={...o.keysMapRtl};delete o.keysMapRtl[9];
+          o.hiddenTextareaContainer=host.current;
+        }
+        live.current.onSelect(canvas.getActiveObjects().map(adapter.objectId).filter((id):id is string=>Boolean(id)));textStyle();
+      }
       function commit(group="") {
         if(restoring||disposed||live.current.disabled)return false;
         try {
@@ -64,8 +85,10 @@ export function PresentationCanvasEditor({slide,source,onChange,onSelect,onTextS
           live.current.onError(adapter.textLayoutError(parsed.data));textStyle();return true;
         } catch(error) {
           live.current.onError(error instanceof Error?error.message:"Invalid canvas change.");
+          const ids=[...live.current.selection];
           restoring=true;
           void adapter.drawSlide(canvas,live.current.slide,live.current.source,()=>!disposed)
+            .then(()=>{if(!disposed)api.current?.select(ids);})
             .catch(error=>live.current.onError(error instanceof Error?error.message:"Slide could not be restored."))
             .finally(()=>{restoring=false;});
           return false;
@@ -84,11 +107,8 @@ export function PresentationCanvasEditor({slide,source,onChange,onSelect,onTextS
         },
         layout:adapter.fitSlideText,
         toggle(mark){
-          const texts=canvas.getActiveObjects().filter((o):o is Textbox=>o instanceof fabric.Textbox);
-          const values=texts.flatMap(o=>{
-            const styles=o.isEditing&&o.selectionEnd>o.selectionStart?o.getSelectionStyles(o.selectionStart,o.selectionEnd,true):[o];
-            return styles.map(s=>mark==="bold"?s.fontWeight==="bold"||s.fontWeight===700:mark==="italic"?s.fontStyle==="italic":Boolean(s.underline));
-          });
+          const values=selectedStyles(false).map(s=>markValue(s,mark));
+          if(!values.length)return;
           api.current?.format({[mark]:!values.every(Boolean)});
         },
         format(patch){

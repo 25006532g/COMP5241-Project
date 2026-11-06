@@ -119,7 +119,7 @@ test("QA real upload-to-presentation placement retains desktop canvas and initia
         return {editor:r(".presentation-editor"),canvas:r(".canvas-container"),scrollY,overflow:document.documentElement.scrollWidth>innerWidth};
       });
       const actions={};
-      for(const name of ["Save","Save and publish","Undo","Redo","Add text","Add slide","Fullscreen preview","Export editable PPTX"]){
+      for(const name of ["Save","Save & request approval","Undo","Redo","Add text","Add slide","Fullscreen preview","Export editable PPTX"]){
         const bounds=await page.getByRole("button",{name,exact:true}).boundingBox();
         actions[name]=bounds;
         if(!bounds||bounds.y<0||bounds.y+bounds.height>height)failures.push(`${width}x${height}: ${name} outside initial viewport ${JSON.stringify(bounds)}`);

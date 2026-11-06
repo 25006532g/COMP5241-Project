@@ -22,7 +22,8 @@ export default async function Teaching({ searchParams }: { searchParams: Promise
   return <LearnerShell active="/teaching" name={await displayName(user)} admin={isAdmin(user)} instructor={isInstructor(user)}>
     <div className="portal-page"><span className="eyebrow">TEACHING</span><h1>Manage enrollment.</h1>
       <p><a href="/studio" className="secondary-button">Create lesson</a></p>
-      <form method="get" className="learning-form"><label>Published lesson roster<select name="lesson" defaultValue={selected?.id ?? ""} required><option value="" disabled>Select a lesson</option>{lessons.map(lesson => <option key={lesson.id} value={lesson.id}>{lesson.title}</option>)}</select></label><button className="secondary-button" type="submit" disabled={!lessons.length}>Manage learners</button></form>
+      {lessons.length ? <form method="get" className="learning-form"><label>Published lesson roster<select name="lesson" defaultValue={selected?.id ?? ""} required><option value="" disabled>Select a lesson</option>{lessons.map(lesson => <option key={lesson.id} value={lesson.id}>{lesson.title}</option>)}</select></label><button className="secondary-button" type="submit">Manage learners</button></form> :
+        <section className="empty-state"><h2>No published lessons available to manage</h2><p>Only published lessons have rosters. A private draft or a lesson awaiting review is not yet available here. Create or open your lesson in <a href="/studio" className="text-link">Lesson studio</a> and request administrator approval.</p></section>}
       {selected && <><h2>{selected.title}</h2><LearnerImport key={selected.id} lessonId={selected.id} /></>}
       <section className="learning-section"><h2>Teaching materials</h2>
         <LessonGeneration importing />
