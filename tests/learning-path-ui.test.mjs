@@ -43,7 +43,7 @@ function pageHarness() {
     const query = {
       select() { return query; }, eq() { return query; }, or() { return query; }, gte() { return query; }, order() { return query; },
       range: async () => ({ data: table === "forge_lessons" ? catalog : [], error: null }),
-      maybeSingle: async () => ({ data: { age: 18, learning_level: state.level ?? "new" }, error: state.profileError }),
+      maybeSingle: async () => ({ data: { age: state.age, learning_level: state.level ?? "new" }, error: state.profileError }),
     };
     return query;
   } };
@@ -82,12 +82,19 @@ test("actual paths page fails closed before reads and keys its client by owner/c
   const h = pageHarness();
   const first = await h.clientElement();
   assert.equal(first.props.ownerId, "owner-a");
+  assert.equal(first.props.aiAvailable,true,"approved user without age can access AI");
   h.state.user = { ...h.state.user, id: "owner-b" };
   const next = await h.clientElement();
   assert.notEqual(first.key, next.key);
   h.state.level = "advanced";
   assert.notEqual(next.key, (await h.clientElement()).key);
   assert.equal(h.state.authCalls, 3);
+  for(const age of [13,17,18,120,null,undefined]){
+    h.state.age=age;
+    assert.equal((await h.clientElement()).props.aiAvailable,true);
+  }
+  h.state.user.app_metadata={};h.state.user.user_metadata={ai_access:true};
+  assert.equal((await h.clientElement()).props.aiAvailable,false,"editable metadata cannot grant access");
   h.state.configFailure = true;
   await assert.rejects(h.route(), /configuration unavailable/);
   h.state.configFailure = false; h.state.profileError = {};

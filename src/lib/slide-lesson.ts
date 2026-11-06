@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { FAMILIES } from "./curriculum";
 import { isPresentation, presentationLessonSchema, slideLessonSchema, slideStyleSchema, type LessonContent } from "./learning";
-import { presentationAuthorSchema, type PresentationAuthor } from "./presentation";
+import { MAX_PRESENTATION_SLIDES, MAX_TEXTBOX_CHARACTERS, presentationAuthorSchema, textRunSchema, type PresentationAuthor } from "./presentation";
 
 export const defaultSlideStyle = { color: "#17201d", size: 24 as const, align: "left" as const, background: "#fffefa" };
 
@@ -17,9 +17,9 @@ export const authorLessonSchema = z.object({
   difficulty: z.enum(["new", "foundation", "intermediate", "advanced"]),
   slides: z.array(z.object({
     title: z.string().trim().min(1).max(100),
-    body: z.string().trim().min(1).max(400),
+    body: textRunSchema.shape.text.min(1).refine(text => Boolean(text.trim()), "A slide needs text."),
     style: slideStyleSchema,
-  })).min(3).max(6),
+  })).min(1).max(MAX_PRESENTATION_SLIDES),
   quiz: z.array(questionSchema).max(10),
 }).superRefine((value, context) => {
   if (value.quiz.length > 0 && value.quiz.length < 3) {
@@ -34,23 +34,26 @@ export function emptyAuthorLesson(): AuthorLesson {
   return { title: "", audience: "learners", difficulty: "foundation", slides: [slide(), slide(), slide()], quiz: [] };
 }
 
-// Template limits are deliberate. Never clip source text or silently discard a
-// seventh slide. PPTX units come from presentation relationships, not paragraphs.
+// Match the presentation editor, not the retired 3–6 / 2,400 author limits.
+// Parser limits remain independent. Never clip text, discard or pad source slides.
 export function slidesFromMaterial(material: { text: string; slides?: string[] }, mode: "text" | "powerpoint"): AuthorLesson["slides"] {
   let units: string[];
   if (mode === "powerpoint") {
     if (!material.slides) throw new Error("Slide import requires a PPTX presentation. Choose Copy text only for PDF or DOCX.");
     units = material.slides;
-    if (units.length < 3 || units.length > 6) throw new Error("Slide import requires 3–6 source slides. Split or extend the PPTX; nothing was saved.");
-    if (units.some(text => !text.trim() || text.length > 400)) throw new Error("Each imported slide needs text and at most 400 characters. Image-only or longer slides cannot be imported. Split or edit the PPTX; nothing was saved.");
+    if (units.length < 1 || units.length > MAX_PRESENTATION_SLIDES) throw new Error("Slide import supports 1–30 source slides. Split the PPTX; nothing was saved.");
+    if (units.some(text => !text.trim() || text.length > MAX_TEXTBOX_CHARACTERS)) throw new Error("Each imported slide needs text and at most 10,000 characters. Image-only or longer slides cannot be imported. Split or edit the PPTX; nothing was saved.");
   } else {
-    const text = material.text.trim();
-    if (!text || text.length > 2400) throw new Error("Text import supports at most 2,400 characters across six slides. Split the source file; nothing was saved.");
+    const text = material.text;
+    if (!text.trim()) throw new Error("Text import needs text. Image-only files cannot be imported; nothing was saved.");
+    if (text.length > 60_000) throw new Error("Text import supports the parser's 60,000-character file ceiling. Split the source file; nothing was saved.");
     units = [];
-    for (let offset = 0; offset < text.length; offset += 400) units.push(text.slice(offset, offset + 400));
+    // Keep short imports readable; grow chunks only enough to retain the full
+    // parser output within 30 slides (60,000 characters => 30 × 2,000).
+    const chunkSize = Math.max(400, Math.ceil(text.length / MAX_PRESENTATION_SLIDES));
+    for (let offset = 0; offset < text.length; offset += chunkSize) units.push(text.slice(offset, offset + chunkSize));
   }
   const result = units.map((body, index) => ({ title: `Slide ${index + 1}`, body, style: { ...defaultSlideStyle } }));
-  while (result.length < 3) result.push({ title: "", body: "", style: { ...defaultSlideStyle } });
   return result;
 }
 
@@ -82,7 +85,9 @@ export function toStoredLesson(draft: AuthorLesson): LessonContent {
     })),
     activity: {
       prompt: "Review the slides in order.",
-      steps: draft.slides.slice(0, 3).map((slide, index) => clip(slide.title, 120) || `Read slide ${index + 1}`),
+      steps: draft.slides.length >= 3
+        ? draft.slides.slice(0, 3).map((slide, index) => clip(slide.title, 120) || `Read slide ${index + 1}`)
+        : ["Read the lesson slides.", "Review the key points.", "Reflect on what you learned."],
     },
     questions: draft.quiz.map(question => ({ ...question, explanation: "Review the matching slide." })),
   });

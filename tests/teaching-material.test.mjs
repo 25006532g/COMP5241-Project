@@ -81,14 +81,38 @@ test("template upload uses real ordered PPTX units, rejects mode tampering and n
   assert.deepEqual(result.slides.map(s => s.body),[texts[2],texts[0],texts[1]]);
   assert.match((await actions.extractLessonUpload(form(file,"forged"))).error,/Invalid option/);
   assert.match((await actions.extractLessonUpload(form(new File([zip(pptxParts())],"renamed.pdf"),"powerpoint"))).error,/requires PPTX/);
-  for (const units of [Array(7).fill("text"),["ok","ok","x".repeat(401)],["ok","","ok"]]) {
+  for (const units of [["Only slide"],["First","Second"],Array.from({length:7},(_,i)=>`Slide ${i}`),["ok","x".repeat(10000)]]) {
+    const imported = await actions.extractLessonUpload(form(new File([zip(pptxParts(units))],"accepted.pptx"),"powerpoint"));
+    assert.equal(imported.error,undefined);
+    assert.deepEqual(imported.slides.map(s=>s.body),units);
+  }
+  for (const units of [Array(31).fill("text"),["ok","x".repeat(10001)],["ok","","ok"]]) {
     const result = await actions.extractLessonUpload(form(new File([zip(pptxParts(units))],"large.pptx"),"powerpoint"));
     assert.ok(result.error); assert.equal(result.slides,undefined);
   }
   const longWord = "W".repeat(1201);
   const chunks = slides.slidesFromMaterial({text:longWord},"text");
   assert.equal(chunks.map(s => s.body).join(""),longWord,"long tokens must not disappear");
-  assert.throws(() => slides.slidesFromMaterial({text:"x".repeat(2401)},"text"),/2,400/);
+  for (const text of ["x".repeat(2401), " Exact\n\ntext ".repeat(1500), "x".repeat(60000)]) {
+    const chunks = slides.slidesFromMaterial({text},"text");
+    assert.equal(chunks.map(s=>s.body).join(""),text);
+    assert.ok(chunks.length<=30);
+  }
+  // Real parser/action accepts >12,000 total file text across bounded units.
+  // PDF text positioned off-page is not extracted, so use complete PPTX text.
+  // Collector counts source paragraph/separator newlines before normalization:
+  // this near-ceiling fixture uses all 60,000 raw characters (59,995 extracted).
+  for (const texts of [["x".repeat(2401)],Array(5).fill("x".repeat(11997)),["x".repeat(11999),...Array(4).fill("x".repeat(11997))]]) {
+    const result = await actions.extractLessonUpload(form(new File([zip(pptxParts(texts))],"accepted.pptx"),"text"));
+    const parsed = await extractStructuredTeachingMaterial(new File([zip(pptxParts(texts))],"accepted.pptx"));
+    assert.equal(result.error,undefined);
+    assert.equal(result.slides.map(s=>s.body).join(""),parsed.text);
+    assert.ok(result.slides.length<=30);
+    assert.equal(parsed.text,texts.join("\n\n"));
+    if(texts[0].length===11999) assert.equal(parsed.text.length,59995);
+  }
+  assert.throws(() => slides.slidesFromMaterial({text:"x".repeat(60001)},"text"),/60,000/);
+  assert.throws(() => slides.slidesFromMaterial({text:" \n "},"text"),/needs text/);
 });
 
 function rc4(key, data) {

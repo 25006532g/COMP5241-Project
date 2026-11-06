@@ -196,9 +196,8 @@ test("server action gates AI, minimizes data, and rechecks current catalog and c
     state.database = {
       from(table) {
         assert.ok(["profiles", "forge_attempts", "forge_lessons"].includes(table));
-        let columns;
         const query = {
-          select(value) { columns = value; calls.push(["select", table, value]); return query; },
+          select(value) { assert.notEqual(value,"age","Path AI authorization must not query profile age");calls.push(["select", table, value]); return query; },
           eq(column, value) { assert.equal(column, table === "profiles" ? "id" : "user_id"); assert.equal(value, state.ownerId, "Never query another owner"); return query; },
           or(value) { assert.equal(value, `visibility.eq.public,owner_id.eq.${state.ownerId}`); return query; },
           gte(column, value) { assert.equal(column, "score"); assert.equal(value, 6); return query; },
@@ -207,7 +206,7 @@ test("server action gates AI, minimizes data, and rechecks current catalog and c
             if (state.failTable === table) return { data: null, error: new Error("PRIVATE ROW DETAIL") };
             return { data: table === "forge_lessons" ? state.catalog : state.passed.map(original_lesson_id => ({ original_lesson_id })), error: null };
           },
-          async maybeSingle() { return { data: state.profile, error: (columns === "age" ? state.ageError : state.profileError) ? new Error("private db detail") : null }; },
+          async maybeSingle() { return { data: state.profile, error: state.profileError ? new Error("private db detail") : null }; },
         };
         return query;
       },
@@ -251,44 +250,52 @@ test("server action gates AI, minimizes data, and rechecks current catalog and c
         if (variant !== "grant") assert.deepEqual(calls.slice(after).map(call => call[0]), ["auth"]);
       }
     });
-    await context.test("minor, unknown age, and unapproved adult cannot call external AI", async () => {
-      for (const [age, approved] of [[12, true], [13, true], [17, true], [null, true], [18, false]]) {
+    await context.test("unapproved/string/spoof grant cannot call external AI at any age", async () => {
+      for (const [age, approved] of [[13, false], [17, false], [null, undefined], [18, "true"], [120, false], [undefined,false]]) {
         const { state, form, calls } = setup();
         state.profile.age = age; state.user.app_metadata.ai_access = approved;
+        state.user.user_metadata={ai_access:true,age};
         const result = await generateLearningPath({ path: [{ id: id(99) }] }, form);
-        assert.match(result.error, /18\+/);
+        assert.match(result.error, /administrator-approved AI access/);
         assert.equal(result.path, undefined);
         assert.ok(!calls.some(call => ["quota", "completion"].includes(call[0])));
         assert.ok(recommendLessons(state.catalog, derivePreferences({})).length > 0);
       }
     });
-    await context.test("eligible adult receives validated non-persisted path with no personal fields sent", async () => {
+    await context.test("approved users receive paths regardless of missing profile age",async()=>{
+      for(const age of [13,17,18,120,null,undefined]){
+        const {state,form,calls}=setup();state.profile.age=age;
+        state.afterCompletion=()=>{state.profile.age=null;};
+        assert.ok((await generateLearningPath({},form)).path);
+        assert.equal(calls.filter(call=>call[0]==="completion").length,1);
+        assert.equal(calls.filter(call=>call[0]==="select"&&call[2]==="age").length,0);
+      }
+    });
+    await context.test("approved user receives validated non-persisted path with no personal fields sent", async () => {
       const { form, calls } = setup();
       const result = await generateLearningPath({}, form);
       assert.equal(result.path[0].id, id(2));
       assert.equal(result.selectionKey, "profile:profile");
       assert.equal(calls.filter(call => call[0] === "auth").length, 2);
-      assert.equal(calls.filter(call => call[0] === "select" && call[2] === "age").length, 2);
+      assert.equal(calls.filter(call => call[0] === "select" && call[2] === "age").length, 0);
       assert.equal(calls.filter(call => call[0] === "quota").length, 1);
       assert.equal(calls.filter(call => call[0] === "completion").length, 1);
       const external = JSON.stringify(calls.find(call => call[0] === "completion").slice(1));
       for (const secret of ["user-private-id", "Private Name", "private@example.com", "learning_goals", "score", "answers"]) assert.ok(!external.includes(secret));
       assert.ok(calls.some(call => call[0] === "select" && call[2] === "original_lesson_id"));
     });
-    await context.test("auth/config/age/quota/read/provider failures are sanitized with no stale path or automatic inference", async () => {
-      for (const variant of ["expired", "auth", "config", "age", "quota", "catalog", "passed", "post-catalog", "post-passed", "post-age", "transport", "provider"]) {
+    await context.test("auth/config/quota/read/provider failures are sanitized with no stale path or automatic inference", async () => {
+      for (const variant of ["expired", "auth", "config", "quota", "catalog", "passed", "post-catalog", "post-passed", "transport", "provider"]) {
         const { state, form, calls } = setup();
         if (variant === "expired") state.user = null;
         if (variant === "auth") state.authThrows = true;
         if (variant === "config") state.dbUnavailable = true;
-        if (variant === "age") state.ageError = true;
         if (variant === "quota") state.quotaError = true;
         if (variant === "catalog") state.failTable = "forge_lessons";
         if (variant === "passed") state.failTable = "forge_attempts";
         state.afterCompletion = () => {
           if (variant === "post-catalog") state.failTable = "forge_lessons";
           if (variant === "post-passed") state.failTable = "forge_attempts";
-          if (variant === "post-age") state.ageError = true;
         };
         if (variant === "transport") state.providerError = new Error("PRIVATE TRANSPORT");
         if (variant === "provider") state.providerError = new PathOpenRouterError("PRIVATE PROVIDER KEY");
@@ -317,7 +324,7 @@ test("server action gates AI, minimizes data, and rechecks current catalog and c
         state.afterCompletion = () => {
           if (variant === "visibility") state.catalog = [catalog[0]];
           if (variant === "passed") state.passed = [id(2)];
-          if (variant === "eligibility") state.profile.age = 17;
+          if (variant === "eligibility") state.user.app_metadata.ai_access = false;
           if (variant === "title") state.catalog = state.catalog.map(item => ({ ...item, title: "Changed title" }));
           if (variant === "metadata") state.catalog = state.catalog.map(item => ({ ...item, metadata: { version: 1, topic: "testing", audience: "both", difficulty: "advanced", outcomes: ["Test"], prerequisites: [] } }));
         };

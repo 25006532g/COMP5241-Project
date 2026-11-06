@@ -68,7 +68,7 @@ export function LessonPlayer(props: PlayerProps) {
 }
 
 function PlayerSession({ id, version, content, saved, revision, resumeAvailable, evidence: loadedEvidence }: PlayerProps) {
-  const initial = saved && saved.answers.length === content.questions.length && saved.slide < content.slides.length && saved.ordering.length === content.activity.steps.length && new Set(saved.ordering).size === saved.ordering.length && saved.ordering.every(index => index < saved.ordering.length) && (content.template !== "slides" || saved.stage !== "activity" && (content.questions.length > 0 || saved.stage !== "quiz")) ? saved : null;
+  const initial = saved && Number.isInteger(saved.slide) && saved.slide >= 0 && saved.slide <= (content.template === "slides" ? 29 : 5) && saved.answers.length === content.questions.length && saved.slide < content.slides.length && saved.ordering.length === content.activity.steps.length && new Set(saved.ordering).size === saved.ordering.length && saved.ordering.every(index => index < saved.ordering.length) && (content.template !== "slides" || saved.stage !== "activity" && (content.questions.length > 0 || saved.stage !== "quiz")) ? saved : null;
   const [slide, setSlide] = useState(initial?.slide ?? 0);
   const legacySlide = "format" in content ? null : content.slides[slide];
   const [stage, setStage] = useState<"slides" | "activity" | "quiz">(initial?.stage ?? "slides");

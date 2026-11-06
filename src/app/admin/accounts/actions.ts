@@ -26,9 +26,7 @@ export async function updateAccount(_previous: ActionState, form: FormData): Pro
     if (error || !data?.user) return { error: "Account not found." };
     if (isAdmin(data.user) || actor.id === id) return { error: "Administrator accounts cannot be changed here." };
     if (aiAccess) {
-      const { data: profile, error: profileError } = await client.from("profiles").select("age").eq("id", id).maybeSingle();
-      if (profileError || !profile || !Number.isInteger(profile.age) || profile.age < 18 || profile.age > 120) return { error: "AI access requires a recorded age of 18 or older. Missing ages and minors cannot be approved." };
-      if (form.get("confirmAi") !== "on") return { error: "Confirm eligibility and consent before approving external AI access." };
+      if (form.get("confirmAi") !== "on") return { error: "Confirm administrator consent review before approving external AI access." };
     }
     const { error: saveError } = await client.auth.admin.updateUserById(id, {
       app_metadata: { ...data.user.app_metadata, role, ai_access: aiAccess },

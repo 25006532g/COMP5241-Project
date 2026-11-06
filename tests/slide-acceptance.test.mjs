@@ -27,7 +27,7 @@ test("independent SQL matrix: slide 0/3, standard 10, malformed JSON, attempt to
     for (const bad of [null, [], {}, { questions: null }, { questions: {} }, { questions: "ten" },
       { ...stored, questions: [null, {}, {}] }, { ...stored, slides: null },
       { ...stored, slides: {} }, { ...stored, slides: [null, {}, {}] },
-      { ...stored, slides: stored.slides.slice(0, 2) }, { ...stored, template: null }]) {
+      { ...stored, slides: [] }, { ...stored, template: null }]) {
       await assert.rejects(insert(bad), e => e.code === "23514", JSON.stringify(bad));
     }
     await assert.rejects(insert(undefined), e => ["23502", "23514"].includes(e.code), "SQL NULL must be rejected");

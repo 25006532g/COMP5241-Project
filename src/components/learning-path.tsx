@@ -106,7 +106,7 @@ export function LearningPath({ ownerId, catalog, completedIds, initialPreference
     <section className="learning-section" aria-labelledby="ai-path-heading" aria-busy={pending}>
       <h2 id="ai-path-heading">AI-generated path</h2>
       <p>Optional and not saved. Reloading clears the generated path. No automatic enrollment.</p>
-      {!aiAvailable && <p id="ai-access-notice" role="status">External AI requires a recorded adult age (18+) and administrator-approved AI access. Local recommendations remain available.</p>}
+      {!aiAvailable && <p id="ai-access-notice" role="status">External AI requires administrator-approved AI access. Local recommendations remain available.</p>}
       <label className="checkbox-field"><input name="shareCourseContent" type="checkbox" checked={shareCourseContent} onChange={event => setShareCourseContent(event.target.checked)} disabled={!aiAvailable || pending || !recommendations.length} />Share candidate lesson titles and audience/difficulty metadata (including my private lessons) and coarse curriculum preferences with the external AI provider for this request.</label>
       <p>No profile text, personal identifiers, grades, answers, or chats are sent. The shared daily AI generation allowance applies.</p>
       <button type="submit" className="auth-submit" disabled={!aiAvailable || !shareCourseContent || pending || !recommendations.length} aria-describedby={!aiAvailable ? "ai-access-notice" : undefined}>

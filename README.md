@@ -6,6 +6,220 @@ For a presentation-ready overview of features, design choices and prototype scre
 
 Track remaining work, blockers, acceptance criteria and verification updates in [IMPLEMENTATION_TRACKER.md](IMPLEMENTATION_TRACKER.md).
 
+## 6 November 2026 — independent narrow follow-up: local QA-AI-01 verified
+
+The initial independent interview blocker below is **historical and now resolved
+in the bounded offline verification**: fresh race/recovery checks **23/23** and
+selected interview UI, failure, eligibility/admin/coach checks **22/22** passed.
+Pre-save authorization loss performs no finalize or reply release; pending lease
+recovery requires the original approved owner and an explicit retry. Post-finalize
+authorization loss suppresses the response, without rolling back a legitimate save.
+Coordinator retains acceptance ownership.
+
+Six new persistent cases in `tests/presentation-ai-ui.test.mjs` close the exact UI
+gaps at **1440px and 320px**: real text scope, consent FIRST, native typing without
+reconfirmation, enabled native click/Tab/Enter Generate, exactly one valid mocked
+generation and before/after Review; focused missing-instruction/consent/empty-new-
+slide errors make zero calls, followed by outside-modal target selection and
+keyboard recovery. **6/6** narrow and **14/14** focused AI regression checks passed,
+including prompt-first, duplicate/stale denial, Apply/Undo/Redo/manual Save/reopen
+and approved-minor action positives. Ten final-group screenshots were opened.
+Two test-authoring failures were corrected only in the owned test file; exact
+commands, iterations, screenshots and cleanup are in the newest tracker entry.
+
+Application files, retained interview tests, unrelated dirty work and migrations/
+`_ran` files are fingerprint-unchanged. Owned browsers/PGlite closed; no owned
+Node/Chromium remained. No environment-file reads/application environment loading,
+connected or live-provider execution, installation, commit, build, typecheck or deployment.
+**User-feature local acceptance evidence only, not production/live-provider or
+age/consent/legal certification.** Hosted atomicity, live provider availability/
+semantics and deployment/provider terms remain untested. Older blocked/pending
+entries below are preserved dated history, not the current bounded QA verdict.
+
+## 6 November 2026 — bounded QA-AI-01 repair; independent QA pending
+
+Interview turns now re-read trusted authentication, require the original owner
+and fresh administrator approval immediately after inference/parsing, before
+saving a reply. They repeat that check after asynchronous finalization, including
+uncertain saves, before releasing any saved row. Lost authentication returns
+`auth`; changed owner or revoked approval returns `denied`, without a row.
+Approval-only AI access and the separate **13+ account-age rules** remain intact.
+
+Pre-save denial leaves the original saved attempt pending with no reply and no
+cleanup write, automatic inference or additional quota. Return with the original
+approved account, reload, and explicitly retry that turn after its existing
+75-second lease. If authorization changes during a legitimately authorized save,
+no result row is released; the original owner must reload to confirm storage.
+
+Local evidence: unchanged retained RED **0/4 pass**, smallest repair **4/4 pass**,
+strengthened authorization/recovery checks **23/23 pass**, requested interview/UI/
+eligibility/action group **72/72 pass**; scoped lint, direct offline TypeScript
+and whitespace passed. One added-fixture failure was corrected without relaxing
+signup age validation. Exact commands/results/cleanup are in the new tracker entry.
+All prior work and migrations are preserved. **Coordinator owns acceptance;
+independent QA requested, not release certification.** No connected/provider
+execution or build/deploy; hosted races after the last server check remain
+non-atomic without a separately authorized database-policy change.
+
+## 6 November 2026 — independent bounded QA: acceptance blocked
+
+Current independent offline execution: **24/24** focused eligibility/admin/coach/
+presentation AI checks passed; selected interview/staged/import/path/free-provider
+checks reported **44 passes, 4 failures** (three interview authorization cases plus
+their failed parent test). This supersedes prior pass-only claims as current QA
+evidence; historical results remain below. Coordinator retains acceptance ownership.
+
+**Blocking defect:** if trusted approval is revoked, the session disappears, or a
+different approved owner signs in during an interview inference, the real action
+still returns success and persists/releases the provider reply. A narrow persistent
+RED regression is retained in `tests/interviews.test.mjs`; no product fix was made.
+Escalated to the coordinator for a bounded implementer. Approval-only AI access
+regardless of age remains the approved policy; no age restriction was restored.
+
+Mounted Generate recovery, stale-work denial, Apply success, actual canvas text,
+Undo/Redo and real in-memory PGlite manual Save/reopen passed. Eleven sanitized
+desktop/mobile screenshots were opened. Owned test lint and whitespace passed;
+no independent typecheck/build/full-suite claim. Protected source/test fingerprints
+and all 17 migration names/content are unchanged except the retained test addition.
+Browsers/PGlite closed; no owned offline runner/Playwright process remained.
+Exact commands, failures, screenshots and untested criteria are in the newest
+tracker entry. No connected execution, environment-file reads, real networking,
+installs, deployment or commits. **Not release certification.**
+
+## 6 November 2026 — approval-only AI access and Generate recovery
+
+**Latest explicit user approval supersedes every older adult-only/minor/unknown-age
+AI restriction and related historical QA expectation below.** External AI now
+requires authenticated, trusted administrator approval (`app_metadata.ai_access`
+must be boolean `true`), regardless of profile age or missing age. Editable
+metadata cannot grant access. Administrator grants still require explicit consent
+review; roles, target-account protection and revocation remain enforced. AI
+authorization no longer queries profiles. Signup, profile, onboarding and database
+**13–120 whole-number age rules and age bands remain unchanged**.
+
+In the mounted presentation editor, checking consent **before** typing no longer
+silently unchecks it. Idle **Generate suggestions** is clickable for validation;
+missing instruction, consent or teaching-text scope produces a focused, actionable
+error without sending anything. Scope, formatting-payload and selected-text changes
+explicitly ask for renewed consent. Pending Generate/Apply and save/upload/uncertain
+locks remain disabled with visible reasons; export locks remain checked by the
+editor's preparation/Apply guards. Empty/new/imported slides require adding or
+selecting text or choosing a text-containing slide: v1 cannot invent targets.
+Before/after review, atomic Apply, rich styles, Undo/Redo and manual Save remain.
+Coach replies also reject a changed signed-in owner before releasing pending output.
+
+**Unchanged:** provider-default policy (effective defaults/retention unknown; no
+ZDR guarantee), free-only catalog, quotas, request consent, minimized prompts,
+retention and saved-lesson/author/instructor/enrollment/version controls.
+**No new SQL, migration changes or dependencies.**
+
+Local offline evidence: **254/254 bounded tests**, direct TypeScript and clean
+scoped ESLint passed. Retained RED tests reproduced the consent-first defect and
+old age authorization; actual offline Chromium/React/Fabric checks cover both
+input orders, native Tab/Enter, 320px clicks, validation recovery and exactly one
+mocked generation per valid submission. Generated screenshots were opened.
+Exact changed files, commands, intermediate failures and cleanup are recorded in
+the newest tracker entry. Earlier passes remain historical evidence, not evidence
+for this changed policy. **Independent QA requested; not release certification.**
+No environment-file reads, real provider/network requests, connected tests,
+remote operations, installs, commits, deployment or full-suite/build execution.
+Live free-provider availability, hosted auth/quota races and legal/provider
+age/region/consent review remain unverified deployment considerations.
+
+## 6 November 2026 — AI Slide Assistant v1 (local implementation)
+
+Historical implementation/QA record: adult-only AI statements and age-based
+acceptance below are superseded by the later 6 November decision above.
+
+### Independent QA evidence — 6 November 2026
+
+Windows/Node 25.2.1, existing offline Chromium/React/Fabric and in-memory
+PGlite: **45/45 bounded checks passed** (11 focused AI, 22 unchanged
+canvas/font/UI/upload, 9 selected free-provider/adult-eligibility, 3 additional
+non-retained acceptance probes). Verified keyboard/review/Apply/Undo/Redo/
+manual Save/reopen, real canvas pixels, explicit mobile multislide scope,
+payload minimization, revoked Apply access and failure/lock recovery.
+Generated desktop/mobile screenshots were actually examined; exact commands,
+paths, fingerprints and probe reproduction are in the tracker's independent QA
+section. No reproducible defect; no source/test changes. Protected dirty work
+and all 17 migration names/content remain unchanged; owned browsers/PGlite closed.
+**Local acceptance evidence only, not release certification:** live provider
+semantics/availability, hosted auth/quota races and deployment remain untested.
+No environment-file reads, remote services, installs, connected writes or build rerun.
+
+Open **AI assistant** in the presentation editor (including imported previews
+and saved lessons). Choose the selected textbox, current slide, or explicitly
+checked slides; enter an instruction, optionally allow font-size/alignment
+suggestions, and consent to the disclosed external-AI payload. Generate shows
+plain-text before/after changes and an explanation. **Apply** is one atomic,
+undoable edit; **Discard/Close** changes no teaching content. Review and
+**Save manually**. Generation/Apply never saves or refreshes the lesson.
+
+V1 supports rewriting, summarizing, translating, examples and explanations.
+It preserves existing rich-run styles; optional textbox-wide font size (8–120)
+and alignment are the only formatting changes. No images, whole-deck redesign,
+geometry changes, quiz changes or arbitrary document replacement. Stale source/
+session/version, invalid patches, text overflow and save/upload/export/uncertain
+locks reject Apply without an AI edit.
+
+Requires a recorded adult age (18+) and trusted administrator AI approval.
+The existing **15/day coach/interview quota is shared**. Only selected teaching
+text, necessary IDs and optionally font sizes/alignment reach the existing
+free-only OpenRouter client. Quiz/answer keys, images/assets, originals, titles,
+accounts and unrelated slides are excluded. FORGE does not persist prompts or
+results; only explicitly applied text may later be saved. Provider defaults and
+retention remain unknown: **no zero-data-retention guarantee**. Discard/Close
+does not cancel upstream work or refund quota.
+
+Server-only configuration names remain `OPENROUTER_API_KEY` (or
+`OPEN_ROUTER_API_KEY`), `OPENROUTER_MODEL`, `OPENROUTER_FALLBACK_MODELS`.
+No new SQL or dependencies are needed; existing eligibility/profile and
+`forge_claim_coach_request` database prerequisites must already be installed.
+
+Current local evidence: **72/72 scoped offline tests**, scoped ESLint, direct
+TypeScript and environment-free Next packaging build passed. Real offline
+React/Fabric/Chromium, PGlite save/reopen, keyboard, responsive screenshots and
+finite viewport/raster checks are covered. Commands, intermediate failures and
+examined screenshots are in the tracker. **Independent Forge QA requested;
+not release certification.** No credentials/environment files read, provider/
+remote calls, connected SQL writes, deployment, installs or commits.
+
+## 6 November 2026 — retired Create lesson upload limits removed
+
+Legacy Title/Body authoring and PPTX slide imports now support **1–30 slides**
+and **10,000 characters per body/textbox**, matching the existing presentation
+editor. One/two-slide PPTX stays one/two slides, with no blank-slide padding.
+Text mode preserves every extracted character and grows its chunks as necessary
+to fit the parser's full 60,000-character budget within 30 slides. The old 3–6,
+400-character author-body and total 2,400-character import restrictions described
+in the historical 5 November entry below are superseded.
+
+**SQL adjustment (provided, not applied remotely):**
+[20261106090000_lesson_authoring_limits.sql](supabase/migrations/20261106090000_lesson_authoring_limits.sql).
+Apply only after the base schema and all earlier migrations in order, including
+`20261105093000_slide_authoring_ran.sql` followed by
+`20261105140000_presentations_ran.sql`. The latter renamed the legacy validator;
+the new SQL updates that function, **not** the presentation wrapper. It also
+expands only legacy slide-template resume bounds. It is locally tested twice
+idempotently, retains historical rows and service-only grants, and is intentionally
+not marked `_ran`.
+
+Remaining safeguards: 30 presentation slides, 10,000 characters per textbox,
+1.5 million document characters, geometry/text-fit and private-asset validation;
+4 MiB uploads, 60,000 raw parser characters per file, 12,000 per page/slide,
+60 parser units and existing archive/signature/security checks. Parser newline
+normalization is unchanged. Image-only slides still reject; originals are not
+retained or sent to AI. Large imports may need size/layout adjustments before
+canvas-fit validation permits saving. Standard/AI lessons remain **4–6 slides,
+400-character bodies and ten questions**; auth/privacy/AI safeguards are unchanged.
+
+Local Windows/Node 25.2.1 evidence: **44/44 focused offline tests**, scoped ESLint
+and direct offline TypeScript passed. Real upload actions, PGlite create/update/
+read/resume, migration prerequisites/idempotency and mounted keyboard/responsive
+preview-save-reopen flows are covered. See the tracker for exact commands,
+fixture corrections and cleanup. **Independent QA requested; not release approval.**
+No remote services, environment-file reads, deployment, connected tests or commit.
+
 ## 5 November 2026 — remaining CI fractional resize: exact UI publication readiness
 
 The original narrow test passed locally, but holding React's real scheduler
@@ -947,7 +1161,7 @@ Beyond the approved private interview transcript policy, this 15 October scope d
 
 ### Existing implementation and limits
 
-- Administrators use `/admin/accounts` to search accounts by email, grant/revoke instructor rights, and approve/revoke external AI access for recorded adults. Administrator accounts cannot be demoted by this interface.
+- Administrators use `/admin/accounts` to search accounts by email, grant/revoke instructor rights, and approve/revoke external AI access regardless of profile age or missing age, after explicit administrator consent review. Administrator accounts cannot be demoted by this interface.
 - Instructors use `/teaching` to create, publish and edit their own lessons, select existing verified learners by email filter for enrollment, and view only their own published-lesson reports. Administrators retain global public-lesson control. Existing self-enrollment and private-draft isolation remain.
 - First dashboard entry sends incomplete accounts to `/onboarding`; later edits and `/diagnostic` are linked from `/profile`. Completion/background and the latest diagnostic summary are separate from the chosen `learning_level`. Current trusted instructors/admins receive instructor questions; reviewers and other accounts receive learner questions. No self-reported privilege grants, invented historical completion/ages, raw answer history or new diagnostic AI payloads.
 - The six-question local diagnostic uses draft rubric `draft-2026-10-v1`: 0–1 New, 2–3 Foundation, 4–5 Intermediate, 6 Advanced. Retaking never changes the chosen level; adoption/override is explicit. Owner pedagogical review is still required. Recovery/profile/export/deletion remain reachable when setup is incomplete or unavailable.
@@ -1142,6 +1356,11 @@ The supplied key authenticated successfully. Synthetic inference probes did **no
 With reasoning disabled, the then-latest Qwen probe still returned HTTP 429, and a temporary `liquid/lfm-2.5-2.6b:free` probe returned HTTP 404 under the same required settings. The temporary probe did not change the configured model. These statuses alone do not identify the exact quota or provider restriction.
 
 ### Current eligibility and data protection
+
+As explicitly approved on **6 November 2026**, external AI authorization depends
+only on authenticated trusted administrator approval, not profile age or profile
+lookup success. Signup/profile/onboarding age rules still apply. Historical
+adult-only statements elsewhere in this document are superseded, not current policy.
 
 Application limits are **5 new saved lesson starts** (including material imports) and **15 shared text-AI requests (coach plus interviews)** per account per UTC database day. Starting atomically claims quota even if later inference fails; resuming/replaying parts does not claim another start. Each stage instead has three bounded explicit attempts, and provider quotas still apply to every call. Failed coach/interview calls consume their shared text request. Quiz retries are never rate-limited by these counters. Provider-wide free quotas may be lower than aggregate user demand.
 

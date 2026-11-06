@@ -53,7 +53,7 @@ test("new migration and actual actions: private/review/version/variable attempts
   try {
     const { actions: a, form, state, db } = h;
     for (const count of [1,2]) assert.ok((await a.createManualLesson({}, form(draft(count)))).error);
-    assert.ok((await a.createManualLesson({}, form({ ...draft(), slides: draft().slides.slice(0,2) }))).error);
+    assert.ok((await a.createManualLesson({}, form({ ...draft(), slides: [] }))).error);
     await db.exec(`alter table forge_lessons drop constraint forge_lessons_content_check;
       alter table forge_lessons add constraint forge_lessons_content_check check(jsonb_array_length(content->'questions')=10);`);
     const rejected = await a.createManualLesson({},form());

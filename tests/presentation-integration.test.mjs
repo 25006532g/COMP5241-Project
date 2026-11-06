@@ -20,7 +20,11 @@ test("native 30-slide resume, safe learner DTO, quiz/report compatibility and te
     assert.ok((await h.actions.saveResume(made.lessonId,1,1,{...state,slide:30})).error);
     const storedResume=(await h.db.query("select * from forge_resume where lesson_id=$1",[made.lessonId])).rows[0];
     assert.equal(storedResume.slide_count,30);assert.equal(storedResume.lesson_format,"presentation");
-    await assert.rejects(()=>h.db.query("update forge_resume set lesson_format='legacy' where lesson_id=$1",[made.lessonId]),e=>e.code==="23514");
+    // The additive limits migration now permits legacy slide-template snapshots
+    // up to 30; standard snapshots must still reject this position/count.
+    await h.db.query("update forge_resume set lesson_format='legacy' where lesson_id=$1",[made.lessonId]);
+    await assert.rejects(()=>h.db.query("update forge_resume set lesson_template='standard' where lesson_id=$1",[made.lessonId]),e=>e.code==="23514");
+    await h.db.query("update forge_resume set lesson_format='presentation' where lesson_id=$1",[made.lessonId]);
     const legacy=await h.actions.createManualLesson({},h.form(draft()));
     await h.db.query("insert into forge_enrollments(user_id,lesson_id) values($1,$2)",[h.owner,legacy.lessonId]);
     assert.ok((await h.actions.saveResume(legacy.lessonId,1,0,{...state,answers:[],slide:6})).error);
@@ -40,6 +44,15 @@ test("native 30-slide resume, safe learner DTO, quiz/report compatibility and te
     renderToStaticMarkup(await route({params:Promise.resolve({slug:made.lessonId,lesson:"1"})}));
     assert.equal(player.saved.slide,29);assert.equal(player.content.slides.length,30);
     assert.ok(player.content.questions.every(q=>Object.keys(q).sort().join()==="options,prompt"));
+    const legacyAuthor={...draft(),slides:Array.from({length:7},(_,i)=>({...draft().slides[0],title:`Legacy ${i}`,body:"Legacy text ".repeat(40)}))};
+    const legacySeven=await h.actions.createManualLesson({},h.form(legacyAuthor));
+    assert.ok(legacySeven.lessonId,legacySeven.error);
+    await h.db.query("insert into forge_enrollments(user_id,lesson_id) values($1,$2)",[h.owner,legacySeven.lessonId]);
+    assert.equal((await h.actions.saveResume(legacySeven.lessonId,1,0,{stage:"slides",slide:6,ordering:[2,1,0],answers:[]})).revision,1);
+    renderToStaticMarkup(await route({params:Promise.resolve({slug:legacySeven.lessonId,lesson:"1"})}));
+    assert.equal(player.saved.slide,6,"real legacy route must not drop expanded resume on reopen");
+    assert.equal(player.content.slides.length,7);
+    renderToStaticMarkup(await route({params:Promise.resolve({slug:made.lessonId,lesson:"1"})}));
     let reference,completionMessages;
     const realCoach=load("../src/lib/openrouter.ts",{
       "server-only":{},zod:{z},"@/lib/learning":learning,"@/lib/curriculum":curriculum,
