@@ -90,7 +90,7 @@ function serverFixture(){
   const f=fixture(),permissions=load("../src/lib/permissions.ts",{}),eligibility=load("../src/lib/eligibility.ts",{});
   const s={user:{id:crypto.randomUUID(),app_metadata:{ai_access:true}},age:22,claims:0,calls:[],quota:true,quotaError:false,editable:true,version:1,late:null};
   const database=()=>({
-    from(table){assert.equal(table,"profiles");const q={select(){return q;},eq(){return q;},maybeSingle:async()=>({data:{age:s.age},error:null})};return q;},
+    from(){assert.fail("Presentation AI authorization must never read profiles");},
     async rpc(name,args){assert.equal(name,"forge_claim_coach_request");assert.equal(args.request_user,s.user.id);s.claims++;return {data:s.quota,error:s.quotaError};},
   });
   const learningServer={...permissions,database,currentUser:async()=>{if(!s.user)throw new Error("PRIVATE_AUTH");return s.user;},
@@ -113,9 +113,18 @@ test("real action gates, shared quota and minimized JSON completion; zero lesson
     const payload=f.s.calls[0];assert.ok(payload.schema.properties.changes);
     assert.doesNotMatch(payload.messages[1].content,/PRIVATE_|UNRELATED_|quiz|asset|lessonId|sourceToken|requestId|audience|userId/);
     assert.deepEqual(await f.server.checkAiApply(result.binding),{});assert.equal(f.s.claims,1);assert.equal(f.s.calls.length,1);
+    for(const age of [13,17,18,120,null,undefined]){
+      const approved=serverFixture();approved.s.age=age;approved.s.user.user_metadata={age};
+      const generated=await approved.server.generateAiSuggestions(approved.request);
+      assert.ok(generated.patch);assert.deepEqual(await approved.server.checkAiApply(generated.binding),{});
+      approved.s.user.app_metadata.ai_access=false;
+      assert.match((await approved.server.checkAiApply(generated.binding)).error,/^External AI requires administrator-approved AI access\.$/);
+      assert.equal(approved.s.calls.length,1);assert.equal(approved.s.claims,1);
+    }
     for(const mutate of [
-      f=>{f.s.user=null;},f=>{f.s.age=17;},f=>{f.s.age=null;},
-      f=>{f.s.user.app_metadata={};},f=>{f.s.user.app_metadata={};f.s.user.user_metadata={ai_access:true};},
+      f=>{f.s.user=null;},
+      f=>{f.s.user.app_metadata={};},f=>{f.s.user.app_metadata={ai_access:"true"};},f=>{f.s.user.app_metadata={};f.s.user.user_metadata={ai_access:true};},
+      f=>{f.request.instruction="   ";},
       f=>{f.request.consent=false;},f=>{f.request.instruction="x".repeat(2001);},
       f=>{f.request.reference[0].id=crypto.randomUUID();},f=>{f.request.reference=[];},
       f=>{f.request.lessonId=crypto.randomUUID();f.request.version=1;f.s.editable=false;},
@@ -145,7 +154,7 @@ test("late session/rights/version denial, invalid/truncated output and safe prov
   try{
     for(const mutate of [
       f=>{f.s.user={...f.s.user,id:crypto.randomUUID()};},
-      f=>{f.s.user=null;},f=>{f.s.age=17;},f=>{f.s.user.app_metadata.ai_access=false;},
+      f=>{f.s.user=null;},f=>{f.s.user.app_metadata.ai_access=false;},
       f=>{f.s.editable=false;},f=>{f.s.version=2;},
       f=>{f.s.lessonOwner=crypto.randomUUID();},
     ]){

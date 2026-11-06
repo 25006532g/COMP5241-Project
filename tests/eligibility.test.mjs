@@ -11,29 +11,26 @@ import { ageRangeFor, isAiEligible, isDemoAge } from "../src/lib/eligibility.ts"
 test("demo ages start at 13 and require a valid numeric integer", () => {
   for (const age of [undefined, null, "", "18", 12, 12.9, 17.5, NaN, Infinity, -1, 121, {}, true]) {
     assert.equal(isDemoAge(age), false);
-    assert.equal(isAiEligible(age, { app_metadata: { ai_access: true } }), false);
   }
   for (const age of [13, 17, 18, 35, 120]) assert.equal(isDemoAge(age), true);
 });
 
-test("external AI requires an adult profile age and a trusted boolean grant", () => {
-  for (const age of [12, 13, 17]) assert.equal(isAiEligible(age, { app_metadata: { ai_access: true } }), false);
-  for (const age of [18, 24, 35, 120]) {
-    assert.equal(isAiEligible(age, { app_metadata: { ai_access: true } }), true);
+test("external AI requires only trusted administrator approval regardless of age", () => {
+  for (const age of [13, 17, 18, 120, null, undefined]) {
+    assert.equal(isAiEligible({ app_metadata: { ai_access: true }, user_metadata: { age } }), true);
     for (const ai_access of [undefined, false, "true", 1, {}, []]) {
-      assert.equal(isAiEligible(age, { app_metadata: { ai_access } }), false);
+      assert.equal(isAiEligible({ app_metadata: { ai_access }, user_metadata: { age, ai_access: true } }), false);
     }
-    assert.equal(isAiEligible(age, {}), false);
-    assert.equal(isAiEligible(age, { user_metadata: { ai_access: true, age: 18 } }), false);
+    assert.equal(isAiEligible({}), false);
+    assert.equal(isAiEligible({ user_metadata: { ai_access: true, age } }), false);
   }
 });
 
-test("editable metadata cannot override the profile age or trusted grant", () => {
+test("editable metadata cannot override the trusted grant", () => {
   const forged = { user_metadata: { age: 18, age_range: "18-24", ai_access: true, app_metadata: { ai_access: true } } };
-  assert.equal(isAiEligible(undefined, { ...forged, app_metadata: { ai_access: true } }), false);
-  assert.equal(isAiEligible(17, { ...forged, app_metadata: { ai_access: true } }), false);
-  assert.equal(isAiEligible(18, { ...forged, app_metadata: { ai_access: false } }), false);
-  assert.equal(isAiEligible(18, forged), false);
+  assert.equal(isAiEligible({ ...forged, app_metadata: { ai_access: true } }), true);
+  assert.equal(isAiEligible({ ...forged, app_metadata: { ai_access: false } }), false);
+  assert.equal(isAiEligible(forged), false);
 });
 
 test("age bands are derived only from valid numeric ages", () => {
@@ -58,40 +55,65 @@ async function loadServerModule(path, dependencies) {
   return exports;
 }
 
-test("server AI guard checks the database profile and fails closed on lookup failure", async () => {
+test("server AI guard never reads profiles, including missing age and schema failure", async () => {
   const user = { id: "synthetic-user", app_metadata: { ai_access: true } };
-  let result = { data: { age: 18 }, error: null };
-  let unavailable = false;
   const { requireAiAccess } = await loadServerModule("../src/lib/ai-eligibility-server.ts", {
     "server-only": {},
     "@/lib/eligibility": { isAiEligible },
     "@/lib/learning-server": { database() {
-      if (unavailable) throw new Error("Synthetic database failure");
-      return { from(table) {
-        assert.equal(table, "profiles");
-        return { select(columns) {
-          assert.equal(columns, "age");
-          return { eq(column, id) {
-            assert.equal(column, "id");
-            assert.equal(id, user.id);
-            return { async maybeSingle() { return result; } };
-          } };
-        } };
-      } };
+      assert.fail("AI authorization must not depend on profile/database schema");
     } },
   });
   assert.equal(await requireAiAccess(user), undefined);
   await assert.rejects(requireAiAccess({ ...user, app_metadata: {}, user_metadata: { ai_access: true } }), /External AI requires/);
-  for (const age of [undefined, null, 12, 13, 17, "18"]) {
-    result = { data: { age }, error: null };
-    await assert.rejects(requireAiAccess(user), /External AI requires/);
+  for (const age of [undefined, null, 13, 17, 18, 120]) {
+    assert.equal(await requireAiAccess({ ...user, user_metadata: { age } }), undefined);
   }
-  result = { data: null, error: null };
-  await assert.rejects(requireAiAccess(user), /External AI requires/);
-  result = { data: { age: 18 }, error: new Error("PRIVATE_SCHEMA query failure") };
-  await assert.rejects(requireAiAccess(user), /^Error: AI eligibility could not be checked\. Check the learning service configuration and profile migrations, then try again\.$/);
-  unavailable = true;
-  await assert.rejects(requireAiAccess(user), /^Error: AI eligibility could not be checked\. Check the learning service configuration and profile migrations, then try again\.$/);
+  await assert.rejects(requireAiAccess({ ...user, app_metadata: { ai_access: "true" } }), /^Error: External AI requires administrator-approved AI access\.$/);
+});
+
+test("admin grants minors/missing profiles only with consent review; rejects tampering and preserves metadata on revoke",async()=>{
+  const actorId=randomUUID(),targetId=randomUUID();
+  let actor={id:actorId,app_metadata:{role:"admin"}};
+  let target={id:targetId,app_metadata:{role:"learner",other:"preserved"},user_metadata:{age:17}};
+  const writes=[];
+  const {updateAccount}=await loadServerModule("../src/app/admin/accounts/actions.ts",{
+    "next/cache":{revalidatePath(){}},zod:{z},"@/lib/account-directory":{},
+    "@/lib/learning-server":{
+      currentUser:async()=>actor,isAdmin:u=>u.app_metadata?.role==="admin",
+      database:()=>({
+        from(){assert.fail("Admin AI grant must not look up profiles");},
+        auth:{admin:{
+          getUserById:async id=>{assert.equal(id,targetId);return {data:{user:target},error:null};},
+          updateUserById:async(id,patch)=>{assert.equal(id,targetId);writes.push(patch);return {error:null};},
+        }},
+      }),
+    },
+  });
+  function form(confirm=true,grant=true){
+    const f=new FormData();f.set("accountId",targetId);f.set("role","instructor");
+    if(grant)f.set("aiAccess","on");if(confirm)f.set("confirmAi","on");return f;
+  }
+  for(const age of [13,17,18,120,null,undefined]){
+    target.user_metadata={age};
+    assert.match((await updateAccount({},form())).success,/permissions saved/);
+    assert.deepEqual(JSON.parse(JSON.stringify(writes.at(-1))),{app_metadata:{role:"instructor",ai_access:true,other:"preserved"}});
+  }
+  const count=writes.length;
+  assert.match((await updateAccount({},form(false))).error,/consent review/);
+  actor={id:actorId,app_metadata:{role:"learner"},user_metadata:{role:"admin"}};
+  assert.match((await updateAccount({},form())).error,/Administrator access required/);
+  actor={id:actorId,app_metadata:{role:"admin"}};target.app_metadata.role="admin";
+  assert.match((await updateAccount({},form())).error,/Administrator accounts/);
+  target.app_metadata.role="learner";actor.id=targetId;
+  assert.match((await updateAccount({},form())).error,/Administrator accounts/);actor.id=actorId;
+  const invalid=form();invalid.set("accountId","forged-id");
+  assert.ok((await updateAccount({},invalid)).error);
+  const badRole=form();badRole.set("role","admin");assert.ok((await updateAccount({},badRole)).error);
+  const savedTarget=target;target=null;assert.match((await updateAccount({},form())).error,/Account not found/);target=savedTarget;
+  assert.equal(writes.length,count);
+  assert.ok((await updateAccount({},form(false,false))).success);
+  assert.deepEqual(JSON.parse(JSON.stringify(writes.at(-1))),{app_metadata:{role:"instructor",ai_access:false,other:"preserved"}});
 });
 
 test("signup validates numeric age and never writes a trusted AI grant or guardian consent", async () => {

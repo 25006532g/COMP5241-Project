@@ -32,7 +32,7 @@ async function setup() {
 function harness(db, owner) {
   const calls = [], payloads = [];
   const state = { user: { id: owner, app_metadata: { ai_access: true } }, age: 22, authError: null, authThrows: false, profileError: null,
-    provider: async () => "What would you verify first?", failRpc: null, loseAfter: null };
+    provider: async () => "What would you verify first?", failRpc: null, loseAfter: null, afterRpc: null };
   const client = {
     auth: { getUser: async () => {
       if (state.authThrows) throw new Error("synthetic private auth failure");
@@ -49,7 +49,7 @@ function harness(db, owner) {
         or(value) { cursor = value; return this; },
         async run(single) {
           calls.push(["query", table, columns, copy(filters), cursor]);
-          if (table === "profiles") return { data: { age: state.age }, error: state.profileError };
+          if (table === "profiles") assert.fail("Interview AI must not read profiles for authorization");
           const values = filters.map(([, value]) => value);
           let where = filters.map(([key], i) => `${key}=$${i + 1}`).join(" and ");
           if (cursor) {
@@ -71,6 +71,7 @@ function harness(db, owner) {
       if (state.failRpc === name) throw new Error("private reservation/transport detail");
       const entries = Object.entries(args);
       const result = await db.query(`select ${name}(${entries.map(([key], i) => `${key} => $${i + 1}`).join(",")}) as result`, entries.map(([, value]) => value));
+      if (state.afterRpc) await state.afterRpc(name, args);
       if (state.loseAfter === name) throw new Error("private lost acknowledgement");
       return { data: result.rows[0].result, error: null };
     },
@@ -115,6 +116,188 @@ async function create(h) {
 async function count(db, owner) {
   return (await db.query("select coach_count from forge_requests where user_id=$1", [owner])).rows[0]?.coach_count ?? 0;
 }
+
+test("interview post-inference authorization denies revoked approval, lost session and switched approved owner without output release", async context => {
+  const db = await setup();
+  context.after(() => db.close());
+  for (const variant of ["revoked approval", "lost session", "switched approved owner"]) {
+    await context.test(variant, async () => {
+      const owner = randomUUID(), other = randomUUID();
+      await db.query("insert into auth.users(id,raw_user_meta_data) values($1,'{\"age\":17}'),($2,'{\"age\":13}')", [owner, other]);
+      const h = harness(db, owner), row = await create(h);
+      const providerText = "SYNTHETIC_POST_AUTH_REPLY_MUST_NOT_ESCAPE";
+      let release, entered;
+      const ready = new Promise(resolve => { entered = resolve; });
+      h.state.provider = () => {
+        entered();
+        return new Promise(resolve => { release = resolve; });
+      };
+      const request = start(row);
+      const pending = h.actions.requestInterviewTurn(request);
+      await ready;
+      try {
+        h.state.user = variant === "lost session" ? null :
+          { id: variant === "switched approved owner" ? other : owner,
+            app_metadata: { ai_access: variant !== "revoked approval" } };
+      } finally {
+        release(providerText);
+      }
+      const result = await pending;
+      const stored = (await db.query("select * from forge_interviews where id=$1", [row.id])).rows[0];
+      assert.equal(h.payloads.length, 1, "exactly one inference before the authorization change");
+      assert.equal(await count(db, owner), 1, "no retry or additional quota claim");
+      assert.deepEqual({
+        returnedProviderText: JSON.stringify(result).includes(providerText),
+        persistedProviderText: JSON.stringify(stored.turns).includes(providerText),
+        successfulResult: result.code === "ok",
+      }, {
+        returnedProviderText: false,
+        persistedProviderText: false,
+        successfulResult: false,
+      }, "fresh authorization must deny finalization and output release after " + variant);
+      assert.deepEqual(copy(result), { code: variant === "lost session" ? "auth" : "denied" }, "no captured row is released");
+      assert.equal(h.calls.filter(c => c[0] === "rpc" && c[1] === "forge_interview_finalize").length, 0);
+      assert.equal(await count(db, other), 0, "changed owner is never charged");
+      assert.equal(stored.owner_id, owner);
+      assert.equal(stored.revision, row.revision + 1, "only the original reservation was saved");
+      assert.equal(stored.turns[0].status, "pending");
+      assert.equal(stored.turns[0].assistant, null);
+      assert.equal(stored.turns[0].attempts.length, 1);
+      const attempt = stored.turns[0].attempts[0];
+      assert.equal(attempt.outcome, "pending");
+      assert.equal(attempt.request_id, request.requestId);
+      assert.equal(attempt.expected_revision, request.revision);
+      assert.equal(attempt.token, h.calls.find(c => c[1] === "forge_interview_reserve")[2].p_token);
+      assert.match(schemas.interviewNotices[result.code], /original.*account/);
+      assert.match(schemas.interviewNotices[result.code], /explicitly retry.*75-second lease/);
+
+      h.state.user = { id: owner, app_metadata: { ai_access: true }, user_metadata: { age: 17 } };
+      h.state.profileError = "PRIVATE_PROFILE_UNAVAILABLE";
+      const saved = (await h.actions.readInterview({ id: row.id })).interview;
+      assert.equal((await h.actions.requestInterviewTurn(request)).code, "replay");
+      assert.equal((await h.actions.requestInterviewTurn(retry(saved))).code, "busy");
+      assert.equal(h.payloads.length, 1, "reload/replay/busy recovery performs no inference");
+      assert.equal(await count(db, owner), 1, "pending recovery does not charge quota");
+      // Advance only the existing DB lease; no sleep, cleanup RPC or implicit retry.
+      await db.query(`update forge_interviews set turns=jsonb_set(turns,'{0,attempts,0,lease_until}',to_jsonb(clock_timestamp()-interval '1 second')) where id=$1`, [row.id]);
+      const expired = (await h.actions.readInterview({ id: row.id })).interview;
+      assert.equal(expired.turns[0].status, "pending");
+      assert.equal(await count(db, owner), 1, "lease expiry/read costs no additional quota");
+      h.state.provider = async () => "Explicit original-owner recovery question?";
+      const recoveryRequest = retry(expired);
+      const recovered = await h.actions.requestInterviewTurn(recoveryRequest);
+      assert.equal(recovered.code, "ok");
+      assert.equal(recovered.interview.owner_id, owner);
+      assert.equal(recovered.interview.turns[0].id, request.turnId);
+      assert.equal(recovered.interview.turns[0].assistant, "Explicit original-owner recovery question?");
+      assert.deepEqual(copy(recovered.interview.turns[0].attempts.map(a => a.outcome)), ["expired", "complete"]);
+      assert.equal((await h.actions.requestInterviewTurn(recoveryRequest)).code, "replay");
+      assert.equal(h.payloads.length, 2, "only the explicit retry starts another inference");
+      assert.equal(await count(db, owner), 2, "cleanup claims only the explicit retry's quota");
+      assert.ok(!JSON.stringify(recovered).includes(providerText));
+      assert.ok(!h.calls.some(c => c[0] === "from" && c[1] === "profiles"));
+    });
+  }
+});
+
+function changeTurnAuth(h, owner, other, variant) {
+  h.state.user = variant === "lost session" ? null :
+    { id: variant === "switched approved owner" ? other : owner,
+      app_metadata: { ai_access: variant !== "revoked approval" }, user_metadata: { age: 17, ai_access: true } };
+  h.state.authError = variant === "auth error with user" ? new Error("PRIVATE_AUTH_ERROR") : null;
+  h.state.authThrows = variant === "thrown auth failure";
+}
+const authDenial = variant => ["lost session", "auth error with user", "thrown auth failure"].includes(variant) ? "auth" : "denied";
+
+test("interview post-inference authorization fails closed even when the provider throws", async context => {
+  const db = await setup();
+  context.after(() => db.close());
+  for (const variant of ["revoked approval", "lost session", "switched approved owner", "auth error with user", "thrown auth failure"]) {
+    await context.test(variant, async () => {
+      const owner = randomUUID(), other = randomUUID();
+      await db.query("insert into auth.users(id,raw_user_meta_data) values($1,'{\"age\":17}'),($2,'{\"age\":13}')", [owner, other]);
+      const h = harness(db, owner), row = await create(h);
+      let reject, entered;
+      const ready = new Promise(resolve => { entered = resolve; });
+      h.state.provider = () => { entered(); return new Promise((_, fail) => { reject = fail; }); };
+      const pending = h.actions.requestInterviewTurn(start(row));
+      await ready;
+      try { changeTurnAuth(h, owner, other, variant); }
+      finally { reject(new Error("PRIVATE_PROVIDER_FAILURE_NO_FALLBACK")); }
+      const result = await pending;
+      assert.deepEqual(copy(result), { code: authDenial(variant) }, "not ok/saved_failed and no row or private error");
+      assert.equal(h.payloads.length, 1);
+      assert.equal(await count(db, owner), 1);
+      assert.equal(await count(db, other), 0);
+      assert.equal(h.calls.filter(c => c[0] === "rpc" && c[1] === "forge_interview_finalize").length, 0);
+      const stored = (await db.query("select turns from forge_interviews where id=$1", [row.id])).rows[0].turns[0];
+      assert.equal(stored.assistant, null);
+      assert.equal(stored.status, "pending");
+      assert.equal(stored.attempts[0].outcome, "pending");
+      h.state.authError = null; h.state.authThrows = false;
+      h.state.user = { id: owner, app_metadata: { ai_access: true } };
+      assert.equal((await h.actions.readInterview({ id: row.id })).interview.turns[0].assistant, null);
+    });
+  }
+});
+
+test("interview post-inference authorization rechecks output release after asynchronous finalization", async context => {
+  const db = await setup();
+  context.after(() => db.close());
+  for (const outcome of ["saved reply", "saved provider failure", "lost acknowledgement"]) {
+    await context.test(outcome, async scenario => {
+      for (const variant of ["revoked approval", "lost session", "switched approved owner"]) {
+        await scenario.test(variant, async () => {
+          const owner = randomUUID(), other = randomUUID();
+          await db.query("insert into auth.users(id,raw_user_meta_data) values($1,'{\"age\":17}'),($2,'{\"age\":13}')", [owner, other]);
+          const h = harness(db, owner), row = await create(h);
+          const providerText = "SYNTHETIC_LEGITIMATE_PREWRITE_AUTH_REPLY";
+          h.state.provider = async () => {
+            if (outcome === "saved provider failure") throw new Error("PRIVATE_PROVIDER_FAILURE");
+            return providerText;
+          };
+          if (outcome === "lost acknowledgement") h.state.loseAfter = "forge_interview_finalize";
+          let release, entered;
+          const ready = new Promise(resolve => { entered = resolve; });
+          h.state.afterRpc = async name => {
+            if (name === "forge_interview_finalize") {
+              entered();
+              await new Promise(resolve => { release = resolve; });
+            }
+          };
+          const pending = h.actions.requestInterviewTurn(start(row));
+          await ready;
+          try { changeTurnAuth(h, owner, other, variant); }
+          finally { release(); }
+          const result = await pending;
+          assert.deepEqual(copy(result), { code: authDenial(variant) }, "post-write auth loss never releases the row, even on failed/uncertain saves");
+          const finalizes = h.calls.filter(c => c[0] === "rpc" && c[1] === "forge_interview_finalize");
+          assert.equal(finalizes.length, 1, "no cleanup write or retry after finalization");
+          assert.equal(finalizes[0][2].p_owner, owner);
+          assert.equal(finalizes[0][2].p_text, outcome === "saved provider failure" ? null : providerText);
+          assert.equal(h.payloads.length, 1);
+          assert.equal(await count(db, owner), 1);
+          assert.equal(await count(db, other), 0);
+          const stored = (await db.query("select turns from forge_interviews where id=$1", [row.id])).rows[0].turns[0];
+          assert.equal(stored.status, outcome === "saved provider failure" ? "failed" : "complete");
+          assert.equal(stored.assistant, outcome === "saved provider failure" ? null : providerText, "prewrite authorization was valid; no rollback after auth loss");
+          h.state.afterRpc = null; h.state.loseAfter = null;
+          h.state.user = { id: owner, app_metadata: { ai_access: true } };
+          const confirmed = (await h.actions.readInterview({ id: row.id })).interview;
+          assert.equal(confirmed.turns[0].assistant, stored.assistant, "original owner can explicitly reload the confirmed state");
+          if (outcome === "saved provider failure") {
+            h.state.provider = async () => "Explicit failure recovery?";
+            const recovered = await h.actions.requestInterviewTurn(retry(confirmed));
+            assert.equal(recovered.code, "ok");
+            assert.deepEqual(copy(recovered.interview.turns[0].attempts.map(a => a.outcome)), ["failed", "complete"]);
+            assert.equal(h.payloads.length, 2);
+            assert.equal(await count(db, owner), 2);
+          }
+        });
+      }
+    });
+  }
+});
 
 test("interviews: actual actions, eligibility, projection and transactional migration (offline)", async context => {
   const db = await setup();
@@ -193,7 +376,7 @@ test("interviews: actual actions, eligibility, projection and transactional migr
     assert.equal(other.payloads.length, 0);
     assert.equal((await h.actions.readInterview({ id: row.id })).code, "ok");
   });
-  await context.test("auth error with user fails closed; minors, unknown, revoked and profile failures deny inference only", async () => {
+  await context.test("auth error with user fails closed; unapproved/string/spoof grants deny inference only", async () => {
     const h = await fresh(), row = await create(h);
     const authenticated = h.state.user;
     for (const failure of ["error with user", "missing user", "thrown failure"]) {
@@ -209,8 +392,9 @@ test("interviews: actual actions, eligibility, projection and transactional migr
       assert.equal(h.calls.length, before, "no privileged database after auth failure");
     }
     h.state.authError = null; h.state.authThrows = false; h.state.user = authenticated;
-    for (const [age, grant, error] of [[17, true, null], [null, true, null], [22, false, null], [22, true, "unavailable"]]) {
+    for (const [age, grant, error] of [[17, false, null], [null, false, null], [22, "true", null], [22, undefined, "unavailable"]]) {
       h.state.age = age; h.state.user.app_metadata.ai_access = grant; h.state.profileError = error;
+      h.state.user.user_metadata={ai_access:true,age};
       assert.equal((await h.actions.requestInterviewTurn(start(row))).code, "denied");
       assert.equal((await h.actions.readInterview({ id: row.id })).code, "ok");
       assert.equal((await h.actions.listInterviews()).code, "ok");
@@ -218,6 +402,16 @@ test("interviews: actual actions, eligibility, projection and transactional migr
     assert.equal((await h.actions.finishInterview({ id: row.id, revision: row.revision })).code, "ok");
     assert.equal((await h.actions.deleteInterview({ id: row.id })).code, "deleted");
     assert.equal(h.payloads.length, 0);
+  });
+  await context.test("trusted approved minors and unknown/profile failure can infer without profile lookup",async()=>{
+    for(const age of [13,17,18,120,null,undefined]){
+      const h=await fresh();h.state.age=age;h.state.profileError="PRIVATE_SCHEMA";
+      h.state.user.user_metadata={age};
+      const row=await create(h);
+      assert.equal((await h.actions.requestInterviewTurn(start(row))).code,"ok");
+      assert.equal(h.payloads.length,1);
+      assert.ok(!h.calls.some(c=>c[0]==="from"&&c[1]==="profiles"));
+    }
   });
   await context.test("shared quota is claimed before provider and no inference follows failed reserve", async () => {
     const h = await fresh(), row = await create(h);

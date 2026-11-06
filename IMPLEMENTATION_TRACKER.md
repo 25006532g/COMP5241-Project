@@ -2,6 +2,595 @@
 
 Last reviewed: 2026-11-06
 
+## 6 November 2026 — independent NARROW follow-up: repaired QA-AI-01 and exact UI gaps
+
+**Bounded local gates passed; QA-AI-01 resolved in independent offline evidence.
+Coordinator owns acceptance.** The initial QA's 24/24 and subsequent 44 passes/
+4 failures, and implementer's RED/GREEN/72-group evidence below remain historical;
+none is adopted as a fresh result here. This is not a repeat broad audit, production
+release decision, live-provider check, or age/consent/legal certification.
+
+### Ownership, safety and inspection
+
+Only `tests/presentation-ai-ui.test.mjs` and new README/tracker entries were edited.
+`tests/interviews.test.mjs` was inspected/run, not edited: no new product defect
+required another RED. Actual action diff preserves pre-reserve checks and captures
+the original owner; new authorization checks occur before finalize and after its
+await, including lost acknowledgements. Retained original three denial/leak cases
+and their added recovery assertions are present. Recovery notices describe the
+original approved account, reload and explicit retry after the 75-second lease.
+
+Windows, Node 25.2.1, installed offline Chromium 153.0.8010.12, real React/Fabric,
+synthetic UUID/text fixtures and in-memory PGlite only. Existing `offline-run.mjs`
+starts a sanitized child without application configuration; `offline-network.mjs`
+rejects Node fetch/socket/http/tls. Browser contexts are offline, service workers
+blocked; only synthetic `https://forge.test/` is fulfilled in memory, no server.
+Provider/action boundaries are mocks, not live API requests or external quota.
+PGlite loads local schema/migrations into disposable memory, never hosted data.
+No environment files, remote/connected tests, provider probe, install, nested
+agent, commit, deploy, build, full suite or typecheck. Skills loaded from the
+existing repository `.github/skills` fallback; requested sibling paths absent.
+
+### Reproducible commands (repository root, executed in this order)
+
+```powershell
+# C1: retained/strengthened race and recovery FIRST
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern='interview post-inference authorization' tests\interviews.test.mjs
+# C2: one selected interview/UI/shared gate group, not all 72
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern='network-blocked mounted interview UI|interviews: actual actions|demo ages|age bands|external AI requires|editable metadata|server AI guard|admin grants|signup validates|profile saves|real coach' --test-skip-pattern='new focus keys|create, opening|strict client|another learner|parallel attempts|finish and delete|eight answers|metadata-only|simultaneous reserve|account cascade|invalid reservation|RLS|continue, finish|individual delete|delete while|creating on a full|create from latest|create while browsing|confirmed create|in-flight create|lost creation' tests\interviews.test.mjs tests\interviews-ui.test.mjs tests\eligibility.test.mjs tests\ai-access-actions.test.mjs
+# C3: new exact UI cases; three iterations below
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern='exact core' tests\presentation-ai-ui.test.mjs
+# C4: scoped test lint
+node tests\offline-run.mjs node_modules\eslint\bin\eslint.js tests\presentation-ai-ui.test.mjs
+# C5: whitespace, also repeated after final documentation
+& 'C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Git\cmd\git.exe' --no-pager diff --check -- tests/presentation-ai-ui.test.mjs README.md IMPLEMENTATION_TRACKER.md
+# C6: smallest relevant AI regression selection plus mocked action policy
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern='exact core|Generate recovery|mounted AI review/apply|duplicate generation|font draft flush|Apply rechecks|real action gates|late session/rights' tests\presentation-ai-ui.test.mjs tests\presentation-ai.test.mjs
+```
+
+| Execution | Actual result |
+| --- | --- |
+| C1, product/interview tests untouched | **23/23 pass**, exit0, 8075.0865ms |
+| C2, selected existing checks | **22/22 pass**, exit0, 11697.6054ms |
+| C3 iteration1 | **0 pass/1 failed file**, exit1, 661.178ms; test TS import could not resolve extensionless `./presentation`; no browser cases executed |
+| C3 iteration2, existing transpiling schema harness reused | **4/6 pass, 2 fail**, exit1, 74912.9672ms; native slide locator timed out at test line155; its accessible name includes thumbnail label |
+| C3 iteration3, locator corrected and native mobile Slides summary opened | **6/6 pass**, exit0, 14548.3042ms |
+| C4 | **exit0**, no errors/warnings |
+| C5 before documentation | **exit0** |
+| C6, includes the six new cases again | **14/14 pass**, exit0, 39715.5322ms |
+| C5 after final documentation; final protected-file and cleanup checks | **exit0**, 224/224 protected fingerprints unchanged; no owned Node/Chromium remaining |
+
+All functional runs report zero cancelled/skipped/todo. Counts include Node parent
+tests where applicable; six UI cases are repeated in C6, not six additional unique
+passes. Intermediate failures were test harness/locator defects, corrected only in
+the owned test; assertions and application behavior were not weakened. No product
+failure remains reproducible in these bounded gates; no product fix was performed.
+No independent type/build pass is claimed from the implementer's historical runs.
+
+### Verified acceptance and recovery
+
+- C1: delayed inference under revoked grant/lost session/switched approved owner
+  returns only `denied`/`auth`, no captured row, no persisted/returned provider text,
+  **zero finalize RPCs**, exactly one original-owner inference/quota and zero
+  changed-owner quota. Pending original request/revision/token/lease is retained.
+  Reload/replay/busy retry/expiry read do not infer or charge. Only explicit
+  original-approved-owner retry expires the attempt and charges one new inference;
+  exact replay of that retry is free. Lease advancement is synthetic DB time
+  manipulation, not a 75-second wall-clock sleep or cleanup claim.
+- C1: provider failure plus late grant/session/owner changes, auth-with-error and
+  thrown auth fail closed, without fallback or success-shaped denial.
+  Delayed finalize across saved reply, saved failure and lost acknowledgement
+  suppresses responses after auth changes. One legitimate preauthorized finalize
+  may already have committed: storage is **not** incorrectly asserted empty or
+  rolled back. Original owner explicitly reloads confirmed storage; failed-turn
+  retry is bounded and separately charged.
+- C2: six interview action leaves cover initial auth/spoof denial, approved minors/
+  missing profile positives without profile reads, shared quota before inference,
+  failed/invalid provider output and explicit bounded retry, DB-expired finalize
+  `stale`, and reserve/save uncertainty without unconfirmed text. Four mounted
+  interview UI leaves cover private create/open, pending vs saved, native keyboard
+  submit/newline, explicit retry/reload and lost-transport draft preservation at
+  desktop/narrow widths. Eight eligibility/admin/signup/profile tests and two
+  coach tests cover trusted boolean approval, tampering, admin consent review/
+  revoke and owner-switch denial. Numeric **13+ signup/profile** rules and
+  **13–17/18–24 operational age bands** remain separate from AI permission.
+- New six persistent exact UI cases: BOTH 1440x1000 and 320x850 open the real
+  assistant, explicitly select actual teaching text, CHECK CONSENT FIRST, then
+  native `pressSequentially` instruction typing. No formatting/scope/consent
+  reconfirmation follows typing. Idle Generate is enabled; native click and native
+  Tab/Enter each produce exactly one schema-valid mocked request/patch and focused
+  Before/After Review. No JS click, force flag, disabled-attribute edit or injected
+  Fabric selection is used by these new cases. Review leaves canvas unchanged
+  and cannot save. Missing instruction/consent clicks give specific focused errors,
+  zero calls. A genuinely empty NEW slide gives the specific no-text error via
+  native Tab/Enter, zero calls; Escape restores trigger focus, choose an actual
+  text-containing slide outside the modal, reopen, consent/type/Tab/Enter recovers
+  to exactly one call and focused review. This uses the approved new-slide branch;
+  no fresh exact empty-imported-preview recovery is claimed.
+- C6: existing prompt-first flows, selection/formatting reconfirmation, duplicate
+  and stale payload/epoch denial, Discard/Close, Apply locks, one atomic undoable
+  edit, rich styles, real Fabric pixels, Undo/Redo and manual PGlite Save/reopen.
+  Mocked real presentation server contracts positively generate/apply for approved
+  ages13/17/missing age, reject untrusted/spoofed/false/string grants and missing
+  consent, enforce quota/permissions/version and suppress late revoked/owner
+  output. Mounted/source copy says administrator approval regardless of age;
+  profile/auth retain13+ account copy, admin consent review remains explicit.
+  No active adult-only AI gate was found in these inspected paths.
+
+### Sanitized visual evidence actually opened
+
+Final C6 artifacts, under `C:\Users\SOLUSER\AppData\Local\Temp\`:
+
+| Directory | Files opened |
+| --- | --- |
+| `forge-ai-exact-1440-2g1YyY` | `enabled.png`, `review.png` |
+| `forge-ai-exact-320-3gVb63` | `enabled.png`, `review.png` |
+| `forge-ai-exact-empty-1440-ZEvEYj` | `no-text.png`, `recovered-review.png` |
+| `forge-ai-exact-empty-320-dPXPic` | `no-text.png`, `recovered-review.png` |
+| `forge-presentation-ai-WJuBOr` | `1440-applied.png`, `320-review.png` |
+
+These ten images show readable desktop/mobile consent/policy, enabled Generate,
+focused no-text error, Before/After recovery and actual applied canvas text without
+horizontal overflow in tested layouts. Scrollable modal images intentionally show
+the relevant lower section rather than falsely claiming every control fits at once.
+Eight earlier green C3 images were also opened; earlier failed-iteration artifacts
+remain outside Git as history. Selected interview artifacts remain at
+`forge-task25-qa-iTdvBX`; no new visual inspection of those images is claimed.
+
+### Preservation, cleanup and untested requirements
+
+Before/after path+content SHA256 over **224 protected files** (src, other tests,
+docs, supabase/schema/migrations including `_ran`, scripts, repository instructions
+and non-environment root files; excludes the three owned files):
+`5dbd1a15c151fa9c7ad9233dd514baa8a163bc5b05883b10b8cc8b0a805a5d61`.
+All **115 source files** aggregate:
+`646b5a0df372d1b7d2f49ed910b8263d15fba01d04746cdbf019907c87574611`.
+Both aggregates unchanged. Interview action:
+`b26340ed738717c7fcb38ed7a1f64cf59d8b937d8c109cecd100a94c4a3be6ec`;
+retained interview test:
+`6eab250d3b18c8f607be439c18f570cb372ec701b7369b88d419a21d1895bdcf`.
+Owned UI test changed from
+`82c56aafcb80a414cd233d644c1cb006168b134f10ec1c7cd614ff27f6f40098`
+to `fb1ca7a73a0a3812f0f48efced67568094c28c2b81bcffeafdaf4f5eaaef22d4`.
+Existing source/test/docs/migration dirt preserved; documentation only prepended.
+
+PGlite closes in test cleanup; browser contexts/browser close in `finally`, including
+failed UI iterations. Passing browser assertions report zero attempted network
+requests and zero page errors. No detached helper/server was started. Process
+inventory after C6 shows **zero Node and zero newly owned Chromium**, only the
+pre-existing unrelated Chrome tree (root PID15408), untouched. No PGlite process/
+database remains; in-memory instances lived in the completed Node runners. Skill
+search helper was explicitly stopped after finding repository fallback files.
+Screenshots deliberately retained in disposable temp directories, not Git; no
+fixture deletion or quota refund/cleanup RPC is claimed.
+
+**Untested, separately from passes:** hosted auth/grant/RPC/quota atomicity after
+the final server check; live free-provider availability/effective policy/retention;
+actual remote data, deployment, paid/region/provider age/consent/legal terms.
+No 72/254/full-suite rerun, build, direct tsc or production release certification.
+The approved empty-NEW-slide alternative was tested; empty imported-preview exact
+outside-modal keyboard recovery is not separately claimed. Stop after these
+bounded gates; coordinator decides user-feature local acceptance.
+
+## 6 November 2026 — bounded implementer repair QA-AI-01; independent QA pending
+
+**Repair delivered for separate independent QA; coordinator retains acceptance.**
+This is local writer evidence, not closure of the retained independent blocker or
+a release certificate. Prior source, tests, documentation and QA records remain
+intact. Latest approval-only AI policy applies; no 18+ gate was added, and signup/
+profile/database 13–120 whole-number age validation is unchanged.
+
+### Scope, hypothesis and repair
+
+Owned only `src/app/interviews/actions.ts`, `tests/interviews.test.mjs`,
+`src/lib/interviews.ts` (two recovery notices only), and new entries in README/
+this tracker. Initial tree had 22 modified tracked files and one untracked test.
+Sibling skill files were absent and broad fallback searches timed out; loaded the
+existing `.github/skills/forge-delivery/SKILL.md` and `forge-verification/SKILL.md`.
+Git was not on PATH; used installed Git Desktop 3.6.10 without installation.
+Inspected the actual auth/approval/action/RPC modules, existing SQL lease/finalize
+contracts and retained RED before editing. No SQL or global-policy file changed.
+
+Falsifiable hypothesis: the captured pre-inference user alone permits late reply
+writes/releases. Fresh current-auth identity and trusted approval checks before
+finalize must block the three observed late changes, and the same checks after
+finalize must withhold results when authorization changes during that await.
+Focused check selected and run unchanged first: the exact retained post-inference
+authorization test-name command below.
+
+- Capture the original owner ID as a string, preserving pre-reserve auth/approval.
+- Immediately after inference/parsing, re-read `currentUser`, compare owner ID,
+  and run fresh `requireAiAccess`. Missing/error/thrown auth returns `auth`;
+  changed owner or revoked grant returns `denied`; no captured row is returned.
+- On pre-save denial, do **not** call finalize or any cleanup RPC. The original
+  reservation stays pending with null assistant under its existing 75-second
+  lease. No fallback, extra quota, AI call, implicit retry or rollback.
+- Repeat fresh identity/approval checks after finalize, even if its acknowledgement
+  is lost. A legitimately authorized pre-write may persist, but post-write denial
+  never releases the saved row. Stable auth retains `saved_failed`, `save_unknown`,
+  `stale` and confirmed-success behavior. No unrelated replay/lifecycle change.
+- Auth/denied notices explain returning with the original approved account,
+  reloading confirmed storage and explicitly retrying a pending turn after lease.
+
+### Exact execution evidence (root; sanitized offline Node only)
+
+```powershell
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern='interview post-inference authorization' tests\interviews.test.mjs
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\interviews.test.mjs tests\interviews-ui.test.mjs tests\eligibility.test.mjs tests\ai-access-actions.test.mjs
+node tests\offline-run.mjs node_modules\eslint\bin\eslint.js src\app\interviews\actions.ts src\lib\interviews.ts tests\interviews.test.mjs
+node tests\offline-run.mjs node_modules\typescript\bin\tsc --noEmit --incremental false
+& 'C:\Users\SOLUSER\AppData\Local\GitHubDesktop\app-3.6.10\resources\app\git\cmd\git.exe' --no-pager diff --check -- src/app/interviews/actions.ts tests/interviews.test.mjs src/lib/interviews.ts README.md IMPLEMENTATION_TRACKER.md
+```
+
+| Execution, in order | Actual result |
+| --- | --- |
+| Exact narrow command, retained RED unchanged, before action edit | **0/4 pass**, exit1; 11362.5014ms; three leaks plus failed parent |
+| Same narrow command, smallest action repair, retained RED unchanged | **4/4 pass**, exit0; 5149.1458ms |
+| Same command after strengthened tests/recovery notices | **4/23 pass**, exit1; 8723.3825ms; 14 new leaves failed fixture setup plus 5 failed parents |
+| Same command after correcting the two new fixture INSERTs | **23/23 pass**, exit0; 6786.2779ms |
+| Requested four-file covering group | **72/72 pass**, exit0; 25345.6559ms |
+| Scoped ESLint | **exit0**, no errors/warnings |
+| Direct offline TypeScript, no Next typegen/build | **exit0** |
+| Scoped whitespace before and after documentation | **exit0** |
+
+All functional executions: zero cancelled/skipped/todo. The intermediate failure
+was missing numeric signup age in the newly added fixture INSERTs: the unchanged
+database trigger correctly rejected accounts without ages. Corrected fixtures
+use age17 original owner and age13 other owner; no product-policy relaxation.
+The original three strengthened RED leaves passed in that failed iteration.
+
+### Retained and added coverage
+
+The original independent RED name and output-leak assertions are retained; current
+approval-only tests are unchanged. Each delayed provider case proves exactly one
+inference/one original-owner quota claim, no changed-owner quota, no finalize RPC,
+no persisted/released provider text or returned row, and meaningful pending state
+with the original request/token/revision. Original-owner reload/exact replay/busy
+retry and DB-lease expiry cost no extra inference/quota; only explicit retry
+expires the original attempt and claims one new attempt. Retry replay is free.
+
+Added real-action/provider failure cases cover revoked approval, session loss,
+switched approved owner, auth errors with a user and thrown auth failures: no
+fallback or success-shaped `saved_failed` denial. Nested delayed-finalize cases
+cover all three identity/approval changes across confirmed reply, persisted null-
+provider failure, and lost acknowledgement; no row release/cleanup rollback.
+Original-owner reload confirms legitimate saved state; explicit failed-turn retry
+retains bounded attempt outcomes.
+
+All **18 existing interview contract leaves** plus parent pass, including quota,
+ownership, revision/replay, lease/stale, failed/invalid output, uncertain saves,
+finish/delete/cascade and RLS. All **18 mounted UI leaves** plus parent pass,
+including history paging, failure/explicit retry, transport recovery, keyboard,
+desktop/mobile and late-response handling. Eligibility and actual admin/coach
+action tests pass, including approved minor/unknown age without profile queries.
+No full 254-group or global suite was run.
+
+### Preservation, cleanup and remaining gates
+
+Initial and post-test SHA256 comparison: **19/19 protected dirty source/test files**
+unchanged, including the untracked `tests/ai-access-actions.test.mjs`;
+**17/17 migration hashes** unchanged, including all `_ran` files. Existing policy
+edits and independent RED were extended, not removed/replaced. Only the five owned
+files were edited. Prior documentation was preserved below these new entries.
+
+PGlite databases close through test cleanup; Chromium 153.0.8010.12 contexts/browser
+close through cleanup. UI reported **zero network attempts and zero page errors**.
+No server or detached helper was started; owned PowerShell sessions completed.
+Synthetic screenshots remain outside Git at
+`C:\Users\SOLUSER\AppData\Local\Temp\forge-task25-qa-oDw2r3`.
+Actually opened `failed-retry-320x844.png` and `pending-1440x900.png`; did not
+independently inspect all 28 generated images or claim new mounted auth-race QA.
+
+**Independent QA requested:** rerun the narrow retained/strengthened cases and
+covering group, review pending lease recovery and both auth gates; coordinator
+decides acceptance. Hosted auth/approval changes after the final server-side check
+cannot be globally atomic without a separate DB-policy change. Live provider,
+hosted RPC/auth/quota races, deployment and release remain unverified. No
+environment-file reads, provider/remote/connected tests, installs, commits,
+build/deploy or nested agents were used.
+
+## 6 November 2026 — independent bounded functional QA: interview authorization RED
+
+**Acceptance blocked; coordinator owns acceptance and bounded implementer assignment.**
+Latest explicit approval-only AI policy applies irrespective of profile age, including
+missing age. No adult/minor/unknown-age gate was restored. This current execution
+supersedes earlier pass-only QA conclusions, not their historical records.
+
+### Safety, initial state and ownership
+
+Windows; actual Node **25.2.1**, offline Chromium **153.0.8010.12**. Requested sibling
+skill paths were absent; loaded existing `.github/skills` equivalents. Bare `git`
+failed before test execution; used installed
+`C:\Users\SOLUSER\AppData\Local\GitHubDesktop\app-3.6.10\resources\app\git\cmd\git.exe`.
+Initial status: 22 modified tracked files plus existing untracked
+`tests/ai-access-actions.test.mjs`. Captured SHA256 for every dirty file and all
+17 migrations before execution. HEAD observed during cleanup:
+`745f59b43786aca9201ffdc998a1c355e22926fe`.
+No reset, checkout, product fix, migration edit or connected test execution.
+
+Inspected existing harnesses before running: `tests/offline-run.mjs` passes only
+OS environment and preloads `offline-network.mjs`, denying HTTP/HTTPS/TLS/socket/
+fetch outside explicit synthetic mocks. No application environment loader/file
+reads. Chromium contexts are offline, block service workers, abort unexpected
+requests and fulfill synthetic documents in memory. PGlite databases are disposable
+memory; real migrations/actions execute locally. No server, real provider/network,
+remote SQL, installs, build, deployment, commit or delegation.
+
+Owned additions only: the narrow post-inference regression at
+`tests/interviews.test.mjs:119–159` and this entry/README evidence. Existing policy
+edits in that test were preserved. Added test SHA256:
+`FFE7629AEF010A34A67B53A2A1CC1935D2C19F80C0BDB1BD7C823D250A68D908`.
+
+### Actual commands and results (repository root; no output redirection)
+
+```powershell
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\eligibility.test.mjs tests\ai-access-actions.test.mjs tests\presentation-ai.test.mjs tests\presentation-ai-ui.test.mjs
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern='interviews:|interview post-inference|server action gates AI|actual paths page|mounted optional paths|approved minor/unknown|current auth/trusted|import extraction/start|reservation recheck|DB leases/revisions|free models preserve|paid IDs|every selected free|text and structured requests use singular|text and structured fallback requests|quota and provider failures' tests\interviews.test.mjs tests\lesson-generation.test.mjs tests\recommendations.test.mjs tests\learning-path-ui.test.mjs tests\openrouter.test.mjs
+node tests\offline-run.mjs --experimental-strip-types node_modules\eslint\bin\eslint.js tests\interviews.test.mjs
+node tests\offline-run.mjs --version
+```
+
+| Independent execution | Actual result |
+| --- | --- |
+| First focused group, before owned test addition | **24/24 pass**, exit0; 41109.3521ms |
+| Selected actual-feature group including retained RED | **44/48 pass**, exit1; 49487.9479ms |
+| Owned test ESLint | **exit0**, no warnings/errors |
+| Node version via offline runner | **v25.2.1**, exit0 |
+| Existing Git `--no-pager diff --check` | **exit0** before and after evidence edits |
+
+Both functional runs: zero cancelled/skipped/todo. Only one failing functional
+iteration; no test retry, product edit or attempted GREEN fix. The 48-result run
+counts nested parents: three RED leaf cases plus their failed parent = four failures.
+Existing interview action group (18 children + parent), staged/import selection
+(8), path action group (8 children + parent), paths page/mount (2), and free-provider
+selection (6) passed. No 254-group/full-suite rerun. Prior typecheck/scoped product
+lint/build results are historical, not independent reruns.
+
+### Passes — observed bounded coverage, not blanket acceptance
+
+- Trusted boolean-only helper/guard/admin/coach/presentation/interview/path checks
+  accept approved 13/17/18/120/null/undefined and reject spoofed/editable/string
+  grants. Guard/admin/coach/presentation/interview fixtures forbid profile
+  authorization queries. Real admin consent review, actor/target/self/role/account
+  protections, metadata merge/revoke, signup/profile integer bounds and SQL age
+  validation/no signup grant pass.
+- Mounted 1440px consent-first native instruction typing retains the checkbox and
+  enabled idle Generate. Formatting resets with visible explanation; missing
+  consent sends zero requests; reconfirmed native Tab/Enter sends one request.
+  320px invalid instruction then native click recovery sends one further request.
+  Prompt-first flows, empty/current/new/no-selected-slide validation and choosing
+  existing teaching text recover without invented targets or invalid dispatch.
+- Shared-text change invalidates late generation/Apply; Discard/Close/unmount,
+  stale history and font drafts reject stale work. Save/upload/export/uncertain
+  Apply locks retain content/reasons. Expected atomic Apply preserves its success
+  notice, makes one history commit, renders actual canvas pixels/text, preserves
+  rich styles, supports Undo/Redo and real PGlite manual Save/reopen.
+- Staged generation accepts approved minor/missing profiles; pre/post inference
+  session/trusted approval/import role, reservation, replay/version/ownership,
+  consented teaching import and explicit pending recovery pass. Real path action/
+  route and mounted focus/transport/stale-owner recovery pass. Existing interview
+  ownership/quota/replay/failure/expiry/cascade protections pass.
+- Selected actual free-client tests retain explicit zero pricing, paid-model
+  rejection, singular defaults/ordered fallbacks, omitted provider/reasoning
+  overrides and sanitized quota/provider failures.
+- Operational `src` scan found no obsolete 18+ AI authorization/copy. Remaining
+  age `<18` is an age-band derivation; fictional lesson distractor text is not an
+  authorization policy. SQL age hits are signup/profile bounds/bands, not AI gates.
+
+### Blocking defect QA-AI-01 — interview output escapes changed authorization
+
+**Reproduction is persistent, using actual auth/guard/interview action/SQL modules.**
+Approved owner (age17) starts one real turn against in-memory PGlite; synthetic
+provider completion waits. Replace the current-auth fixture with (1) same owner,
+trusted grant false, (2) no user, or (3) different approved owner (age13). Release
+one valid synthetic reply. All three cases return `code: "ok"` and the reply is
+both in the returned interview and stored turns. Exactly one inference and one
+original-owner quota claim occurred; no retry. Expected: changed authorization
+denies finalization/output release, with no provider reply persisted/released.
+
+`src/app/interviews/actions.ts:45–71` checks current user/approval only before
+reservation, then at lines65–69 calls the provider and finalizes using captured
+`user.id` without fresh session/approval/identity checks. `interviewRpc` verifies
+the captured owner's result but does not reauthenticate. This is a product defect,
+not an old age-gate expectation. Existing 18 interview subtests did not cover it.
+**Escalated to coordinator for bounded implementer; RED retained, no source fix.**
+Stop condition met: concrete local acceptance blocker reproduced.
+
+Standalone reproduction command (documented for implementer; not an additional QA run):
+
+```powershell
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern='interview post-inference authorization' tests\interviews.test.mjs
+```
+
+### Screenshots, cleanup and separately untested requirements
+
+Actually opened all 11 generated sanitized images (synthetic text only), retained
+outside Git under `C:\Users\SOLUSER\AppData\Local\Temp\`:
+
+- `forge-ai-generate-recovery-j525cn`: `1440-enabled.png`, `320-validation.png`,
+  `320-enabled.png`.
+- `forge-presentation-ai-KVtAnh`: `1440-review.png`, `1440-applied.png`,
+  `320-review.png`, `320-input.png`.
+- `forge-path-PttA1m`: `error-320.png`, `local-320.png`, `pending-320.png`,
+  `success-1440.png`.
+
+Opened images show checked desktop consent/enabled Generate, mobile actionable
+validation/enabled recovery, review/formatting disclosure, actual applied canvas
+text and path pending/error/local-only/success states. No real learner data.
+Sanitized failing-run output was retained by the tool at
+`C:\Users\SOLUSER\AppData\Local\Temp\1793934005193-copilot-tool-output-25404-839a6ed4-bd4f-4bc2-abc3-a67337609694.txt`.
+Browser/context cleanup and PGlite close hooks completed even for RED; no cleanup
+error. Process inspection found **0** remaining offline-runner/Playwright processes.
+Programmatic SHA256 comparison verified all **37 protected fingerprints**
+(20 other dirty source/test files + all 17 migrations) unchanged; migration
+inventory remains 17. Only the named test addition and documentation differ from
+the starting dirty work.
+
+**Not established, separate from passes:** the exact uninterrupted consent-first
+typing→Generate sequence at both sizes (existing desktop test reconfirms after a
+formatting change; mobile uses prompt-first recovery); native Tab/Enter recovery
+on specifically empty imported previews/missing selection; exhaustive per-feature
+age/grant cross-product and mounted interview page availability; standalone
+onboarding/browser signup and unchanged core font/UI suites beyond the AI-linked
+regressions executed. No further tests added/executed after the confirmed blocker.
+These are remaining acceptance assertions, not passes or inferred product defects.
+Deployed auth/quota races, live free-provider availability/defaults/retention,
+legal/provider age/region/consent terms and deployment remain unverified.
+**No release certification or acceptance sign-off.**
+
+## 6 November 2026 — approved AI policy replacement and mounted Generate repair
+
+**Implementation handoff; coordinator retains scope/acceptance ownership; separate
+independent QA requested. Not release certification.** Latest explicit user approval
+replaces historical adult/minor/unknown-age external-AI restrictions with trusted
+administrator approval ONLY, regardless of profile age or missing age. Earlier
+reports and passes below are preserved as historical records and do not validate
+this new policy. No coordinator task/todo records were edited.
+
+### Inspection, hypothesis and causal evidence
+
+Requested `../skills/forge-delivery/SKILL.md` and verification sibling paths were
+absent; read the existing `.github/skills` equivalents without editing them.
+Read package, README/tracker, actual modal/editor/assistant, request/scope schemas,
+server guards, actions and offline harnesses. Bare `git` was unavailable; initial
+status using existing GitHub Desktop Git was **clean**. Preserved all existing
+implementation/editor/CSS/harness work and all 17 `_ran` migration names/content.
+A broad Git-location probe was stopped; no application helper/server was started.
+
+Falsifiable hypothesis: consent-first typing calls `invalidate()` on each keystroke,
+clears consent and disables Generate; prompt-first existing tests mask this.
+Retained **RED: 0/5 passed**, then **GREEN: 5/5**, proved the mounted consent-first
+checkbox became unchecked before repair and remains checked afterward. Empty
+textbox was already clickable but gave a poorer error; empty/missing slide scopes
+were silently disabled. Generate now validates idle submissions with focused,
+specific instruction/scope/consent errors; no invalid/no-text request is dispatched.
+The actual modal is not a form-submit blocker. Editor preparation reads live
+history, flushes canvas/font drafts and validates its snapshot; these guards,
+refs, fingerprints, epochs, atomic Apply and manual-save behavior remain intact.
+Instruction edits preserve consent; changed scope/formatting/shared text explicitly
+invalidate it. Exact expected Apply payload preserves its success notice, whereas
+manual text/undo changes invalidate stale pending work.
+
+Policy RED checks proved the old predicate/profile lookup rejected approved
+minor/unknown-age users. Predicate now takes trusted user only; guard no longer
+imports or reads the profile database. Boolean grants alone authorize; editable
+metadata/string grants fail. Administrator actions retain authentication, actor/
+target protection, explicit consent review, role validation and merged metadata.
+Whole-number 13–120 signup/profile/onboarding/database rules are untouched.
+
+Trace: coach `app/learning/actions.ts`; paths action/page; interview actions and
+both pages; staged generation helpers/actions; teaching import; presentation
+generation/Apply actions all use `requireAiAccess` with trusted current auth.
+Branch-specific enrollment/author/instructor/owner/version and pre/post-inference
+checks remain. Presentation standard denial prefix handling is unchanged.
+Coach's post-inference check previously accepted a *different approved owner*:
+retained focused test **1/2 passed RED**, then **2/2 GREEN** after adding a same-owner
+check before output release. No extra inference/quota operation is added.
+Bounded scripts scan found no standalone age-dependent AI authorization. SQL age
+hits are profile/signup bounds and bands, not AI authorization: **no new SQL**.
+
+### Exact owned changes
+
+Source (12):
+`src/lib/eligibility.ts`, `src/lib/ai-eligibility-server.ts`,
+`src/lib/interviews.ts`, `src/lib/lesson-generation-server.ts`,
+`src/app/admin/accounts/actions.ts`, `src/app/learning/actions.ts`,
+`src/app/paths/actions.ts`, `src/components/presentation-ai-assistant.tsx`,
+`src/components/account-maintenance.tsx`, `src/components/profile-form.tsx`,
+`src/components/auth-form.tsx`, `src/components/learning-path.tsx`.
+The additional auth-form copy was an actual obsolete AI-policy surface.
+Presentation editor/canvas, provider client, CSS and harnesses are unchanged.
+
+Tests (9):
+`tests/eligibility.test.mjs`, new `tests/ai-access-actions.test.mjs`,
+`tests/presentation-ai.test.mjs`, `tests/presentation-ai-ui.test.mjs`,
+`tests/lesson-generation.test.mjs`, `tests/interviews.test.mjs`,
+`tests/recommendations.test.mjs`, `tests/learning-path-ui.test.mjs`,
+`tests/instructor-e2e.mjs` (**source edit only; NEVER executed**).
+Docs: `README.md`, `IMPLEMENTATION_TRACKER.md` (this entry).
+
+Coverage accepts trusted approved 13/17/18/120/null/undefined, denies unapproved/
+string/editable-metadata spoof, forbids authorization profile queries and keeps
+signup/profile/database rejection and signup-no-grant checks. Admin tests cover
+consent review, forged nonadmin, admin/self targets, invalid/missing targets/roles,
+metadata merge and revoke. Real coach/path/interview/presentation/staged/import
+helpers retain quota, consent, ownership, reservation/replay, role, stale/revoked
+session and Apply protections. Mounted button tests cover both input orders,
+formatting/scope/shared-text changes, blank/missing instructions, empty textbox/
+new slide/shape-only scopes and imported previews, native Tab/Enter, 320px click recovery,
+pending and uncertain-save locks; each valid submission dispatches exactly once.
+
+### Local commands and actual results
+
+Windows / existing Node 25.2.1. All Node child processes used `tests/offline-run.mjs`
+(OS-only environment, no application env loading; HTTP/TLS/socket/fetch forbidden).
+Offline Chromium uses blocked routes/service workers; PGlite is disposable memory.
+No connected tests, provider calls, remote operations, installs or commits.
+All commands below ran from the repository root (no output redirection):
+
+```powershell
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern='Generate recovery|external AI requires only|editable metadata|server AI guard' tests\presentation-ai-ui.test.mjs tests\eligibility.test.mjs
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\eligibility.test.mjs tests\presentation-ai.test.mjs tests\presentation-ai-ui.test.mjs tests\lesson-generation.test.mjs tests\interviews.test.mjs
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern='mounted AI review|duplicate generation|transient zero|approved minor|current auth' tests\presentation-ai-ui.test.mjs tests\lesson-generation.test.mjs
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern='mounted AI review|duplicate generation|transient zero' tests\presentation-ai-ui.test.mjs
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\eligibility.test.mjs tests\recommendations.test.mjs tests\learning-path-ui.test.mjs
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\ai-access-actions.test.mjs
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern='import extraction' tests\lesson-generation.test.mjs
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\eligibility.test.mjs tests\ai-access-actions.test.mjs tests\account.test.mjs tests\auth.test.mjs tests\profile.test.mjs tests\profile-ui.test.mjs tests\presentation-ai.test.mjs tests\presentation-ai-ui.test.mjs tests\lesson-generation.test.mjs tests\lesson-generation-ui.test.mjs tests\interviews.test.mjs tests\interviews-ui.test.mjs tests\recommendations.test.mjs tests\learning-path-ui.test.mjs tests\presentation-model.test.mjs tests\presentation-font-layout.test.mjs tests\presentation-ui.test.mjs tests\presentation-layout.test.mjs tests\presentation-upload.test.mjs tests\openrouter.test.mjs
+node tests\offline-run.mjs --experimental-strip-types node_modules\typescript\bin\tsc --noEmit --incremental false
+node tests\offline-run.mjs --experimental-strip-types node_modules\eslint\bin\eslint.js src/lib/eligibility.ts src/lib/ai-eligibility-server.ts src/lib/interviews.ts src/lib/lesson-generation-server.ts src/app/admin/accounts/actions.ts src/app/learning/actions.ts src/app/paths/actions.ts src/components/presentation-ai-assistant.tsx src/components/account-maintenance.tsx src/components/profile-form.tsx src/components/auth-form.tsx src/components/learning-path.tsx tests/eligibility.test.mjs tests/ai-access-actions.test.mjs tests/presentation-ai.test.mjs tests/presentation-ai-ui.test.mjs tests/lesson-generation.test.mjs tests/interviews.test.mjs tests/recommendations.test.mjs tests/learning-path-ui.test.mjs tests/instructor-e2e.mjs
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern='Generate recovery' tests\presentation-ai-ui.test.mjs
+node tests\offline-run.mjs --experimental-strip-types node_modules\eslint\bin\eslint.js tests/presentation-ai-ui.test.mjs tests/recommendations.test.mjs
+& 'C:\Users\SOLUSER\AppData\Local\GitHubDesktop\app-3.6.10\resources\app\git\cmd\git.exe' --no-pager diff --check
+```
+
+| Run (commands above; repeated checks noted) | Actual result |
+| --- | --- |
+| New button/policy pattern, before / immediately after repair | **0/5 RED exit1 / 5/5 GREEN exit0** |
+| First five-file affected group | **49/53 exit1**: quota-exhausted acceptance fixture, duplicate `status` locator, own Apply success overwritten, old stale-result expectation |
+| Focused Apply/stale/quota iteration | **2/5 exit1**: quota fixed; own Apply payload effect still overwrote success; indiscriminate apply-pending skip suppressed manual undo invalidation |
+| Exact Apply-payload fix, focused mounted checks | **3/3 exit0** |
+| Approval/admin/path API/page group | **32/32 exit0** |
+| Coach new regression before / after same-owner repair | **1/2 RED exit1 / 2/2 GREEN exit0** |
+| Actual teaching-import acceptance without age/profile dependency | **1/1 exit0** |
+| Final 20-file bounded group | **254/254 exit0**, 207191.6375ms; zero skipped/cancelled |
+| Direct offline TypeScript | **exit0** |
+| Scoped ESLint first / after unused fixture variable removal | **exit0, 1 warning / exit0, clean** |
+| Final screenshot framing-only adjustment (scroll mobile Generate into view); focused recovery / test ESLint | **2/2 exit0 / exit0, clean** |
+| Whitespace check | **exit0** |
+
+No full-suite retry or Next build: no changed client/server import boundary requiring
+packaging verification (shared server guard loses a dependency; existing assistant
+uses its already shared pure patch helper). Historical build results are not new
+evidence. The final group includes free-only/provider-default regressions, account/
+profile/auth controls, staged/interview/path UI and core presentation/font/layout/
+upload history/manual-save checks because these are the directly affected branches.
+
+### Examined screenshots, cleanup and residual gaps
+
+Actually opened all three final-run files in
+`C:\Users\SOLUSER\AppData\Local\Temp\forge-ai-generate-recovery-smzGgk`:
+`1440-enabled.png`, `320-validation.png`, `320-enabled.png`.
+Desktop shows consent checked after typing and green enabled Generate; mobile
+shows the focused actionable instruction error and normal click recovery with
+consent checked. Same three images from the first GREEN run
+`forge-ai-generate-recovery-KUJ5P1` were also opened. Native Tab/Enter and mobile
+click assertions used no force-click or disabled-attribute changes. Existing
+duplicate/pending checks remain. Screenshot directories are retained outside Git.
+The final evidence-framing rerun scrolled the enabled mobile Generate button into
+view before capturing; actually opened
+`C:\Users\SOLUSER\AppData\Local\Temp\forge-ai-generate-recovery-eW0nga\320-enabled.png`,
+which clearly shows the full green Generate button and checked consent together.
+Browsers/contexts and PGlite close in harness `finally`/test cleanup; no application
+server, remote database or provider helper was started.
+
+No migration filename/content changed (`git diff` has no `supabase` changes).
+Effective provider defaults/retention, free endpoint availability, hosted auth/
+quota concurrency and deployment are unverified. Approved policy replacement is
+not legal/provider age/region eligibility certification; no production review
+or release/deployment was performed. No credentials/environment contents read.
+**Request independent QA of both policy authorization and mounted editor recovery.**
+
 ## 6 November 2026 — independent AI Slide Assistant v1 QA evidence
 
 **Owner: independent QA; coordinator owns acceptance and implementer owns defects.

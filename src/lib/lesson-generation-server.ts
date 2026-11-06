@@ -52,7 +52,7 @@ async function owned(owner: string, id: string): Promise<Generation> {
 async function access(user: Awaited<ReturnType<typeof currentUser>>, kind: Generation["kind"]) {
   if (kind === "import" && !canPublishLessons(user)) throw new GenerationError("Instructor access is required to change or generate imported drafts.");
   try { await requireAiAccess(user); }
-  catch { throw new GenerationError("External AI requires current adult (18+) and administrator-approved AI eligibility. Check your profile and access approval."); }
+  catch { throw new GenerationError("External AI requires administrator-approved AI access."); }
 }
 async function confirm(owner: string, kind: Generation["kind"]) {
   const user = await currentUser();

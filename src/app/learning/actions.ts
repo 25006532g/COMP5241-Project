@@ -280,7 +280,9 @@ export async function askCoach(id: string, history: unknown): Promise<{ reply?: 
     if (!allowed) throw new Error("Your shared 15/day text-AI quota (coach and interviews) has been reached. Lessons and quizzes remain available.");
     const reply = await coachReply({ subject: FAMILIES[selection.family], topic, slides: referenceSlides,
       ...(isPresentation(lesson.content)?{format:"presentation"}:{}) }, messages);
-    await requireAiAccess(await currentUser());
+    const freshUser = await currentUser();
+    if (freshUser.id !== user.id) throw new Error("Your session changed. Reload before asking the coach again.");
+    await requireAiAccess(freshUser);
     return { reply };
   } catch (error) { return failure(error); }
 }
