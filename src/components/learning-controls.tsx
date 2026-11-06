@@ -43,7 +43,21 @@ export function BookmarkButton({ id, initial }: { id: string; initial: boolean }
   const [saved, setSaved] = useState(initial);
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
-  return <div><button className="secondary-button" disabled={pending} aria-pressed={saved} onClick={() => startTransition(async () => { const result = await saveBookmark(id, !saved); setError(result.error ?? ""); if (!result.error) setSaved(!saved); })}><Bookmark size={17} fill={saved ? "currentColor" : "none"} />{pending ? "Saving..." : saved ? "Saved" : "Save lesson"}</button>{error && <p role="alert">{error}</p>}</div>;
+  const inFlight = useRef(false);
+  const hint = useId();
+  return <div><button className="secondary-button" disabled={pending} aria-pressed={saved} aria-describedby={hint} onClick={() => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    startTransition(async () => {
+      setError("");
+      try {
+        const result = await saveBookmark(id, !saved);
+        setError(result.error ?? "");
+        if (!result.error) setSaved(!saved);
+      } catch { setError("Bookmark change was not confirmed. Check Progress > Saved lessons before trying again."); }
+      finally { inFlight.current = false; }
+    });
+  }}><Bookmark size={17} fill={saved ? "currentColor" : "none"} />{pending ? "Updating bookmark..." : saved ? "Remove bookmark" : "Bookmark lesson"}</button><p id={hint}>Find bookmarks in <Link href="/progress">Progress &gt; Saved lessons</Link>.</p>{error && <p role="alert">{error}</p>}</div>;
 }
 
 type SafeContent<T> = T extends LessonContent ? Omit<T,"questions"> & { questions:{prompt:string;options:string[]}[] } : never;

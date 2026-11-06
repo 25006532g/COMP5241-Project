@@ -345,10 +345,10 @@ try {
   await learner.page.goto(`${origin}${lessonUrl}/lessons/1`);
   await expect(learner.page.getByRole("heading", { name: "Lesson or page unavailable." })).toBeVisible();
   await owner.page.goto(`${origin}${lessonUrl}`);
-  await owner.page.getByRole("button", { name: "Save lesson", exact: true }).click();
-  await expect(owner.page.getByRole("button", { name: "Saved", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await owner.page.getByRole("button", { name: "Bookmark lesson", exact: true }).click();
+  await expect(owner.page.getByRole("button", { name: "Remove bookmark", exact: true })).toHaveAttribute("aria-pressed", "true");
   await owner.page.reload();
-  await expect(owner.page.getByRole("button", { name: "Saved", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(owner.page.getByRole("button", { name: "Remove bookmark", exact: true })).toHaveAttribute("aria-pressed", "true");
   await owner.page.getByRole("link", { name: "Open lesson", exact: true }).first().click();
   await expect(owner.page.locator(".slide-stage")).toBeVisible();
   assert.equal((await owner.page.content()).includes(`Answer-key-only explanation ${runId}`), false);

@@ -6,6 +6,71 @@ For a presentation-ready overview of features, design choices and prototype scre
 
 Track remaining work, blockers, acceptance criteria and verification updates in [IMPLEMENTATION_TRACKER.md](IMPLEMENTATION_TRACKER.md).
 
+## 6 November 2026 — eight UI/UX enhancements: bounded independent local gates passed
+
+All eight approved enhancements are implemented: private **Save & request
+approval** wording, coach recovery, skip link/**Profile & settings**, teaching
+empty-state guidance, dashboard lesson priorities, bookmark retrieval guidance,
+real Fabric On/Off/Mixed formatting feedback and compact catalog/counts.
+
+Independent narrow follow-up now passes **QA-UX-02 / gate 2**: **six distinct
+cases, 6/6**, zero failures/cancelled/skipped/todo. The previous seven gates
+remain independently passed, with fingerprint proof of unchanged product areas;
+this is **bounded local acceptance, not a new full audit or production release**.
+The appended [native coach focus regression](tests/approved-ui-ux.test.mjs#L504)
+checks pending/typing, identical failures and successful retry at 320/1440px;
+exact drafts/history and explicit-only retries are preserved. Test lint and
+whitespace passed; no new typecheck/build ran in this QA follow-up.
+
+Exact commands, sanitized screenshots, preservation and cleanup are in the
+newest tracker entry. Earlier failed/pending entries below remain dated history.
+No provider/DB/env/deployment/install/commit activity; build/typegen, connected
+services, measured contrast, screen-reader, IME and RTL remain untested.
+
+## 6 November 2026 — QA-UX-02 coach focus repair; independent narrow recheck pending
+
+Initial independent UI/UX QA passed seven gates but blocked gate 2: a second
+explicit retry with an identical transport/quota error left focus on BODY.
+Those findings and the implementation results below remain historical evidence.
+
+The coach now focuses recovery only after pending finishes, including consecutive
+identical failures. Draft/history, explicit-only retries, accessible alert/focus
+styling and approval-only AI authorization are unchanged. Untouched retained
+tests reproduced **0 pass / 2 fail**, then passed **2/2** after the surgical fix.
+The full acceptance file passed **13/13**, existing real-coach regressions **2/2**,
+and a supplementary native focus check **1/1**. Scoped lint, sanitized direct
+TypeScript and owned-file whitespace passed. Exact commands, evidence and cleanup
+are in the newest tracker entry. No live services, environment-file reads,
+installs, build/typegen, commits or deployment. **Coordinator owns acceptance;
+independent narrow QA recheck requested, not release certification.**
+
+## 6 November 2026 — eight approved UI/UX changes; independent QA pending
+
+- Presentation **Save & request approval** explains private saving and separate
+  administrator publication, including truthful pending/success messages.
+- Coach connection failures focus an actionable notice, retain the exact draft
+  and history, release pending state and never retry automatically.
+- A first-focusable skip link moves keyboard focus into page content; the avatar
+  shortcut is named **Profile & settings**.
+- Teaching explains an empty published roster and links to the existing studio.
+- Dashboard prioritizes **Find a lesson** and prominent **Continue lesson** links;
+  creation, routes and version-specific progress/resume behavior are unchanged.
+- **Bookmark lesson / Remove bookmark** points to **Progress > Saved lessons**,
+  retaining the previous UI state on unconfirmed changes.
+- Formatting publishes real Fabric on/off/mixed states, preserves character
+  selection across native mouse/Tab/Enter, and retains rich saves and Undo/Redo.
+- Catalog uses compact subject/visibility text headers and exact filtered counts.
+
+New persistent eight-feature offline regressions **8/8** and the final coupled
+group **75/75** passed. Scoped ESLint, direct offline `tsc --noEmit --incremental
+false` and whitespace checks passed. Synthetic browser layouts were checked at
+320px, 768px and 1440px; screenshot paths, commands and intermediate failures are
+recorded in the newest tracker entry. No environment files/application credentials,
+connected DB/provider, installation, commit or deployment were used. Next
+typegen/build and connected e2e were intentionally not run; no measured contrast
+or release certification is claimed. **Coordinator-assigned independent QA is
+requested.** Latest approval-only AI policy and all historical entries remain intact.
+
 ## 6 November 2026 — independent narrow follow-up: local QA-AI-01 verified
 
 The initial independent interview blocker below is **historical and now resolved

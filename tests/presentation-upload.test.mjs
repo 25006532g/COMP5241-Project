@@ -71,7 +71,7 @@ test("uploaded workspace fits desktop shell; 320px importer, primary controls an
         assert.equal(measured.scrollY,0,"Do not scroll to obtain passing bounds.");
         assert.ok(measured.editor.bottom<=height,JSON.stringify(measured));
         assert.ok(measured.canvas.y>=0&&measured.canvas.bottom<=height,JSON.stringify(measured));
-        for(const name of ["Change file","Save","Save and publish","Undo","Redo","Add text","Add slide","Fullscreen preview","Export editable PPTX","Lesson settings","Quiz","Help"]){
+        for(const name of ["Change file","Save","Save & request approval","Undo","Redo","Add text","Add slide","Fullscreen preview","Export editable PPTX","Lesson settings","Quiz","Help"]){
           const control=button(page,name),bounds=await control.boundingBox();actions[name]=bounds;
           assert.ok(bounds&&bounds.y>=0&&bounds.y+bounds.height<=height,`${width}: ${name}`);
           assert.equal(await control.evaluate(el=>{
@@ -94,7 +94,7 @@ test("uploaded workspace fits desktop shell; 320px importer, primary controls an
         await page.screenshot({path:join(artifacts,"importer-expanded-320.png"),fullPage:true});
         await button(page,"Close importer").focus();await page.keyboard.press("Enter");
         assert.equal(await title(page).inputValue(),"Retain my uploaded edits");
-        for(const name of ["Save","Save and publish","Add text","Fullscreen preview","Export editable PPTX"]){
+        for(const name of ["Save","Save & request approval","Add text","Fullscreen preview","Export editable PPTX"]){
           const control=button(page,name);await control.focus();await control.scrollIntoViewIfNeeded();
           const bounds=await control.boundingBox();actions[name]=bounds;
           assert.ok(bounds&&bounds.x>=0&&bounds.x+bounds.width<=320);
