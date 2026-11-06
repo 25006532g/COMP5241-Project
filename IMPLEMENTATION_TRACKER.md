@@ -2,6 +2,447 @@
 
 Last reviewed: 2026-11-06
 
+## 6 November 2026 — independent AI Slide Assistant v1 QA evidence
+
+**Owner: independent QA; coordinator owns acceptance and implementer owns defects.
+Bounded local verification, not a release certification or broad audit.**
+Read current implementation/README/tracker, repository QA instructions and
+delivery/security/verification skills (requested sibling paths absent). Latest
+20 October provider/default policy was preserved; no provider/reasoning override
+or ZDR enforcement was added. No product/test/harness changes, migrations,
+environment-file reads, provider/remote services, connected e2e/database writes,
+installs, deployment, commit or build rerun.
+
+### Safety, commands and actual results
+
+Windows / existing Node **v25.2.1** (`C:\Program Files\nodejs\node.exe`).
+Inspected `offline-run.mjs`, `offline-network.mjs` and imported harnesses before
+execution: OS-only child environment, denied Node HTTP/TLS/socket/fetch,
+offline Chromium with blocked service workers/routes, in-memory PGlite with
+synthetic users. Local migrations execute only inside disposable PGlite.
+No application server or helper service was started.
+
+All commands ran from `C:\Ken\PolyU\COMP5241\Project\COMP5241-Project`.
+The following are the actual PowerShell commands, in execution order:
+
+```powershell
+& 'C:\Program Files\nodejs\node.exe' tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\presentation-ai.test.mjs tests\presentation-ai-ui.test.mjs
+& 'C:\Program Files\nodejs\node.exe' tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\presentation-font-layout.test.mjs tests\presentation-ui.test.mjs tests\presentation-layout.test.mjs tests\presentation-upload.test.mjs
+& 'C:\Program Files\nodejs\node.exe' tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 --test-name-pattern='free models preserve|paid IDs|every selected free|text and structured requests|text and structured fallback|malformed, empty, refused and incomplete|external AI requires an adult|editable metadata cannot|server AI guard' tests\openrouter.test.mjs tests\eligibility.test.mjs
+```
+
+| Independent execution | Actual outcome |
+| --- | --- |
+| Focused AI pair, first | **11/11**, exit0, 28088.0615ms |
+| Unchanged canvas/font/UI/upload group | **22/22**, exit0, 74341.5631ms |
+| Selected unchanged free/default-provider/eligibility contracts | **9/9**, exit0, 1118.708ms |
+| Additional inline contract probes below | **2/2**, exit0, 231.985ms |
+| Additional inline mounted mobile probe below | **1/1**, exit0, 4235.9562ms |
+| Total | **45 passed, 0 failed, 0 skipped/cancelled** |
+
+No whole-72/full-suite rerun. No retained test additions: the missing assertions
+were checked through the non-retained inline probes below and all passed.
+Scoped ESLint/direct tsc were not rerun because only evidence documentation
+changed; prior implementer build/type/lint results are historical, not new QA runs.
+
+### Gates closed locally
+
+* Real mounted 1440px and 320px editor: selected textbox/current slide/explicit
+  multislide reference; no implicit all-slide selection; consent and formatting
+  initially unchecked. Visible plain-text before/after, explanation and optional
+  size/alignment review. Tab/Shift+Tab/Escape/Close focus return and keyboard
+  Enter/Space Generate/Discard/Apply/Undo/Redo/Save.
+* Real Fabric text/runs and lower-canvas dark pixels, finite viewport and
+  zero-sized-host recovery, not merely action success. Exactly one changed AI
+  history commit. Undo/Redo restore actual canvas content. No save before manual
+  Save; real action/in-memory PGlite rows match saved rich runs, reopen renders
+  applied text. Mobile probe applies explicit slides 1+2 of 3, preserves slide 3,
+  shape/layout/quiz and rich bold/italic/underline/font/color, changing only
+  permitted font size/alignment. Imported preview and saved-editor access covered.
+* Pending manual edit/undo, pending input/new request, Discard/Close/unmount and
+  delayed authorization epochs reject stale work; duplicate Generate/Apply
+  produces only one operation. Save/export/upload/uncertain-save locks deny AI.
+  Initial/final font draft flush and real overflow denial preserve original
+  teaching text and character range; unchanged font/UI regressions cover
+  IME, fractional resize, responsive publication, export and failure recovery.
+* Real server AI functions with injected profile/lesson/quota/completion
+  dependencies: authentication, recorded adult eligibility, trusted approval,
+  owner/instructor/admin permissions, saved version, consent/key/quota denial;
+  invalid requests do not invoke completion. Delayed provider rechecks identity,
+  age/approval/edit rights/version before release; Apply independently rechecks
+  session/adult/approval/owner/visibility/version, with no additional quota or
+  completion. Database fixture allows only profile reads and shared quota RPC,
+  never lesson writes. Exact provider user-message object equals instruction,
+  allowFormatting and minimized reference (optional size/alignment only).
+* Strict empty/no-op/unknown/duplicate/out-of-scope/run-index/style/oversize/
+  truncated JSON rejection, original unchanged; inclusive 2,000 instruction/
+  20,000 selected-text/10,000 textbox bounds without clipping. Candidate schema
+  and actual fit validation precede the single commit. Unchanged free-only
+  zero-price catalog and omitted provider/reasoning policy checks pass.
+  Server-only import boundary was source-traced; no deployed bundle claim.
+
+### Examined evidence and cleanup
+
+Actually opened the following generated image files during this QA run:
+
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-presentation-ai-Ei4vuY\1440-applied.png`
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-presentation-ai-Ei4vuY\320-input.png`
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-presentation-ai-Ei4vuY\320-review.png`
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-presentation-layout-fY4spC\workspace-1366.png`
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-upload-followup-yiONA5\upload-1366.png`
+* `C:\Users\SOLUSER\AppData\Local\Temp\forge-ai-independent-q062Qq\320-multislide-applied.png`
+
+Desktop image shows applied text with retained bold/Courier run and fitted
+ribbon/canvas. Mobile input/review shows wrapping controls, before/after/style
+diffs and Apply; cropped mobile canvas shows both applied textboxes and untouched
+shape. These are synthetic local screenshots, not live-provider evidence.
+Screenshot directories intentionally retained outside the repository.
+Contexts/browsers/PGlite close in `finally`; inline mobile run explicitly logged
+closure. All five QA test sessions completed exit0, no running owned helper.
+No cleanup failure or unrelated process termination.
+
+### Protected dirty-work verification
+
+Initial Git status: dirty README/tracker/CSS/editor/canvas/browser harness and
+pre-existing `tests/lesson-authoring-limits.test.mjs`; new untracked AI source/
+tests. Final SHA256 comparison: **11/11 unchanged** below; **17/17 migration
+filenames/content unchanged**, including existing
+`20261106090000_lesson_authoring_limits_ran.sql`. No rename/status correction.
+Six selected unchanged regression files still match Git (font/UI/layout/upload/
+OpenRouter/eligibility). Git used existing GitHub Desktop executable
+`C:\Users\SOLUSER\AppData\Local\GitHubDesktop\app-3.6.10\resources\app\git\cmd\git.exe`.
+QA changed only new evidence sections in README/tracker.
+
+| Protected file | Unchanged SHA256 |
+| --- | --- |
+| `src/lib/presentation-ai.ts` | `E40556541533E4BFD24525FE1BEA2B9408FBAC16674BE34C60BE930446EBFEBA` |
+| `src/lib/presentation-ai-server.ts` | `C2FE34D47A6F87130646665CDE8C24FD1E3732DE6C9AB82A0FADCE3CD5EB1A03` |
+| `src/app/presentation/ai-actions.ts` | `B477D38E705E15465312E61E8CD02F60A0D0D6CF6B5117DD3B2A8D800916EA1A` |
+| `src/components/presentation-ai-assistant.tsx` | `DF3E81A5651655B3BCD1A45EAA8D201981DE89998C34DDB71B8D794EE9D95C43` |
+| `src/components/presentation-editor.tsx` | `F127EB190409C36257D86124B0318610ED1E42C151E2C7C1F658DD5F701968D3` |
+| `src/components/presentation-canvas.tsx` | `C2C7B6FC05839F07DF52CE2B84C3B996DF42302565F9534FD705DCE960CE5515` |
+| `src/app/globals.css` | `13FEEB78D771E3C7CD109684054A868EC650061CF3D18654379FB592A93499A4` |
+| `tests/presentation-browser-harness.mjs` | `59B9B184DB60C9DD03D576FADE0291DD0A57749E11F1BBCEAA5F4C047E38C6C2` |
+| `tests/lesson-authoring-limits.test.mjs` | `2ABA1B1C907894811F62C1B8EA05B3C665D03DE4AEEDE25195E169428C2F7E35` |
+| `tests/presentation-ai.test.mjs` | `E7AC5CBFB6ADC1EDD1013C82129E7258F3F37185BA5EF34C52B3C2B7ABEC1F2C` |
+| `tests/presentation-ai-ui.test.mjs` | `7CAFB77F3F33DFB2511A3DA3361A95FF530967452C2DDAB45FC14203D90EA5B8` |
+
+### Defects and open gates (separate from passes)
+
+**Reproducible product defects: none found in this bounded execution.** No
+failing regression retained or product fix requested.
+**Untested:** live model rewrite/summarize/translate/example/explanation quality,
+availability and actual provider defaults/retention; real hosted auth/quota/
+permission/version races and migration prerequisites; deployed bundles/browsers,
+Linux CI and release readiness. Offline mocks establish the contract, not live
+model adherence. Discard/upstream cancellation and quota refund are not promised.
+No new SQL expected; existing profile/eligibility/shared-quota prerequisites
+remain deployment responsibilities. Coordinator may close these local gates
+without treating this as live/deployment/release certification.
+
+<details>
+<summary>Exact non-retained inline acceptance probe commands (reproduction)</summary>
+
+These use existing test-fixture transpilation/dependency injection in memory;
+test registration from the fixture file is disabled, not product behavior.
+No files are created except screenshots in the UI probe.
+
+```powershell
+@'
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {z} from 'zod';
+import * as h from './tests/slide-authoring-harness.mjs';
+import {OpenRouterError} from './src/lib/openrouter-client.ts';
+const mod={exports:{}};
+const deps={'node:test':()=>{},'node:assert/strict':assert,zod:{z},'./slide-authoring-harness.mjs':h,'../src/lib/openrouter-client.ts':{OpenRouterError}};
+new Function('require','module','exports',h.transpile('./presentation-ai.test.mjs')+';module.exports.serverFixture=serverFixture;')(name=>{assert.ok(Object.hasOwn(deps,name),name);return deps[name];},mod,mod.exports);
+const {ai,fixture,serverFixture}=mod.exports;
+process.env.OPENROUTER_API_KEY='offline-fixture';
+test('QA exact provider payload, strict no-op/IDs and inclusive text boundaries',async()=>{
+  for(const allowFormatting of [false,true]){
+    const f=serverFixture();f.request.allowFormatting=allowFormatting;
+    f.request.reference=ai.minimizedReference(f.author.document,f.scope,allowFormatting);
+    assert.ok((await f.server.generateAiSuggestions(f.request)).patch);
+    assert.deepEqual(JSON.parse(f.s.calls[0].messages[1].content),{instruction:f.request.instruction,allowFormatting,reference:f.request.reference});
+    assert.equal(f.s.calls.length,1);assert.equal(f.s.claims,1);
+  }
+  const f=fixture(),before=structuredClone(f.author);
+  for(const changes of [
+    [{...f.patch.changes[0],runs:[{paragraph:0,run:0,text:f.box.paragraphs[0].runs[0].text}]}],
+    [{...f.patch.changes[0],textboxId:crypto.randomUUID()}],
+    [{...f.patch.changes[0],runs:[{paragraph:99,run:0,text:'bad'}]}],
+    [{...f.patch.changes[0],runs:[{paragraph:0,run:0,text:'',bold:true}]}],
+  ])assert.throws(()=>ai.applyAiPatch(f.author.document,f.request,{...f.patch,changes}));
+  assert.deepEqual(f.author,before);
+  f.box.paragraphs[0].runs=[{...h.presentation.defaultRun,text:'x'.repeat(10000)}];
+  f.first.elements.push(h.presentation.newText('y'.repeat(10000)));
+  const scope={kind:'slide',slideId:f.first.id};
+  const request={...f.request,scope,instruction:'i'.repeat(2000),reference:ai.minimizedReference(f.author.document,scope,false)};
+  assert.equal(ai.aiRequestSchema.safeParse(request).success,true);
+  f.first.elements.push(h.presentation.newText('z'));
+  assert.equal(ai.aiRequestSchema.safeParse({...request,reference:ai.minimizedReference(f.author.document,scope,false)}).success,false);
+});
+test('QA Apply rechecks revoked adult/approval/owner/version/session and malformed binding without quota or completion',async()=>{
+  for(const mutate of [
+    f=>{f.s.user=null;},f=>{f.s.age=17;},f=>{f.s.age=null;},
+    f=>{f.s.user.app_metadata.ai_access=false;},
+    f=>{f.s.user.app_metadata={};f.s.user.user_metadata={ai_access:true,role:'admin'};},
+    f=>{f.s.lessonOwner=crypto.randomUUID();},f=>{f.s.editable=false;},
+    f=>{f.s.version=2;},f=>{f.s.visibility='public';},f=>{f.s.user.id=crypto.randomUUID();},
+  ]){
+    const f=serverFixture();f.request.lessonId=crypto.randomUUID();f.request.version=1;
+    const generated=await f.server.generateAiSuggestions(f.request);assert.ok(generated.patch);
+    mutate(f);assert.ok((await f.server.checkAiApply(generated.binding)).error);
+    assert.equal(f.s.calls.length,1);assert.equal(f.s.claims,1);
+  }
+  const f=serverFixture();
+  for(const binding of [{},{requestId:f.request.requestId,sourceToken:f.request.sourceToken,userId:f.s.user.id,lessonId:crypto.randomUUID()},
+    {requestId:f.request.requestId,sourceToken:f.request.sourceToken,userId:f.s.user.id,extra:true}])assert.ok((await f.server.checkAiApply(binding)).error);
+  assert.equal(f.s.calls.length,0);assert.equal(f.s.claims,0);
+});
+'@ | & 'C:\Program Files\nodejs\node.exe' tests\offline-run.mjs --experimental-strip-types --input-type=module
+```
+
+```powershell
+@'
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {chromium,expect} from '@playwright/test';
+import {harness,presentation as model} from './tests/slide-authoring-harness.mjs';
+import {mountPresentation} from './tests/presentation-browser-harness.mjs';
+test('QA 320px keyboard current/new-request/multislide Apply pixels, atomic UndoRedo, manual PGlite Save/reopen',async()=>{
+  const h=await harness(),browser=await chromium.launch(),context=await browser.newContext({offline:true,serviceWorkers:'block',viewport:{width:320,height:900}});
+  const page=await context.newPage(),errors=[],network=[],calls=[],saves=[];
+  let release,gate;
+  try{
+    await context.route('**/*',r=>{network.push(r.request().url());return r.abort();});
+    page.on('pageerror',e=>errors.push(e.message));
+    await page.exposeFunction('images',()=>({error:'Not used'}));
+    await page.exposeFunction('persist',async(name,entries)=>{saves.push(entries);const form=new FormData();for(const [k,v]of entries)form.set(k,v);return h.actions[name]({},form);});
+    await page.exposeFunction('presentationAi',async(kind,request)=>{
+      calls.push({kind,request});if(kind==='authorize')return {};
+      if(gate)await gate;
+      return {binding:{requestId:request.requestId,sourceToken:request.sourceToken,userId:h.owner},patch:{explanation:'Clear teaching example.',changes:request.reference.map(e=>({slideId:e.slideId,textboxId:e.id,runs:[{paragraph:0,run:0,text:'Clear SDLC '}],...(request.allowFormatting?{fontSize:18,align:'center'}:{})}))}};
+    });
+    const initial=model.blankPresentation();initial.title='Offline independent AI QA';
+    const first=initial.document.slides[0];first.title='First';
+    const rich=model.newText('Complex SDLC ');rich.paragraphs[0].runs.push({...model.defaultRun,text:'requirements',bold:true,italic:true,underline:true,font:'Courier New',color:'#123456',size:24});
+    const other=model.newText('Second explanation');other.y=260;
+    first.elements=[rich,other,{id:crypto.randomUUID(),type:'shape',shape:'rect',x:800,y:10,w:30,h:30,rotation:0,fill:'#123456',stroke:'#123456',strokeWidth:0}];
+    const second=model.newSlide();second.title='Second';second.elements=[model.newText('Second slide explanation')];
+    const third=model.newSlide();third.title='Unselected';third.elements=[model.newText('Do not change this')];
+    initial.document.slides.push(second,third);
+    initial.quiz=Array.from({length:3},(_,i)=>({prompt:`Question ${i}`,options:['A','B','C','D'],correct:0}));
+    await mountPresentation(page,{initial});await page.waitForFunction(()=>editCanvas.getObjects().length===3);
+    const aiButton=page.getByRole('button',{name:'AI Slide Assistant',exact:true});
+    await aiButton.focus();await page.keyboard.press('Enter');await expect(page.getByLabel('Suggestion scope')).toHaveValue('slide');
+    await page.getByLabel('Instruction',{exact:true}).fill('Explain with an educational example.');
+    await page.getByLabel('I consent',{exact:false}).focus();await page.keyboard.press('Space');
+    gate=new Promise(resolve=>{release=resolve;});
+    await page.getByRole('button',{name:'Generate suggestions',exact:true}).focus();await page.keyboard.press('Enter');
+    await page.getByLabel('Instruction',{exact:true}).fill('Rewrite the current slide.');release();gate=null;
+    await expect(page.getByRole('button',{name:'Generate suggestions',exact:true})).toBeDisabled();
+    await expect(page.getByRole('region',{name:'AI suggestions'})).toHaveCount(0);
+    assert.equal(calls[0].request.reference.length,2);
+    await page.getByLabel('I consent',{exact:false}).focus();await page.keyboard.press('Space');
+    await page.getByRole('button',{name:'Generate suggestions',exact:true}).focus();await page.keyboard.press('Enter');
+    await expect(page.getByRole('region',{name:'AI suggestions'})).toBeFocused();
+    assert.equal(calls[1].request.instruction,'Rewrite the current slide.');
+    await page.getByRole('button',{name:'Discard',exact:true}).focus();await page.keyboard.press('Enter');
+    await page.getByLabel('Suggestion scope').selectOption('slides');
+    assert.equal(await page.getByRole('checkbox').filter({visible:true}).count(),5);
+    assert.equal(await page.getByLabel('1. First').isChecked(),false);assert.equal(await page.getByLabel('2. Second').isChecked(),false);assert.equal(await page.getByLabel('3. Unselected').isChecked(),false);
+    for(const label of ['1. First','2. Second','Allow simple','I consent']){await page.getByLabel(label,{exact:false}).focus();await page.keyboard.press('Space');}
+    await page.getByRole('button',{name:'Generate suggestions',exact:true}).focus();await page.keyboard.press('Enter');
+    await expect(page.getByRole('region',{name:'AI suggestions'})).toBeFocused();
+    const request=calls.at(-1).request;assert.deepEqual(request.scope.slideIds,[first.id,second.id]);assert.equal(request.reference.length,3);assert.doesNotMatch(JSON.stringify(request.reference),/Do not change|Question|asset|fill/);
+    await page.evaluate(()=>{
+      const History=presentationModules('@/lib/presentation').PresentationHistory,original=History.prototype.commit;
+      window.qaAiEdits=[];History.prototype.commit=function(next,...args){if(JSON.stringify(next)!==JSON.stringify(this.value))qaAiEdits.push({before:structuredClone(this.value),after:structuredClone(next)});return original.call(this,next,...args);};
+    });
+    await page.getByRole('button',{name:'Apply',exact:true}).focus();await page.keyboard.press('Enter');
+    await expect(page.getByRole('status')).toContainText('one undoable edit');await page.keyboard.press('Escape');await expect(aiButton).toBeFocused();
+    await page.waitForFunction(()=>editCanvas.getObjects().filter(o=>o.type==='textbox').every(o=>o.text.startsWith('Clear SDLC ')));
+    const edits=await page.evaluate(()=>qaAiEdits);assert.equal(edits.length,1);const {before,after}=edits[0];
+    assert.deepEqual(after.quiz,before.quiz);assert.deepEqual(after.document.slides[2],before.document.slides[2]);assert.deepEqual(after.document.slides[0].elements[2],before.document.slides[0].elements[2]);
+    for(let si=0;si<2;si++)for(let ei=0;ei<before.document.slides[si].elements.length;ei++){
+      const b=before.document.slides[si].elements[ei],a=after.document.slides[si].elements[ei];if(b.type!=='text')continue;
+      const expected=structuredClone(b);expected.paragraphs[0].runs[0].text='Clear SDLC ';expected.align='center';for(const p of expected.paragraphs)for(const r of p.runs)r.size=18;assert.deepEqual(a,expected);
+    }
+    assert.equal(saves.length,0);
+    await page.waitForFunction(()=>{const c=editCanvas.lowerCanvasEl,p=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let n=0;for(let i=0;i<p.length;i+=4)if(p[i]<90&&p[i+1]<90&&p[i+2]<90&&p[i+3]>200)n++;return n>20&&editCanvas.viewportTransform.every(Number.isFinite);});
+    const artifacts=await mkdtemp(join(tmpdir(),'forge-ai-independent-'));await page.locator('.presentation-surface.presentation-editable').screenshot({path:join(artifacts,'320-multislide-applied.png')});console.log('Independent AI screenshots:',artifacts);
+    await page.getByRole('button',{name:'Undo',exact:true}).focus();await page.keyboard.press('Enter');await page.waitForFunction(()=>editCanvas.getObjects()[0].text==='Complex SDLC requirements');
+    await page.getByRole('button',{name:'Redo',exact:true}).focus();await page.keyboard.press('Enter');await page.waitForFunction(()=>editCanvas.getObjects()[0].text==='Clear SDLC requirements');
+    await page.getByRole('button',{name:'Save',exact:true}).focus();await page.keyboard.press('Enter');await page.getByRole('status').filter({hasText:'Version 1'}).waitFor();
+    const {rows}=await h.db.query('select id,version,content from forge_lessons');assert.equal(rows.length,1);assert.equal(saves.length,1);assert.equal(rows[0].version,1);
+    const stored=JSON.parse(new Map(saves[0]).get('content'));assert.deepEqual(rows[0].content.slides,stored.document.slides);assert.deepEqual(stored.quiz,initial.quiz);
+    const styled=stored.document.slides[0].elements[0].paragraphs[0].runs[1];for(const key of ['bold','italic','underline','font','color'])assert.equal(styled[key],rich.paragraphs[0].runs[1][key]);assert.equal(styled.size,18);
+    await page.evaluate(()=>presentationRoot.unmount());await mountPresentation(page,{initial:stored,lessonId:rows[0].id,version:1});await page.waitForFunction(()=>editCanvas.getObjects()[0].text==='Clear SDLC requirements');
+    assert.equal(calls.filter(c=>c.kind==='authorize').length,1);assert.deepEqual(errors,[]);assert.deepEqual(network,[]);
+  }finally{release?.();await context.close();await browser.close();await h.db.close();console.log('Independent browser/context/PGlite closed');}
+});
+'@ | & 'C:\Program Files\nodejs\node.exe' tests\offline-run.mjs --experimental-strip-types --input-type=module
+```
+
+</details>
+
+## 6 November 2026 — approved AI Slide Assistant v1 implementation
+
+**Owner: implementer; parent coordinator retains requirements/handover and acceptance.
+Independent Forge QA requested, not self-certified release.**
+Initial Git status showed only pre-existing `tests/lesson-authoring-limits.test.mjs`
+changes. Those changes, all migrations and historical documentation entries
+remain untouched. Git was accessed through existing GitHub Desktop Git.
+Sibling skills were absent; repository delivery/security/verification skills
+and implementer instructions were loaded. Latest approved 20 October provider
+policy takes precedence over historical privacy wording: no provider/reasoning
+overrides, no enforced ZDR/data-collection denial, effective defaults unknown.
+
+### Hypotheses, changes and boundaries
+
+Inspected controlling editor/history/flush/modal, presentation schemas, real
+Fabric layout, server authorization/eligibility, permissions, free-only client,
+package scripts and offline harnesses before editing. First falsifiable
+hypothesis: ID/run-targeted patches can retain rich formatting and add exactly
+one undoable AI edit while source fingerprints reject concurrent changes.
+Smallest first check: minimized-reference/rich-run/history unit test, **1/1**.
+
+* Separate AI dialog content reuses existing modal, keyboard/focus-return and
+  responsive conventions. Selected text defaults when a real textbox is selected;
+  otherwise current slide. Multislide selection starts empty and shows labels/
+  counts. Instruction, formatting permission and consent are explicit; consent
+  and formatting start unchecked. All changed runs and optional styles appear
+  before Apply as safe text; explanation is never rendered as HTML.
+* Strict requests allow at most 2,000 instruction characters, 20,000 selected
+  text characters, 100 textboxes, 2,000 runs, 30 slides and 100,000 serialized
+  characters. Oversized/empty scopes reject, without clipping/skipping/batching.
+  Provider payload contains only instruction, allowFormatting and minimized
+  text/IDs (sizes/alignment only when allowed). No title/audience/quiz/answer keys/
+  accounts/originals/images/asset IDs/URLs/alt text/shapes/unrelated slides.
+* Strict JSON-schema patches target existing slide/textbox and paragraph/run
+  indices, preserving all other rich styles/properties. Only textbox-wide
+  fontSize 8–120 and left/center/right alignment are optionally allowlisted.
+  Empty/no-op, unknown/duplicate/out-of-scope IDs/indices/properties, changed
+  paragraph boundaries, oversized text/output and malformed JSON reject.
+* Server-only action authenticates, checks recorded adult age and trusted
+  `app_metadata.ai_access`, consent and structure, and saved-lesson edit access/
+  version before quota/provider. Existing `forge_claim_coach_request` claims one
+  shared 15/day request; no lesson/storage writes. Identity/eligibility/edit rights/
+  version are rechecked before releasing results and again on Apply (no new quota
+  claim). Existing owner/instructor/admin permissions are reused unchanged.
+* Existing free-only client retains explicit zero-price catalog validation,
+  configured primary/fallback ordering and its finite deadline. No retries or
+  provider configuration changes were added. Missing key/quota/authorization/
+  provider/schema errors are standard safe `{error}` results; no teaching logs.
+* Mount identity, history revision, acknowledged saved ID/version and full
+  targeted text/style/layout fingerprints reject stale edits, undo/redo and
+  replaced drafts. Close/unmount/new request/input changes/Discard invalidate
+  local epochs; duplicate Generate/Apply use synchronous refs.
+* Apply flushes actual canvas/font drafts, rereads history, rechecks source,
+  authorizes the original user and validates the candidate with
+  `presentationSchema` and real `validateTextLayout` before one ungrouped commit.
+  A final flush/check catches drafts entered during asynchronous validation.
+  Measurement fitting does not expand v1 geometry; existing manual Save
+  normalization remains unchanged. Generate/Apply never saves/refreshes.
+* **Necessary tightly coupled additional file:** `presentation-canvas.tsx`.
+  Examined post-Apply pixels exposed a persistent blank canvas despite correct
+  `.text`: viewport translations were **NaN**. Falsifiable second hypothesis:
+  transient zero host dimensions make Fabric `setZoom` invert a singular matrix.
+  The raster check failed twice before repair (30s/5s), proving this was not just
+  screenshot readiness. Resize now ignores nonpositive dimensions and directly
+  sets the fit-only viewport matrix. A zero-sized-host regression and actual
+  dark text pixels verify recovery. No canvas storage/geometry contract changes.
+* Six bounded AI CSS rules provide wrapping/min-width/result-focus only.
+  Compact visible “AI assistant” retains full accessible name/title; the longer
+  label caused real ribbon/canvas layout regression and was reduced, not hidden.
+
+Changed files: new `src/lib/presentation-ai.ts`,
+`src/lib/presentation-ai-server.ts`, `src/app/presentation/ai-actions.ts`,
+`src/components/presentation-ai-assistant.tsx`,
+`tests/presentation-ai.test.mjs`, `tests/presentation-ai-ui.test.mjs`;
+updated `src/components/presentation-editor.tsx`,
+`src/components/presentation-canvas.tsx`, `src/app/globals.css`,
+`tests/presentation-browser-harness.mjs` (new module map/delegates only), README
+and this tracker. Existing presentation schema, other actions/harness behavior,
+OpenRouter configuration, coach wording and coordinator task statuses unchanged.
+
+### Commands and actual local evidence
+
+Windows / Node **v25.2.1**, existing offline Chromium/Fabric/React and PGlite.
+All Node tools used the OS-only, network-denying runner; no environment loader.
+Let `N = node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1`.
+
+| Command/check, in execution order | Actual outcome |
+| --- | --- |
+| `N tests\presentation-ai.test.mjs`, first helper then expanded action checks | 1/1 then 4/4, exit0 |
+| `N tests\presentation-ai-ui.test.mjs`, initial iterations | 0/2 then 1/2, exit1: instruction textarea label drift, pre-Generate normalization made an assumed empty undo stack false, multislide fixture returned a no-op |
+| Same after explicit label, one-commit instrumentation and meaningful fixture | 2/2, exit0 |
+| Initial scoped ESLint | Exit1: render-time ref writes and cleanup warning; corrected to synchronous operation/ack refs outside render |
+| Expanded focused pair (same two files) | 6/6, 9/9 and later 10/10, exit0 |
+| Initial full targeted group below | 68 passed / 2 failed, exit1: longer AI utility created an extra ribbon row and canvas widths below unchanged desktop/upload assertions |
+| `N tests\presentation-layout.test.mjs tests\presentation-upload.test.mjs` after compact label | Exit0, both original regression files passed unchanged |
+| Group below after label / after final draft flush | 70/70 then 71/71, exit0; object-level evidence was not yet sufficient for raster visibility |
+| Final-flush test addition iteration | 12 passed / 1 failed / 1 cancelled, exit1: accidental nested fixture placement; corrected independent test and completed export lock gate, then 10/10 exit0 |
+| `N --test-name-pattern="mounted AI review" tests\presentation-ai-ui.test.mjs`, pixel check and diagnostic | Two 0/1 exit1 runs: persistent blank raster, actual viewport `[zoom,0,0,zoom,NaN,NaN]`; no teaching/document corruption |
+| Focused pair after bounded viewport repair | 10/11 exit1: new host locator matched thumbnails too; narrowed to editable host |
+| `N --test-name-pattern="mounted AI review\|transient zero" tests\presentation-ai-ui.test.mjs` | 2/2, exit0 |
+| FINAL focused pair | **11/11, exit0**, 29394.2704ms; no skips/cancellations |
+| FINAL targeted group below | **72/72, exit0**, 118846.1696ms; no skips/cancellations |
+| FINAL scoped ESLint and direct offline TypeScript below | Exit0, no diagnostics |
+| Environment-free packaging build below (also passed earlier snapshots) | Exit0: typegen, tsc and webpack build; final compile 16.3s, all 25 static pages generated |
+| Desktop Git `--no-pager diff --check` | Exit0; final owned build snapshot absent and zero remaining Node processes |
+
+```powershell
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\presentation-ai.test.mjs tests\presentation-ai-ui.test.mjs tests\presentation-ui.test.mjs tests\presentation-upload.test.mjs tests\presentation-font-layout.test.mjs tests\presentation-model.test.mjs tests\presentation-layout.test.mjs tests\presentation-integration.test.mjs tests\openrouter.test.mjs tests\eligibility.test.mjs
+node tests\offline-run.mjs node_modules\eslint\bin\eslint.js src/lib/presentation-ai.ts src/lib/presentation-ai-server.ts src/app/presentation/ai-actions.ts src/components/presentation-ai-assistant.tsx src/components/presentation-editor.tsx src/components/presentation-canvas.tsx tests/presentation-ai.test.mjs tests/presentation-ai-ui.test.mjs tests/presentation-browser-harness.mjs
+node tests\offline-run.mjs node_modules\typescript\bin\tsc --noEmit --incremental false
+node tests\offline-run.mjs tests\offline-build.mjs --presentation-gate
+```
+
+Contract coverage includes current/selected/multislide scopes, rich-run preservation,
+unique/allowlisted patches, actual serialized/run/text bounds, unapproved/minor/
+unknown-age/user_metadata spoof denial, owner/public edit denial, permitted admin/
+instructor cases, late session/rights/version denial, consent/quota/missing-key
+failures, malformed/truncated JSON and safe provider errors. Invalid requests
+never reach completion; mocked database allows only profile reads and quota RPC,
+not lesson writes. Existing free-only/omitted-provider-policy regressions pass.
+
+Mounted coverage includes before/after/style explanation, duplicate submits,
+one changed AI history commit, undo/redo, actual manually saved rich styles and
+PGlite reopen, imported preview access, pending edit + undo staleness, Close/
+Discard/unmount late results, save/upload/export/uncertain locks, overflow retaining
+the textbox/character range, font-draft flushing including the gated final-layout
+race, accessible notices/results, Tab/Shift+Tab/Escape/Close focus return and
+320px inputs/list/results/buttons without horizontal overflow.
+
+**Actually examined final screenshots:**
+`C:\Users\SOLUSER\AppData\Local\Temp\forge-presentation-ai-92is7M\`
+`1440-applied.png`, `320-input.png`, `320-review.png`; and
+`C:\Users\SOLUSER\AppData\Local\Temp\forge-presentation-layout-sIQIIF\workspace-1366.png`.
+They show rendered applied text with rich bold/Courier text, reachable mobile
+input/results/style controls and desktop ribbon/canvas fit. Earlier blank
+`forge-presentation-ai-mDIX43\1440-applied.png` was examined and is superseded,
+not claimed as valid visual evidence. Screenshots remain in owned temporary
+artifact directories for independent QA; no repository binaries added.
+Owned contexts/browsers and PGlite close in finally. Final disposable build
+snapshot/junction `forge-slide-build-EFgKJn` was removed and explicitly checked
+absent; unrelated existing Chrome processes were not terminated.
+
+**Remaining gaps/prerequisites:** live OpenRouter availability/model adherence,
+real hosted authentication/quota/rights races, provider retention/defaults and
+deployed-browser/OS behavior remain unverified. Existing profile/eligibility and
+`forge_claim_coach_request` migrations are prerequisites; **no new SQL needed**.
+Configuration names only: `OPENROUTER_API_KEY` or `OPEN_ROUTER_API_KEY`,
+`OPENROUTER_MODEL`, `OPENROUTER_FALLBACK_MODELS`. No env/credential files read,
+remote/provider calls, connected SQL writes, installs, deployment or commits.
+Request independent Forge QA of the scoped files/flows above; coordinator owns
+acceptance. No full-suite or release certification.
+
 ## 6 November 2026 — bounded removal of retired author/import limits
 
 **Owner: implementer; coordinator owns traceability/handover and acceptance. Independent QA requested.**

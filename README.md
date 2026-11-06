@@ -6,6 +6,61 @@ For a presentation-ready overview of features, design choices and prototype scre
 
 Track remaining work, blockers, acceptance criteria and verification updates in [IMPLEMENTATION_TRACKER.md](IMPLEMENTATION_TRACKER.md).
 
+## 6 November 2026 — AI Slide Assistant v1 (local implementation)
+
+### Independent QA evidence — 6 November 2026
+
+Windows/Node 25.2.1, existing offline Chromium/React/Fabric and in-memory
+PGlite: **45/45 bounded checks passed** (11 focused AI, 22 unchanged
+canvas/font/UI/upload, 9 selected free-provider/adult-eligibility, 3 additional
+non-retained acceptance probes). Verified keyboard/review/Apply/Undo/Redo/
+manual Save/reopen, real canvas pixels, explicit mobile multislide scope,
+payload minimization, revoked Apply access and failure/lock recovery.
+Generated desktop/mobile screenshots were actually examined; exact commands,
+paths, fingerprints and probe reproduction are in the tracker's independent QA
+section. No reproducible defect; no source/test changes. Protected dirty work
+and all 17 migration names/content remain unchanged; owned browsers/PGlite closed.
+**Local acceptance evidence only, not release certification:** live provider
+semantics/availability, hosted auth/quota races and deployment remain untested.
+No environment-file reads, remote services, installs, connected writes or build rerun.
+
+Open **AI assistant** in the presentation editor (including imported previews
+and saved lessons). Choose the selected textbox, current slide, or explicitly
+checked slides; enter an instruction, optionally allow font-size/alignment
+suggestions, and consent to the disclosed external-AI payload. Generate shows
+plain-text before/after changes and an explanation. **Apply** is one atomic,
+undoable edit; **Discard/Close** changes no teaching content. Review and
+**Save manually**. Generation/Apply never saves or refreshes the lesson.
+
+V1 supports rewriting, summarizing, translating, examples and explanations.
+It preserves existing rich-run styles; optional textbox-wide font size (8–120)
+and alignment are the only formatting changes. No images, whole-deck redesign,
+geometry changes, quiz changes or arbitrary document replacement. Stale source/
+session/version, invalid patches, text overflow and save/upload/export/uncertain
+locks reject Apply without an AI edit.
+
+Requires a recorded adult age (18+) and trusted administrator AI approval.
+The existing **15/day coach/interview quota is shared**. Only selected teaching
+text, necessary IDs and optionally font sizes/alignment reach the existing
+free-only OpenRouter client. Quiz/answer keys, images/assets, originals, titles,
+accounts and unrelated slides are excluded. FORGE does not persist prompts or
+results; only explicitly applied text may later be saved. Provider defaults and
+retention remain unknown: **no zero-data-retention guarantee**. Discard/Close
+does not cancel upstream work or refund quota.
+
+Server-only configuration names remain `OPENROUTER_API_KEY` (or
+`OPEN_ROUTER_API_KEY`), `OPENROUTER_MODEL`, `OPENROUTER_FALLBACK_MODELS`.
+No new SQL or dependencies are needed; existing eligibility/profile and
+`forge_claim_coach_request` database prerequisites must already be installed.
+
+Current local evidence: **72/72 scoped offline tests**, scoped ESLint, direct
+TypeScript and environment-free Next packaging build passed. Real offline
+React/Fabric/Chromium, PGlite save/reopen, keyboard, responsive screenshots and
+finite viewport/raster checks are covered. Commands, intermediate failures and
+examined screenshots are in the tracker. **Independent Forge QA requested;
+not release certification.** No credentials/environment files read, provider/
+remote calls, connected SQL writes, deployment, installs or commits.
+
 ## 6 November 2026 — retired Create lesson upload limits removed
 
 Legacy Title/Body authoring and PPTX slide imports now support **1–30 slides**

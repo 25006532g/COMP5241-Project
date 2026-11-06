@@ -9,6 +9,9 @@ import {PresentationHistory,blankPresentation,defaultRun,duplicateSlide,legacyPr
 import type {AuthorLesson} from "@/lib/slide-lesson";
 import {PresentationCanvasEditor,type CanvasHandle,type CanvasTextStyle} from "./presentation-canvas";
 import {assetUrl,PresentationView} from "./presentation-view";
+import {PresentationAiAssistant} from "./presentation-ai-assistant";
+import {authorizePresentationAiApply} from "@/app/presentation/ai-actions";
+import {aiRequestSchema,minimizedReference,sourceFingerprint,applyAiPatch,type AiScope,type AiSnapshot,type AiResult} from "@/lib/presentation-ai";
 
 type FontSizeHandle={flush:()=>boolean};
 function FontSizeInput({value,onApply,handle}:{value:number|null;onApply:(size:number)=>void;handle:RefObject<FontSizeHandle|null>}){
@@ -51,9 +54,11 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
   const [saved,setSaved]=useState(JSON.stringify(history.value));
   const [preview,setPreview]=useState(false),[previewIndex,setPreviewIndex]=useState(0);
   const [previewError,setPreviewError]=useState("");
-  const [panel,setPanel]=useState<"settings"|"quiz"|"help"|null>(null);
+  const [panel,setPanel]=useState<"settings"|"quiz"|"help"|"ai"|null>(null);
   const [positionOpen,setPositionOpen]=useState(false),[arrangeOpen,setArrangeOpen]=useState(false),[contentOpen,setContentOpen]=useState(false);
   const inFlight=useRef(false),blocked=useRef(false),live=useRef(true);
+  const [aiMount]=useState(()=>crypto.randomUUID());
+  const revision=useRef(0),externalLock=useRef(false),ackState=useRef(ack);
   const canvas=useRef<CanvasHandle|null>(null),notice=useRef<HTMLParagraphElement>(null),dialog=useRef<HTMLDialogElement>(null);
   const fontSize=useRef<FontSizeHandle|null>(null),quietError=useRef("");
   const panelNotice=useRef<HTMLParagraphElement>(null);
@@ -131,6 +136,7 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
 
   const commit=useCallback((next:PresentationAuthor,group="")=>{
     if(blocked.current||inFlight.current)return;
+    if(JSON.stringify(next)!==JSON.stringify(history.value))revision.current++;
     history.commit(next,group);setDraft(history.value);setSuccess("");
   },[history]);
   const changeSlide=useCallback((next:PresentationSlide,group="")=>{
@@ -151,7 +157,44 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
   }
   function undo(redo=false){
     if(locked)return;
-    const next=redo?history.redo():history.undo();if(next){setDraft(next);setSelection([]);setError("");}
+    const next=redo?history.redo():history.undo();if(next){revision.current++;setDraft(next);setSelection([]);setError("");}
+  }
+  function aiLocked(){return !live.current||blocked.current||inFlight.current||externalLock.current;}
+  function aiIdentity(){return `${aiMount}:${revision.current}:${ackState.current.id}:${ackState.current.version}`;}
+  function flushAi(){
+    if(aiLocked())throw new Error("AI edits are locked during save, export, upload or an uncertain save.");
+    if((fontSize.current&&!fontSize.current.flush())||!canvas.current?.flush())throw new Error("Finish or correct your outstanding text/font edits before using AI. Nothing was applied.");
+  }
+  function prepareAi(scope:AiScope,instruction:string,formatting:boolean,consent:boolean):AiSnapshot{
+    flushAi();
+    const parsed=aiRequestSchema.safeParse({
+      requestId:crypto.randomUUID(),sourceToken:crypto.randomUUID(),
+      ...(ackState.current.id?{lessonId:ackState.current.id,version:ackState.current.version}:{}),
+      scope,instruction,allowFormatting:formatting,consent,
+      reference:minimizedReference(history.value.document,scope,formatting),
+    });
+    if(!parsed.success)throw new Error(parsed.error.issues[0]?.message??"Invalid AI request.");
+    return {request:parsed.data,fingerprint:sourceFingerprint(history.value.document,scope,aiIdentity())};
+  }
+  async function applyAi(snapshot:AiSnapshot,result:Extract<AiResult,{patch:unknown}>,isCurrent:()=>boolean){
+    const assertCurrent=()=>{
+      if(aiLocked())throw new Error("AI edits are locked during save, export, upload or an uncertain save.");
+      if(!isCurrent()||result.binding.requestId!==snapshot.request.requestId||result.binding.sourceToken!==snapshot.request.sourceToken||
+        sourceFingerprint(history.value.document,snapshot.request.scope,aiIdentity())!==snapshot.fingerprint)
+        throw new Error("The source changed or suggestions were discarded. Generate again; nothing was applied.");
+    };
+    assertCurrent();
+    const authorized=await authorizePresentationAiApply(result.binding);
+    if(authorized.error)throw new Error(authorized.error);
+    assertCurrent();flushAi();assertCurrent();
+    const current=history.value;
+    const candidate=applyAiPatch(current.document,snapshot.request,result.patch);
+    const {validateTextLayout}=await import("@/lib/presentation-fabric");
+    try{await validateTextLayout(candidate);}catch{throw new Error("AI text overflows the slide. Reduce the requested text/font size or adjust layout, then generate again. Nothing was applied.");}
+    assertCurrent();flushAi();assertCurrent();
+    // Measurement fitting must not expand the allowlisted patch contract.
+    // Existing manual Save normalization remains the only save path.
+    commit({...current,document:presentationSchema.parse(candidate)});
   }
   function remove(){patchSlide({elements:slide.elements.filter(e=>!selection.includes(e.id))});setSelection([]);}
   function duplicateObjects(){
@@ -199,7 +242,7 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
   }
   async function image(file:File|undefined,replace=false){
     if(!file||locked||inFlight.current)return;
-    setUploading(true);setError("");
+    externalLock.current=true;setUploading(true);setError("");
     try {
       if(!replace&&slide.elements.length>=100)throw new Error("A slide supports at most 100 objects.");
       const id=await ensureImageDraft();
@@ -216,7 +259,7 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
         add({id:crypto.randomUUID(),type:"image",assetId:result.id,alt:"Image — add a description",ratio,x:60,y:70,w,h,rotation:0});
       }
     }catch(e){if(live.current)setError(e instanceof Error?e.message:"Image upload failed.");}
-    finally{if(live.current)setUploading(false);}
+    finally{externalLock.current=false;if(live.current)setUploading(false);}
   }
   async function save(intent:"save"|"publish"){
     if(inFlight.current||blocked.current||uploading)return;
@@ -228,6 +271,7 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
     try{
       const {validateTextLayout}=await import("@/lib/presentation-fabric");
       const normalized={...parsed.data,document:await validateTextLayout(parsed.data.document)};
+      if(JSON.stringify(normalized)!==JSON.stringify(history.value))revision.current++;
       history.commit(normalized);setDraft(history.value);
       const form=new FormData();
       for(const [k,v] of Object.entries({template:"slides",format:"presentation",content:JSON.stringify(normalized),intent,lessonId:ack.id,version:String(ack.version),draftId}))form.set(k,v);
@@ -238,7 +282,7 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
         blocked.current=true;setUncertain(true);setError("Save outcome is unknown. Keep this tab and check Your lessons in another tab before saving again.");
       }else if(result.error)setError(result.error);
       else{
-        setAck({id:result.lessonId!,version:result.version!});
+        ackState.current={id:result.lessonId!,version:result.version!};setAck(ackState.current);
         setSaved(JSON.stringify(normalized));setSuccess(`${result.success} Version ${result.version}.`);router.refresh();
       }
     }catch(e){if(live.current){
@@ -252,7 +296,7 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
     if((fontSize.current&&!fontSize.current.flush())||!canvas.current?.flush())return;
     // Explicit action failures must focus the notice, even when flush just
     // reported the same layout error quietly during canvas editing.
-    setUploading(true);quietError.current="";setError("");
+    externalLock.current=true;setUploading(true);quietError.current="";setError("");
     try{
       const {presentationPptx,fetchAssetData}=await import("@/lib/presentation-export");
       const blob=await presentationPptx(history.value.document,id=>fetchAssetData(source(id)));
@@ -260,7 +304,7 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
       link.href=url;link.download="presentation.pptx";link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
       setSuccess("Native editable PPTX exported. Review font and wrapping fidelity in PowerPoint.");
     }catch(e){setError(e instanceof Error?e.message:"Export failed. No partial PPTX was produced.");}
-    finally{if(live.current)setUploading(false);}
+    finally{externalLock.current=false;if(live.current)setUploading(false);}
   }
   async function openPreview(){
     if(locked)return;
@@ -273,11 +317,11 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
   }
   async function discard(){
     if(locked||!window.confirm("Discard unsaved input and undo history? Saved lesson images remain; unused draft images will be removed."))return;
-    setUploading(true);
+    externalLock.current=true;setUploading(true);
     try{
       if(draftId){const result=await discardPresentationDraft(draftId);if(result.error)throw new Error(result.error);}
       router.refresh();window.location.assign(ack.id?`/studio?edit=${ack.id}`:"/studio?manual=1");
-    }catch(e){setError(e instanceof Error?e.message:"Draft cleanup failed.");setUploading(false);}
+    }catch(e){externalLock.current=false;setError(e instanceof Error?e.message:"Draft cleanup failed.");setUploading(false);}
   }
   const style=primary?.type==="text"?primary.paragraphs[0].runs[0]:defaultRun;
   return <div className="presentation-editor" onKeyDown={keyboard}>
@@ -307,6 +351,7 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
         <button type="button" onClick={()=>void exportPptx()}>Export editable PPTX</button>
       </fieldset>
       <div className="presentation-toolbar presentation-utilities">
+        <button type="button" aria-label="AI Slide Assistant" title="AI Slide Assistant" onClick={e=>openPanel("ai",e.currentTarget)}>AI assistant</button>
         <button type="button" onClick={e=>openPanel("settings",e.currentTarget)}>Lesson settings</button>
         <button type="button" onClick={e=>openPanel("quiz",e.currentTarget)}>Quiz{draft.quiz.length?` (${draft.quiz.length})`:""}</button>
         <button type="button" onClick={e=>openPanel("help",e.currentTarget)}>Help</button>
@@ -399,7 +444,9 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
       </details>
     </div>
     {panel&&<dialog ref={panelDialog} className="presentation-panel-dialog" aria-labelledby="presentation-panel-title" onKeyDown={panelKeyboard} onCancel={event=>{event.preventDefault();closePanel();}}>
-      <header><h2 id="presentation-panel-title">{panel==="quiz"?"Optional quiz":panel==="settings"?"Lesson settings":"Editor help"}</h2><button type="button" onClick={closePanel}>Close</button></header>
+      <header><h2 id="presentation-panel-title">{panel==="ai"?"AI Slide Assistant":panel==="quiz"?"Optional quiz":panel==="settings"?"Lesson settings":"Editor help"}</h2><button type="button" onClick={closePanel}>Close</button></header>
+      {panel==="ai"&&<PresentationAiAssistant document={draft.document} slideId={slide.id} textboxId={primary?.type==="text"?primary.id:undefined} locked={locked}
+        prepare={prepareAi} apply={applyAi}/>}
       {panel==="quiz"&&<section>
       <p>Optional quiz — excluded from PPTX export. Include 3–10 complete questions, or leave the quiz off.</p>
       <fieldset disabled={locked} className="learning-form">

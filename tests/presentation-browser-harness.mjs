@@ -9,6 +9,7 @@ export const sources=Object.fromEntries([
 ].map(([name,pkg,file])=>[name,readFileSync(join(dirname(require.resolve(`${pkg}/package.json`)),"cjs",file),"utf8")]));
 for(const [name,path] of [
   ["editor","src/components/presentation-editor.tsx"],["./presentation-canvas","src/components/presentation-canvas.tsx"],["./presentation-view","src/components/presentation-view.tsx"],
+  ["./presentation-ai-assistant","src/components/presentation-ai-assistant.tsx"],["@/lib/presentation-ai","src/lib/presentation-ai.ts"],
   ["@/lib/presentation","src/lib/presentation.ts"],["@/lib/presentation-fabric","src/lib/presentation-fabric.ts"],["@/lib/presentation-export","src/lib/presentation-export.ts"],
 ])sources[name]=ts.transpileModule(readFileSync(path,"utf8"),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText;
 function bundle(path){
@@ -54,6 +55,10 @@ export async function mountPresentation(page,props={}){
         beginPresentationDraft:lesson=>images("begin",lesson),
         uploadPresentationImage:async form=>images("upload",{draftId:form.get("draftId"),size:form.get("image").size}),
         discardPresentationDraft:id=>images("discard",id),cleanExpiredPresentationUploads:()=>images("clean"),
+      };
+      if(name==="@/app/presentation/ai-actions")return {
+        generatePresentationSuggestions:request=>window.presentationAi("generate",request),
+        authorizePresentationAiApply:binding=>window.presentationAi("authorize",binding),
       };
       if(!modules[name]){if(!sources[name])throw new Error(`Unexpected browser dependency ${name}`);const mod={exports:{}};modules[name]=mod;new Function("require","module","exports","process",sources[name])(load,mod,mod.exports,{env:{NODE_ENV:"development"}});}
       return modules[name].exports;

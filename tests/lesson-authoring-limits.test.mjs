@@ -20,7 +20,7 @@ test("expanded legacy create/update/read/resume retains text and actual bounds; 
       .replace("public.forge_lesson_content_valid","public.forge_legacy_lesson_content_valid");
     await h.db.exec(historicalDefinition);
     const rejected=await h.actions.createManualLesson({},h.form(authored(7)));
-    assert.match(rejected.error,/23514.*20261106090000_lesson_authoring_limits\.sql/);
+    assert.match(rejected.error,/23514.*20261106090000_lesson_authoring_limits_ran\.sql/);
     assert.equal(rejected.saveUncertain,undefined);
     await h.db.exec(sql);
     for (const count of [1,2,7,30]) {

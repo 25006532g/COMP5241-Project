@@ -111,7 +111,12 @@ export function PresentationCanvasEditor({slide,source,onChange,onSelect,onTextS
         // Fit both dimensions with one Fabric zoom, not CSS stretching. The
         // logical 960×540 coordinates and pointer mapping remain unchanged.
         const width=Math.min(host.current?.clientWidth??960,(host.current?.clientHeight??540)*960/540);
-        canvas.setDimensions({width,height:width*540/960});canvas.setZoom(width/960);canvas.requestRenderAll();
+        if(!Number.isFinite(width)||width<=0)return;
+        // A transient collapsed host must not create a singular zoom matrix.
+        // This fit-only editor owns the viewport (no pan); reset it directly
+        // rather than inverting a possibly zero prior zoom via setZoom.
+        canvas.setDimensions({width,height:width*540/960});
+        canvas.setViewportTransform([width/960,0,0,width/960,0,0]);canvas.requestRenderAll();
       });observer.observe(host.current);
       close=()=>{api.current=null;canvasRef.current=null;observer.disconnect();void canvas.dispose();};
       setReady(n=>n+1);
