@@ -7,7 +7,7 @@ import { requireAiAccess } from "@/lib/ai-eligibility-server";
 import { isAdmin, isInstructor } from "@/lib/permissions";
 import { pickRelatedQuestion, rateAnswers } from "@/lib/interviews-v2-ai";
 import {
-  applyAiPick, chooseAfterSkip, chooseNext, chooseReplacement, drawPrimary, importFileSchema, introBubble, keywordHit, localFeedback, profileIdSchema, v2Profiles,
+  applyAiPick, bridgeLead, chooseAfterSkip, chooseNext, chooseReplacement, drawPrimary, importFileSchema, introBubble, keywordHit, localFeedback, profileIdSchema, topicScore, v2Profiles,
   type ProfileId, type V2Code, type V2TurnView, type V2View,
 } from "@/lib/interviews-v2";
 
@@ -77,6 +77,9 @@ export async function loadView(id: string, user: User): Promise<V2View | null> {
   const current = session.current_question_id ? (await questionMap([session.current_question_id])).get(session.current_question_id) : undefined;
   const summaryRow = ratingRows.find(row => row.turn_id == null);
   const summary = summaryRow?.comment ?? null;
+  const followUp = session.state === "asking" && (session.current_reason === "keyword" || session.current_reason === "ai") ? session.current_reason : null;
+  const previous = [...turns].reverse().find(turn => !turn.skipped && turn.student_text);
+  const lead = followUp && previous?.student_text ? bridgeLead(previous.student_text, current?.keywords ?? []) : null;
   const answered = turns.some(turn => !turn.skipped && turn.student_text);
   const ratingState: V2View["ratingState"] = session.state !== "complete" ? "pending" : summary ? "ready" : answered ? "unavailable" : "empty";
   const showSamples = session.state === "complete";
@@ -90,7 +93,8 @@ export async function loadView(id: string, user: User): Promise<V2View | null> {
       id: session.id, ownerId: session.owner_id, profileId: session.profile_id, label: profile.label,
       interviewer: profile.interviewer, state: session.state, revision: session.revision, presented: turns.length,
     },
-    bubble: session.state === "intro" ? introBubble : session.state === "asking" ? current?.prompt ?? null : null,
+    followUp,
+    bubble: session.state === "intro" ? introBubble : session.state === "asking" ? (current?.prompt ? `${lead ?? ""}${current.prompt}` : null) : null,
     wordTarget: session.state === "intro" ? 130 : null,
     turns: turns.map(turn => {
       const rating = ratingRows.find(row => row.turn_id != null && String(row.turn_id) === String(turn.id));
@@ -260,23 +264,34 @@ export async function submitAnswer(input: unknown, skipped = false): Promise<V2R
   const current = (await questionMap([owned.session.current_question_id])).get(owned.session.current_question_id);
   const asked = owned.session.asked_ids ?? [];
   const plannedRemaining = owned.session.planned_ids.filter(id => !asked.includes(id));
-  const relatedRows = await questionMap(current?.related_ids ?? []);
-  const relatedIds = [...relatedRows.values()].filter(row => row.active && row.profile_id === owned.session?.profile_id).map(row => row.id);
+  const relatedRows = [...(await questionMap(current?.related_ids ?? [])).values()].filter(row => row.active && row.profile_id === owned.session?.profile_id);
+  const relatedIds = relatedRows.map(row => row.id);
   const presentedAfter = owned.turns.length + 1;
+  const answerText = parsed.data.text ?? "";
   let next = skipped || !current
     ? chooseAfterSkip({ presentedAfter, askedIds: asked, plannedRemaining })
-    : chooseNext({ presentedAfter, relatedIds, askedIds: asked, plannedRemaining, keywordMatched: keywordHit(parsed.data.text ?? "", current.keywords ?? []) });
+    : chooseNext({
+      presentedAfter, relatedIds, askedIds: asked, plannedRemaining,
+      keywordMatched: keywordHit(answerText, current.keywords ?? []),
+      answer: answerText,
+      related: relatedRows.map(row => ({ id: row.id, prompt: row.prompt, keywords: row.keywords ?? [] })),
+    });
   if (!skipped && current && next.type === "ai") {
     const candidates = next.candidates;
+    const fallback = relatedRows
+      .filter(row => candidates.includes(row.id))
+      .map(row => ({ id: row.id, score: topicScore(answerText, { prompt: row.prompt, keywords: row.keywords ?? [] }) }))
+      .sort((left, right) => right.score - left.score || left.id.localeCompare(right.id))
+      .find(row => row.score >= 1)?.id ?? null;
     let pick: string | null = null;
     try {
       await requireAiAccess(user);
       const { data: claimed, error } = await database().rpc("forge_v2_claim_ai", { p_owner: user.id });
       if (!error && claimed === true) {
-        pick = await pickRelatedQuestion(current.prompt, parsed.data.text ?? "", [...relatedRows.values()].filter(row => candidates.includes(row.id)).map(row => ({ id: row.id, prompt: row.prompt })));
+        pick = await pickRelatedQuestion(current.prompt, answerText, relatedRows.filter(row => candidates.includes(row.id)).map(row => ({ id: row.id, prompt: row.prompt })));
       }
     } catch { pick = null; }
-    next = applyAiPick(pick, next, asked, plannedRemaining);
+    next = applyAiPick(pick, next, asked, plannedRemaining, fallback);
   }
   const saved = await rpc("forge_v2_save_answer", {
     p_owner: user.id, p_id: parsed.data.id, p_revision: parsed.data.revision,

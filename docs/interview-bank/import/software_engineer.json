@@ -7,12 +7,11 @@
       "prompt": "Why do you want to work as a software engineer at this company?",
       "sampleAnswer": "Connect your experience to the company’s products, users, and engineering challenges—cite a specific product behaviour or tech blog insight. Explain how the role’s scope (product eng, platform, etc.) matches skills you want to deepen.\n\nClose with mutual fit: what you deliver in the first 6–12 months and what you hope to learn. Avoid generic “great culture” without evidence.",
       "keywords": [
-        "motivation",
-        "fit",
-        "want",
-        "work",
-        "software",
-        "engineer"
+        "product",
+        "users",
+        "platform",
+        "challenges",
+        "scope"
       ],
       "relatedKeys": [
         "se-02",
@@ -26,17 +25,16 @@
       "prompt": "Walk me through your résumé, focusing on impact.",
       "sampleAnswer": "Narrate 2–3 roles/projects with the formula: problem → your actions → measurable result (latency, revenue, reliability, users). Keep each to ~1 minute.\n\nInvite deeper dives. Interviewers use this to choose follow-up technical threads.",
       "keywords": [
-        "motivation",
-        "fit",
-        "walk",
-        "through",
-        "sum",
-        "focusing"
+        "impact",
+        "latency",
+        "reliability",
+        "measurable",
+        "result"
       ],
       "relatedKeys": [
-        "se-01",
         "se-32",
-        "se-40"
+        "se-40",
+        "se-01"
       ]
     },
     {
@@ -45,17 +43,16 @@
       "prompt": "Tell me about a time you disagreed with a teammate or manager about a technical decision.",
       "sampleAnswer": "STAR: disagreement topic, how you sought to understand their constraints, data or prototype you brought, how you committed after a decision, and outcome.\n\nEmphasize “disagree and commit” professionalism and user impact.",
       "keywords": [
-        "behavioural",
-        "STAR",
-        "tell",
-        "time",
-        "disagreed",
-        "teammate"
+        "disagree",
+        "constraints",
+        "commit",
+        "decision",
+        "outcome"
       ],
       "relatedKeys": [
         "se-04",
-        "se-05",
-        "se-06"
+        "se-06",
+        "se-07"
       ]
     },
     {
@@ -64,17 +61,16 @@
       "prompt": "Describe a time you dealt with ambiguity on a project.",
       "sampleAnswer": "Explain how you clarified success metrics, listed unknowns, ran a time-boxed spike, and delivered an incremental milestone. Quantify reduced uncertainty.\n\nAmbiguity handling is a frequent FAANG-style behavioural theme.",
       "keywords": [
-        "behavioural",
-        "STAR",
-        "describe",
-        "time",
-        "dealt",
-        "ambiguity"
+        "ambiguity",
+        "metrics",
+        "unknowns",
+        "spike",
+        "milestone"
       ],
       "relatedKeys": [
-        "se-03",
-        "se-05",
-        "se-06"
+        "se-06",
+        "se-07",
+        "se-08"
       ]
     },
     {
@@ -83,17 +79,16 @@
       "prompt": "Tell me about a production incident you helped resolve.",
       "sampleAnswer": "STAR: detection, mitigation to restore service, root-cause analysis, permanent fix, and follow-up (runbook, tests, dashboards). Stress communication during the incident.\n\nShow calm ownership rather than blame.",
       "keywords": [
-        "behavioural",
-        "STAR",
-        "tell",
-        "production",
         "incident",
-        "helped"
+        "mitigation",
+        "cause",
+        "runbook",
+        "dashboard"
       ],
       "relatedKeys": [
-        "se-04",
-        "se-06",
-        "se-03"
+        "se-24",
+        "se-31",
+        "se-38"
       ]
     },
     {
@@ -102,17 +97,16 @@
       "prompt": "Give an example of receiving critical code review feedback and how you responded.",
       "sampleAnswer": "Describe the feedback, what was valid, changes you made, and how it improved later reviews. If you disagreed, explain how you discussed trade-offs respectfully.\n\nGrowth mindset is the signal.",
       "keywords": [
-        "behavioural",
-        "STAR",
-        "give",
-        "example",
-        "receiving",
-        "critical"
+        "review",
+        "feedback",
+        "tradeoff",
+        "improved",
+        "respectful"
       ],
       "relatedKeys": [
-        "se-05",
         "se-07",
-        "se-04"
+        "se-08",
+        "se-26"
       ]
     },
     {
@@ -121,17 +115,16 @@
       "prompt": "Tell me about a time you mentored someone or raised the engineering bar.",
       "sampleAnswer": "Actions might include pairing, design docs, improving CI, or documenting onboarding. Result: mentee independence or fewer repeated bugs.\n\nLeadership without title matters at mid levels.",
       "keywords": [
-        "behavioural",
-        "STAR",
-        "tell",
-        "time",
-        "mentored",
-        "someone"
+        "mentoring",
+        "pairing",
+        "onboarding",
+        "mentee",
+        "documentation"
       ],
       "relatedKeys": [
-        "se-06",
         "se-08",
-        "se-05"
+        "se-26",
+        "se-27"
       ]
     },
     {
@@ -140,17 +133,16 @@
       "prompt": "Describe a deadline trade-off: how did you protect quality while shipping?",
       "sampleAnswer": "Explain options considered (cut scope, feature flags, defer non-critical polish), risk assessment, stakeholder alignment, and post-ship follow-up.\n\nShow product sense + engineering integrity.",
       "keywords": [
-        "behavioural",
-        "STAR",
-        "describe",
         "deadline",
-        "trade-off",
-        "protect"
+        "scope",
+        "quality",
+        "stakeholders",
+        "flag"
       ],
       "relatedKeys": [
-        "se-07",
-        "se-06",
-        "se-05"
+        "se-26",
+        "se-27",
+        "se-33"
       ]
     },
     {
@@ -159,12 +151,11 @@
       "prompt": "How do you approach a new coding interview problem on the whiteboard or editor?",
       "sampleAnswer": "Restate requirements, ask about constraints and edge cases, work an example, propose brute force, analyze complexity, then optimize. Narrate trade-offs and test the final approach.\n\nThis meta-answer is itself frequently evaluated.",
       "keywords": [
-        "algorithms",
+        "constraints",
+        "edge",
+        "brute",
         "complexity",
-        "approach",
-        "new",
-        "coding",
-        "interview"
+        "optimize"
       ],
       "relatedKeys": [
         "se-10",
@@ -178,17 +169,16 @@
       "prompt": "Implement or outline how to find whether two strings are anagrams. Discuss complexity.",
       "sampleAnswer": "Sort both O(n log n) or count characters O(n) with fixed alphabet. Discuss Unicode caveats and early exit on length mismatch.\n\nClean communication + complexity is the bar.",
       "keywords": [
-        "algorithms",
-        "complexity",
-        "implement",
-        "outline",
-        "find",
-        "whether"
+        "anagram",
+        "sorting",
+        "characters",
+        "unicode",
+        "complexity"
       ],
       "relatedKeys": [
-        "se-09",
         "se-11",
-        "se-12"
+        "se-12",
+        "se-13"
       ]
     },
     {
@@ -197,17 +187,17 @@
       "prompt": "Explain BFS vs DFS. When is each preferable?",
       "sampleAnswer": "BFS explores by layers—good for shortest paths in unweighted graphs. DFS explores deep paths—good for cycle detection, topological patterns, path existence.\n\nDiscuss recursion stack limits vs explicit stacks/queues and graph representations.",
       "keywords": [
-        "algorithms",
-        "complexity",
-        "explain",
         "bfs",
         "dfs",
-        "each"
+        "shortest",
+        "cycle",
+        "graph",
+        "queue"
       ],
       "relatedKeys": [
-        "se-10",
         "se-12",
-        "se-09"
+        "se-13",
+        "se-14"
       ]
     },
     {
@@ -216,17 +206,17 @@
       "prompt": "How would you detect duplicates in a large stream of IDs with limited memory?",
       "sampleAnswer": "Discuss hash sets when memory allows; otherwise Bloom filters (probabilistic), external sort + scan, or partitioning by hash to disk.\n\nShow ability to adapt algorithms to constraints—SWE interview staple.",
       "keywords": [
-        "algorithms",
-        "complexity",
-        "detect",
-        "duplicates",
-        "large",
-        "stream"
+        "duplicate",
+        "bloom",
+        "memory",
+        "stream",
+        "partition",
+        "hash"
       ],
       "relatedKeys": [
-        "se-11",
-        "se-10",
-        "se-09"
+        "se-13",
+        "se-14",
+        "se-15"
       ]
     },
     {
@@ -235,17 +225,17 @@
       "prompt": "Compare arrays, linked lists, and dynamic arrays (vectors). Practical trade-offs?",
       "sampleAnswer": "Arrays: contiguous, O(1) index, costly insert mid. Linked lists: O(1) insert given pointer, poor cache locality. Dynamic arrays: amortized append, occasional resize.\n\nRelate to real language structures (ArrayList, slice).",
       "keywords": [
-        "data",
-        "structures",
-        "compare",
-        "arrays",
+        "array",
         "linked",
-        "lists"
+        "cache",
+        "insert",
+        "amortized",
+        "contiguous"
       ],
       "relatedKeys": [
         "se-14",
         "se-15",
-        "se-29"
+        "se-25"
       ]
     },
     {
@@ -254,17 +244,16 @@
       "prompt": "When would you use a heap / priority queue?",
       "sampleAnswer": "Use for repeated retrieval of min/max: Dijkstra, scheduling, streaming top-k. Describe sift operations at high level and O(log n) updates.\n\nGive a production-flavoured example (job scheduler).",
       "keywords": [
-        "data",
-        "structures",
-        "use",
         "heap",
         "priority",
-        "queue"
+        "dijkstra",
+        "scheduler",
+        "ranking"
       ],
       "relatedKeys": [
-        "se-13",
         "se-15",
-        "se-29"
+        "se-25",
+        "se-28"
       ]
     },
     {
@@ -273,16 +262,15 @@
       "prompt": "Explain hash tables: collision strategies and load factor.",
       "sampleAnswer": "Cover chaining vs open addressing, load factor impact on performance, and need for good hash functions. Mention resizing costs.\n\nDiscuss when keys are adversarial and you need stronger hashing.",
       "keywords": [
-        "data",
-        "structures",
-        "explain",
         "hash",
-        "tables",
-        "collision"
+        "collision",
+        "chaining",
+        "load",
+        "factor"
       ],
       "relatedKeys": [
-        "se-14",
-        "se-13",
+        "se-25",
+        "se-28",
         "se-29"
       ]
     },
@@ -292,12 +280,11 @@
       "prompt": "Design a URL shortener. What components and failure modes do you consider?",
       "sampleAnswer": "Requirements, API, ID generation, storage, cache, redirects, analytics. Discuss uniqueness, hot keys, and monitoring. Scale reads with caching/CDN.\n\nClassic SWE system design prompt.",
       "keywords": [
-        "systems",
-        "architecture",
-        "design",
-        "url",
         "shortener",
-        "components"
+        "redirect",
+        "cache",
+        "uniqueness",
+        "scale"
       ],
       "relatedKeys": [
         "se-17",
@@ -311,17 +298,16 @@
       "prompt": "How would you design a rate limiter for an API?",
       "sampleAnswer": "Clarify limits (per user/IP), algorithms (token bucket, sliding window), storage (Redis), and response behaviour (429 + headers). Discuss distributed coordination and bypass for internal traffic.\n\nTie to fairness and abuse prevention.",
       "keywords": [
-        "systems",
-        "architecture",
-        "design",
-        "rate",
+        "bucket",
         "limiter",
-        "api"
+        "fairness",
+        "distributed",
+        "headers"
       ],
       "relatedKeys": [
-        "se-16",
         "se-18",
-        "se-19"
+        "se-19",
+        "se-30"
       ]
     },
     {
@@ -330,17 +316,16 @@
       "prompt": "Explain horizontal vs vertical scaling and when you choose each.",
       "sampleAnswer": "Vertical: bigger machine—simpler but capped. Horizontal: more nodes—needs statelessness, sharding, load balancing. Discuss cost, failure domains, and operational complexity.\n\nGive an example from a service you know.",
       "keywords": [
-        "systems",
-        "architecture",
-        "explain",
         "horizontal",
         "vertical",
-        "scaling"
+        "scaling",
+        "balancer",
+        "capacity"
       ],
       "relatedKeys": [
-        "se-17",
         "se-19",
-        "se-16"
+        "se-30",
+        "se-35"
       ]
     },
     {
@@ -349,15 +334,15 @@
       "prompt": "What is idempotency, and why does it matter for APIs?",
       "sampleAnswer": "Idempotent operations can be retried safely without duplicating side effects. Payment charges need idempotency keys so timeouts do not double-bill.\n\nExplain server-side storage of request keys and responses.",
       "keywords": [
-        "systems",
-        "architecture",
         "idempotency",
-        "matter",
-        "apis"
+        "retry",
+        "duplicate",
+        "payment",
+        "request"
       ],
       "relatedKeys": [
-        "se-18",
-        "se-17",
+        "se-30",
+        "se-35",
         "se-16"
       ]
     },
@@ -367,17 +352,16 @@
       "prompt": "How do you write a good design document?",
       "sampleAnswer": "Context, goals/non-goals, proposals considered, detailed design, data model/API, risks, rollout/monitoring, and open questions. Keep it reviewable and decision-oriented.\n\nShare a time a design doc prevented rework.",
       "keywords": [
-        "software",
-        "engineering",
-        "practices",
-        "write",
-        "good",
-        "design"
+        "document",
+        "goals",
+        "alternatives",
+        "tradeoffs",
+        "review"
       ],
       "relatedKeys": [
         "se-21",
         "se-22",
-        "se-31"
+        "se-23"
       ]
     },
     {
@@ -386,17 +370,16 @@
       "prompt": "What makes a pull request easy to review?",
       "sampleAnswer": "Small focused diffs, clear description, test plan, screenshots for UI, and self-review first. Avoid drive-by refactors mixed with features.\n\nMentions CI green and risk notes.",
       "keywords": [
-        "software",
-        "engineering",
-        "practices",
-        "makes",
         "pull",
-        "request"
+        "diff",
+        "description",
+        "tests",
+        "reviewer"
       ],
       "relatedKeys": [
-        "se-20",
         "se-22",
-        "se-31"
+        "se-23",
+        "se-36"
       ]
     },
     {
@@ -405,17 +388,16 @@
       "prompt": "How do you approach technical debt versus new features?",
       "sampleAnswer": "Frame debt as risk/interest: prioritize by user impact and developer velocity. Propose budgeting capacity, measuring pain (build times, Sev frequency), and incremental paydown.\n\nSpeak to stakeholder communication.",
       "keywords": [
-        "software",
-        "engineering",
-        "practices",
-        "approach",
-        "technical",
-        "debt"
+        "debt",
+        "features",
+        "capacity",
+        "risk",
+        "refactor"
       ],
       "relatedKeys": [
-        "se-21",
-        "se-20",
-        "se-31"
+        "se-23",
+        "se-36",
+        "se-37"
       ]
     },
     {
@@ -424,17 +406,16 @@
       "prompt": "How do you decide what to unit test vs integration test vs e2e test?",
       "sampleAnswer": "Pyramid: many fast unit tests for logic; fewer integration tests for DB/API contracts; sparse e2e for critical user journeys. Discuss flakiness and cost.\n\nExample from a past service.",
       "keywords": [
-        "testing",
-        "debugging",
-        "decide",
         "unit",
-        "test",
-        "integration"
+        "integration",
+        "contract",
+        "flaky",
+        "coverage"
       ],
       "relatedKeys": [
-        "se-24",
-        "se-25",
-        "se-36"
+        "se-36",
+        "se-37",
+        "se-20"
       ]
     },
     {
@@ -443,17 +424,16 @@
       "prompt": "Describe your debugging process for an intermittent bug.",
       "sampleAnswer": "Reproduce reliably, gather logs/metrics/traces, form hypotheses, bisect changes, add instrumentation, fix, and add regression tests. Mention race conditions and environment parity.\n\nShow scientific method.",
       "keywords": [
-        "testing",
-        "debugging",
-        "describe",
-        "process",
         "intermittent",
-        "bug"
+        "reproduce",
+        "logs",
+        "hypothesis",
+        "debugger"
       ],
       "relatedKeys": [
-        "se-23",
-        "se-25",
-        "se-36"
+        "se-31",
+        "se-38",
+        "se-05"
       ]
     },
     {
@@ -462,17 +442,16 @@
       "prompt": "What are edge cases you always consider in coding problems?",
       "sampleAnswer": "Empty inputs, nulls, duplicates, overflow, negative numbers, Unicode, concurrency, and maximum constraints. State how you document assumptions.\n\nInterviewers watch for proactive edge-case coverage.",
       "keywords": [
-        "testing",
-        "debugging",
-        "edge",
-        "cases",
-        "always",
-        "consider"
+        "empty",
+        "null",
+        "overflow",
+        "concurrency",
+        "boundary"
       ],
       "relatedKeys": [
-        "se-24",
-        "se-23",
-        "se-36"
+        "se-28",
+        "se-29",
+        "se-34"
       ]
     },
     {
@@ -481,16 +460,16 @@
       "prompt": "How do you communicate project status to non-engineering stakeholders?",
       "sampleAnswer": "Use outcomes and risks, not jargon: milestone progress, blockers, decisions needed, and options with trade-offs. Visuals/timelines help.\n\nGive a STAR example of aligning a delayed launch.",
       "keywords": [
-        "collaboration",
-        "leadership",
-        "communicate",
-        "project",
+        "stakeholder",
         "status",
-        "non-engineering"
+        "blocker",
+        "outcome",
+        "jargon"
       ],
       "relatedKeys": [
         "se-27",
-        "se-37"
+        "se-33",
+        "se-03"
       ]
     },
     {
@@ -499,16 +478,16 @@
       "prompt": "Tell me about a time you influenced a technical decision without authority.",
       "sampleAnswer": "Describe building shared understanding via prototypes, RFCs, or customer evidence. Result: adopted approach and relationship trust.\n\nInfluence is a mid/senior SWE signal.",
       "keywords": [
-        "collaboration",
-        "leadership",
-        "tell",
-        "time",
-        "influenced",
-        "technical"
+        "influence",
+        "proposal",
+        "prototype",
+        "consensus",
+        "rfc"
       ],
       "relatedKeys": [
-        "se-26",
-        "se-37"
+        "se-33",
+        "se-03",
+        "se-04"
       ]
     },
     {
@@ -517,17 +496,16 @@
       "prompt": "Outline how you would merge k sorted lists efficiently.",
       "sampleAnswer": "Use a min-heap of size k for O(n log k). Contrast with pairwise merging. Discuss memory and streaming variants.\n\nClassic heap + lists crossover question.",
       "keywords": [
-        "algorithms",
-        "complexity",
-        "outline",
         "merge",
         "sorted",
+        "heap",
+        "complexity",
         "lists"
       ],
       "relatedKeys": [
+        "se-29",
         "se-34",
-        "se-39",
-        "se-12"
+        "se-39"
       ]
     },
     {
@@ -536,17 +514,16 @@
       "prompt": "How does a binary search tree differ from a balanced BST (e.g., AVL/red-black) in practice?",
       "sampleAnswer": "Unbalanced BSTs can degrade to O(n). Balanced trees guarantee O(log n) ops. Discuss when hash maps beat trees (unordered) vs when sorted order matters.\n\nPractical performance awareness matters.",
       "keywords": [
-        "data",
-        "structures",
-        "binary",
-        "search",
-        "tree",
-        "differ"
+        "balanced",
+        "rotation",
+        "height",
+        "avl",
+        "rebalance"
       ],
       "relatedKeys": [
-        "se-15",
-        "se-14",
-        "se-13"
+        "se-34",
+        "se-39",
+        "se-09"
       ]
     },
     {
@@ -555,17 +532,16 @@
       "prompt": "Explain CAP and give a real product example of prioritizing availability vs consistency.",
       "sampleAnswer": "Under partition, choose AP (serve possibly stale reads) or CP (refuse/unavailable until consistent). Example: social feed freshness vs inventory reservation.\n\nClarify that partitions are real in WANs.",
       "keywords": [
-        "systems",
-        "architecture",
-        "explain",
-        "cap",
-        "give",
-        "real"
+        "availability",
+        "consistency",
+        "partition",
+        "inventory",
+        "reservation"
       ],
       "relatedKeys": [
         "se-35",
-        "se-19",
-        "se-18"
+        "se-16",
+        "se-17"
       ]
     },
     {
@@ -574,17 +550,16 @@
       "prompt": "How do you ensure observability for a new service?",
       "sampleAnswer": "Define SLIs/SLOs, structured logs, metrics (RED/USE), traces, and actionable alerts. Include dashboards before launch and load tests.\n\nTie alerts to user impact, not only CPU.",
       "keywords": [
-        "software",
-        "engineering",
-        "practices",
-        "ensure",
-        "observability",
-        "new"
+        "metrics",
+        "traces",
+        "alerts",
+        "dashboard",
+        "latency"
       ],
       "relatedKeys": [
         "se-38",
-        "se-22",
-        "se-21"
+        "se-05",
+        "se-24"
       ]
     },
     {
@@ -593,17 +568,16 @@
       "prompt": "What are you looking for in your next engineering role?",
       "sampleAnswer": "Discuss problem scope, mentorship/growth, tech stack learning, and impact. Align honestly with the posting without contradicting your résumé.\n\nAsk a thoughtful question back.",
       "keywords": [
-        "motivation",
-        "fit",
-        "looking",
-        "next",
-        "engineering",
-        "role"
+        "growth",
+        "mentorship",
+        "ownership",
+        "learning",
+        "team"
       ],
       "relatedKeys": [
         "se-40",
-        "se-02",
-        "se-01"
+        "se-01",
+        "se-02"
       ]
     },
     {
@@ -612,16 +586,15 @@
       "prompt": "Tell me about a time you made a mistake in production. What did you learn?",
       "sampleAnswer": "Own it, explain blast radius control, fix, communication, and systemic prevention (canary, better tests). Avoid self-flagellation without learning.\n\nIntegrity + engineering maturity.",
       "keywords": [
-        "behavioural",
-        "STAR",
-        "tell",
-        "time",
-        "made",
-        "mistake"
+        "mistake",
+        "rollback",
+        "canary",
+        "postmortem",
+        "blast"
       ],
       "relatedKeys": [
-        "se-08",
-        "se-07",
+        "se-03",
+        "se-04",
         "se-06"
       ]
     },
@@ -631,17 +604,16 @@
       "prompt": "Explain quicksort vs mergesort trade-offs.",
       "sampleAnswer": "Quicksort: average O(n log n), in-place variants, poor worst case without care. Mergesort: stable O(n log n) guaranteed, needs extra memory.\n\nDiscuss practical library choices and adversarial inputs.",
       "keywords": [
-        "algorithms",
-        "complexity",
-        "explain",
         "quicksort",
         "mergesort",
-        "trade-offs"
+        "pivot",
+        "stable",
+        "memory"
       ],
       "relatedKeys": [
         "se-39",
-        "se-28",
-        "se-12"
+        "se-09",
+        "se-10"
       ]
     },
     {
@@ -650,16 +622,15 @@
       "prompt": "How would you approach designing a news feed or timeline at high level?",
       "sampleAnswer": "Clarify ranking vs chronological, fan-out on write vs read, caching, and personalization. Discuss celebrity hot keys and eventual consistency.\n\nStay structured: requirements → API → storage → bottlenecks.",
       "keywords": [
-        "systems",
-        "architecture",
-        "approach",
-        "designing",
-        "news",
-        "feed"
+        "feed",
+        "fanout",
+        "ranking",
+        "cache",
+        "timeline"
       ],
       "relatedKeys": [
-        "se-30",
-        "se-19",
+        "se-16",
+        "se-17",
         "se-18"
       ]
     },
@@ -669,17 +640,16 @@
       "prompt": "What is flaky test hygiene, and why does it matter?",
       "sampleAnswer": "Flakes erode trust in CI. Practices: quarantine, fix root causes (time/order/dependency), deterministic seeds, and retry policies used sparingly.\n\nCultural bar for quality engineering.",
       "keywords": [
-        "testing",
-        "debugging",
         "flaky",
-        "test",
-        "hygiene",
-        "matter"
+        "quarantine",
+        "deterministic",
+        "pipeline",
+        "retry"
       ],
       "relatedKeys": [
-        "se-25",
-        "se-24",
-        "se-23"
+        "se-37",
+        "se-20",
+        "se-21"
       ]
     },
     {
@@ -688,16 +658,16 @@
       "prompt": "How do you onboard onto an unfamiliar codebase quickly?",
       "sampleAnswer": "Read architecture docs, run the app, trace a request path, make a small safe change, ask targeted questions, and document findings.\n\nShow a past ramp-up timeline with impact.",
       "keywords": [
-        "collaboration",
-        "leadership",
-        "onboard",
-        "onto",
-        "unfamiliar",
-        "codebase"
+        "codebase",
+        "architecture",
+        "trace",
+        "documentation",
+        "change"
       ],
       "relatedKeys": [
-        "se-27",
-        "se-26"
+        "se-20",
+        "se-21",
+        "se-22"
       ]
     },
     {
@@ -706,17 +676,16 @@
       "prompt": "Explain feature flags and their risks.",
       "sampleAnswer": "Flags decouple deploy from release, enable canaries and experiments. Risks: flag debt, complex combinations, security if misconfigured.\n\nDescribe cleanup ownership.",
       "keywords": [
-        "software",
-        "engineering",
-        "practices",
-        "explain",
-        "feature",
-        "flags"
+        "flag",
+        "rollout",
+        "canary",
+        "cleanup",
+        "experiment"
       ],
       "relatedKeys": [
-        "se-31",
-        "se-22",
-        "se-21"
+        "se-05",
+        "se-24",
+        "se-31"
       ]
     },
     {
@@ -725,17 +694,16 @@
       "prompt": "How do you find the k-th largest element in an unsorted array?",
       "sampleAnswer": "Quickselect average O(n), heap O(n log k), full sort O(n log n). Discuss worst cases and practical constants.\n\nState which you’d pick under interview constraints.",
       "keywords": [
-        "algorithms",
-        "complexity",
-        "find",
-        "k-th",
+        "quickselect",
+        "heap",
+        "partition",
         "largest",
-        "element"
+        "complexity"
       ],
       "relatedKeys": [
-        "se-34",
-        "se-28",
-        "se-12"
+        "se-09",
+        "se-10",
+        "se-11"
       ]
     },
     {
@@ -744,17 +712,16 @@
       "prompt": "Do you have questions for us about the team’s engineering practices?",
       "sampleAnswer": "Ask about code review norms, on-call, deployment frequency, quality metrics, or how tech strategy decisions are made. Show you evaluate employers too.\n\nPrepared questions signal seniority of approach.",
       "keywords": [
-        "motivation",
-        "fit",
-        "have",
-        "questions",
-        "team",
-        "engineering"
+        "oncall",
+        "testing",
+        "deployment",
+        "review",
+        "practices"
       ],
       "relatedKeys": [
-        "se-32",
+        "se-01",
         "se-02",
-        "se-01"
+        "se-32"
       ]
     }
   ]

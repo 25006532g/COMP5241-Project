@@ -233,7 +233,7 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
       <img className={styles.table} data-layer="table" src={roomArt.table} alt="" width={1014} height={523} />
       <img className={styles.interviewee} data-layer="interviewee" src={roomArt.interviewee[intervieweeLook]} alt="" width={intervieweeBox[0]} height={intervieweeBox[1]} />
       <div className={styles.bubbleWrap} data-layer="question">
-        <div className={styles.bubbleCard} tabIndex={0} role="region" aria-label={asking ? "Interview question" : intro ? "Introduction prompt" : "Interviewer"}>
+        <div className={styles.bubbleCard} data-related={view.followUp ? "true" : "false"} tabIndex={0} role="region" aria-label={asking ? "Interview question" : intro ? "Introduction prompt" : "Interviewer"}>
           {view.bubble ? <p className={styles.bubble}>{view.bubble}</p> : <p className={styles.bubbleMuted}>{complete ? "This interview has ended." : "The interviewer will speak in a moment."}</p>}
           {view.bubble && <button type="button" className={styles.speaker} aria-label="Speak" disabled={muted || hearing} onClick={() => speakText(view.bubble ?? "")}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9h3.2L12 5.2v13.6L7.2 15H4z" /><path d="M15.2 8.5a4.5 4.5 0 0 1 0 7M17.6 6a8 8 0 0 1 0 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>

@@ -293,6 +293,11 @@
   border-color: transparent #fffefa transparent transparent;
   filter: drop-shadow(-1px 1px 0 rgba(23, 32, 29, 0.08));
 }
+.bubbleCard[data-related="true"] .bubble {
+  background: #e7f6ec;
+  border-color: #7dcea0;
+}
+.bubbleCard[data-related="true"]::before { border-right-color: #e7f6ec; }
 .speaker {
   position: absolute;
   right: 8px;

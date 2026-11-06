@@ -7,17 +7,16 @@
       "prompt": "Tell me about yourself and why you want to be a data analyst.",
       "sampleAnswer": "Focus on your path into analytics: curiosity about evidence-based decisions, a project that sparked interest, and skills you bring (SQL, spreadsheets, communication).\n\nAnswer three silent questions: what excites you about analysis, about this role, and why you are a strong fit.",
       "keywords": [
-        "motivation",
-        "fit",
-        "tell",
-        "yourself",
-        "want",
-        "data"
+        "insight",
+        "stakeholder",
+        "decision",
+        "metric",
+        "analyst"
       ],
       "relatedKeys": [
         "da-02",
-        "da-36",
-        "da-40"
+        "da-03",
+        "da-04"
       ]
     },
     {
@@ -26,17 +25,16 @@
       "prompt": "What do data analysts do, and how do they create business value?",
       "sampleAnswer": "Describe the loop: identify questions, collect, clean, analyze, interpret, and communicate recommendations that improve decisions.\n\nGive a concrete value example (reduce churn, optimize marketing spend) rather than a dictionary definition.",
       "keywords": [
-        "motivation",
-        "fit",
-        "data",
-        "analysts",
-        "create",
-        "business"
+        "insight",
+        "decision",
+        "metric",
+        "stakeholder",
+        "dashboard"
       ],
       "relatedKeys": [
-        "da-01",
-        "da-36",
-        "da-40"
+        "da-03",
+        "da-04",
+        "da-05"
       ]
     },
     {
@@ -45,12 +43,11 @@
       "prompt": "Describe your most successful data analysis project. What made it successful?",
       "sampleAnswer": "STAR with your role, methods, stakeholders, and outcome metrics. Map skills used to the job description.\n\nSuccess = decision changed or measurable impact, not only a pretty dashboard.",
       "keywords": [
-        "behavioural",
-        "STAR",
-        "describe",
-        "most",
-        "successful",
-        "data"
+        "recommendation",
+        "impact",
+        "metric",
+        "decision",
+        "insight"
       ],
       "relatedKeys": [
         "da-04",
@@ -64,17 +61,16 @@
       "prompt": "Tell me about your most challenging data project and what you learned.",
       "sampleAnswer": "Be honest about incomplete data, small samples, or shifting requirements. Focus on lessons and what you would do differently.\n\nShows resilience and methodological humility.",
       "keywords": [
-        "behavioural",
-        "STAR",
-        "tell",
-        "most",
-        "challenging",
-        "data"
+        "missing",
+        "outlier",
+        "assumption",
+        "validation",
+        "lesson"
       ],
       "relatedKeys": [
-        "da-03",
         "da-05",
-        "da-06"
+        "da-06",
+        "da-36"
       ]
     },
     {
@@ -83,17 +79,16 @@
       "prompt": "Tell me about a time you got unexpected results. What did you do?",
       "sampleAnswer": "Explain validation steps (query checks, data lineage, peer review), how you avoided confirmation bias, and any new opportunity the surprise revealed.\n\nInterviewers test whether data—not ego—drives conclusions.",
       "keywords": [
-        "behavioural",
-        "STAR",
-        "tell",
-        "time",
-        "got",
-        "unexpected"
+        "unexpected",
+        "hypothesis",
+        "bias",
+        "validation",
+        "source"
       ],
       "relatedKeys": [
-        "da-04",
         "da-06",
-        "da-03"
+        "da-36",
+        "da-40"
       ]
     },
     {
@@ -102,17 +97,16 @@
       "prompt": "What’s the largest data set you’ve worked with? What was hard about it?",
       "sampleAnswer": "Discuss rows/columns, data types, tools used, and challenges (joins, performance, quality). Academic/bootcamp data counts if job experience is limited.\n\nFocus on techniques for scale, not bragging sizes.",
       "keywords": [
-        "behavioural",
-        "STAR",
-        "largest",
-        "data",
-        "set",
-        "worked"
+        "volume",
+        "memory",
+        "sampling",
+        "warehouse",
+        "performance"
       ],
       "relatedKeys": [
-        "da-05",
-        "da-04",
-        "da-03"
+        "da-36",
+        "da-40",
+        "da-01"
       ]
     },
     {
@@ -121,9 +115,11 @@
       "prompt": "What is your process for cleaning data?",
       "sampleAnswer": "Explain profiling, handling missing/duplicate values, type fixes, outlier investigation, and reconciling multiple sources. Emphasize documenting transforms.\n\nCleaning is often most of the timeline—treat it as core skill.",
       "keywords": [
-        "data",
-        "cleaning",
-        "process"
+        "duplicate",
+        "missing",
+        "validation",
+        "standardize",
+        "type"
       ],
       "relatedKeys": [
         "da-08",
@@ -137,16 +133,16 @@
       "prompt": "How do you handle missing data?",
       "sampleAnswer": "Diagnose mechanism (MCAR/MAR/MNAR intuition), then choose deletion, imputation, or separate “missing” category based on analysis goals. Report sensitivity checks.\n\nNever silently drop large fractions without disclosure.",
       "keywords": [
-        "data",
-        "cleaning",
-        "process",
-        "handle",
-        "missing"
+        "imputation",
+        "missing",
+        "bias",
+        "indicator",
+        "drop"
       ],
       "relatedKeys": [
-        "da-07",
         "da-09",
-        "da-10"
+        "da-10",
+        "da-37"
       ]
     },
     {
@@ -155,16 +151,15 @@
       "prompt": "How do you detect and treat outliers?",
       "sampleAnswer": "Use domain rules + statistical screens; investigate before deleting—outliers may be fraud or critical rare events. Document treatment.\n\nVisualize distributions when possible.",
       "keywords": [
-        "data",
-        "cleaning",
-        "process",
-        "detect",
-        "treat",
-        "outliers"
+        "outlier",
+        "quartile",
+        "deviation",
+        "median",
+        "robust"
       ],
       "relatedKeys": [
-        "da-08",
         "da-10",
+        "da-37",
         "da-07"
       ]
     },
@@ -174,17 +169,16 @@
       "prompt": "Walk through your end-to-end process when starting a new analytics project.",
       "sampleAnswer": "Clarify the business question and success metric, identify data sources, clean/EDA, analyze, validate, visualize, and socialize recommendations with follow-up metrics.\n\nAsk stakeholders “what decision will this inform?” early.",
       "keywords": [
-        "data",
         "cleaning",
-        "process",
-        "walk",
-        "through",
-        "end-to-end"
+        "analysis",
+        "visualization",
+        "stakeholder",
+        "question"
       ],
       "relatedKeys": [
-        "da-09",
-        "da-08",
-        "da-07"
+        "da-37",
+        "da-07",
+        "da-08"
       ]
     },
     {
@@ -193,10 +187,9 @@
       "prompt": "Explain INNER JOIN vs LEFT JOIN with a business example.",
       "sampleAnswer": "INNER keeps matching keys only; LEFT keeps all left rows with nulls for non-matches. Example: all customers left-joined to orders to find never-purchased customers.\n\nMention accidental row duplication from many-to-many joins.",
       "keywords": [
-        "SQL",
-        "data",
-        "explain",
         "inner",
+        "unmatched",
+        "customer",
         "join",
         "left"
       ],
@@ -212,17 +205,16 @@
       "prompt": "How do GROUP BY and aggregate functions work together?",
       "sampleAnswer": "GROUP BY collapses rows sharing key values while aggregates (COUNT, SUM, AVG) compute per group. WHERE filters pre-aggregation; HAVING filters post-aggregation.\n\nGive a revenue-by-month example.",
       "keywords": [
-        "SQL",
-        "data",
-        "group",
         "aggregate",
-        "functions",
-        "work"
+        "average",
+        "dimension",
+        "count",
+        "group"
       ],
       "relatedKeys": [
-        "da-11",
         "da-13",
-        "da-14"
+        "da-14",
+        "da-15"
       ]
     },
     {
@@ -231,16 +223,16 @@
       "prompt": "What are primary keys and foreign keys?",
       "sampleAnswer": "Primary key uniquely identifies a row; foreign key references another table’s key to enforce relationships. Discuss cascading risks and surrogate vs natural keys.\n\nIntegrity constraints prevent analytics nightmares.",
       "keywords": [
-        "SQL",
-        "data",
         "primary",
-        "keys",
-        "foreign"
+        "foreign",
+        "unique",
+        "constraint",
+        "relationship"
       ],
       "relatedKeys": [
-        "da-12",
         "da-14",
-        "da-11"
+        "da-15",
+        "da-16"
       ]
     },
     {
@@ -249,16 +241,16 @@
       "prompt": "Explain UNION vs UNION ALL.",
       "sampleAnswer": "UNION concatenates result sets and deduplicates; UNION ALL keeps duplicates and is faster. Schemas/column counts must align.\n\nChoose based on whether duplicates are meaningful.",
       "keywords": [
-        "SQL",
-        "data",
-        "explain",
         "union",
-        "all"
+        "distinct",
+        "duplicate",
+        "rows",
+        "combine"
       ],
       "relatedKeys": [
-        "da-13",
         "da-15",
-        "da-12"
+        "da-16",
+        "da-17"
       ]
     },
     {
@@ -267,17 +259,16 @@
       "prompt": "What is a window function? Give an example use case.",
       "sampleAnswer": "Window functions compute across related rows without collapsing groups—e.g., ROW_NUMBER, running SUM, LAG for month-over-month.\n\nExample: rank users by spend within each country.",
       "keywords": [
-        "SQL",
-        "data",
         "window",
-        "function",
-        "give",
-        "example"
+        "rank",
+        "partition",
+        "running",
+        "over"
       ],
       "relatedKeys": [
-        "da-14",
         "da-16",
-        "da-13"
+        "da-17",
+        "da-39"
       ]
     },
     {
@@ -286,17 +277,16 @@
       "prompt": "How would you write a query to find duplicate records?",
       "sampleAnswer": "GROUP BY the business key HAVING COUNT(*) > 1, or use window ROW_NUMBER() and filter rn > 1. Discuss which columns define duplication.\n\nThen explain remediation carefully.",
       "keywords": [
-        "SQL",
-        "data",
-        "write",
-        "query",
-        "find",
-        "duplicate"
+        "duplicate",
+        "having",
+        "distinct",
+        "count",
+        "group"
       ],
       "relatedKeys": [
-        "da-15",
         "da-17",
-        "da-14"
+        "da-39",
+        "da-11"
       ]
     },
     {
@@ -305,17 +295,16 @@
       "prompt": "Given a slow SQL query, how do you debug it?",
       "sampleAnswer": "Inspect filters/joins for fan-outs, check indexes, reduce scanned columns, EXPLAIN plans, and validate predicate pushdown. Confirm correctness before micro-optimizing.\n\nSpeak to collaboration with data engineers when needed.",
       "keywords": [
-        "SQL",
-        "data",
-        "given",
-        "slow",
-        "query",
-        "debug"
+        "explain",
+        "index",
+        "scan",
+        "plan",
+        "slow"
       ],
       "relatedKeys": [
-        "da-16",
-        "da-15",
-        "da-14"
+        "da-39",
+        "da-11",
+        "da-12"
       ]
     },
     {
@@ -324,12 +313,11 @@
       "prompt": "Which statistical methods have you used in analysis?",
       "sampleAnswer": "Mention descriptive stats, distributions, confidence intervals, hypothesis tests, and regression at a level you’ve actually used. Tie each to a business insight.\n\nHonesty about depth beats laundry lists.",
       "keywords": [
-        "statistics",
-        "experimentation",
-        "statistical",
-        "methods",
-        "have",
-        "used"
+        "regression",
+        "significance",
+        "interval",
+        "distribution",
+        "test"
       ],
       "relatedKeys": [
         "da-19",
@@ -343,17 +331,16 @@
       "prompt": "Explain the difference between descriptive and inferential statistics.",
       "sampleAnswer": "Descriptive summarizes observed data; inferential uses samples to make claims about populations with uncertainty.\n\nExample: dashboard averages vs estimating lift from an A/B test.",
       "keywords": [
-        "statistics",
-        "experimentation",
-        "explain",
-        "difference",
-        "between",
-        "descriptive"
+        "descriptive",
+        "inferential",
+        "sample",
+        "population",
+        "generalize"
       ],
       "relatedKeys": [
-        "da-18",
         "da-20",
-        "da-21"
+        "da-21",
+        "da-22"
       ]
     },
     {
@@ -362,17 +349,16 @@
       "prompt": "How does hypothesis testing work in plain language?",
       "sampleAnswer": "State null/alternative, choose a test, compute a statistic/p-value or CI, and decide under a significance threshold—while discussing practical significance and assumptions.\n\nAvoid claiming “proved” the alternative.",
       "keywords": [
-        "statistics",
-        "experimentation",
         "hypothesis",
-        "testing",
-        "work",
-        "plain"
+        "significance",
+        "null",
+        "sample",
+        "pvalue"
       ],
       "relatedKeys": [
-        "da-19",
         "da-21",
-        "da-18"
+        "da-22",
+        "da-23"
       ]
     },
     {
@@ -381,15 +367,16 @@
       "prompt": "What is an A/B test? What can go wrong?",
       "sampleAnswer": "Randomly assign users to variants to estimate causal lift on a primary metric. Pitfalls: peeking, multiple comparisons, sample ratio mismatch, novelty effects, and underpowered tests.\n\nMention guardrail metrics.",
       "keywords": [
-        "statistics",
-        "experimentation",
-        "test",
-        "wrong"
+        "experiment",
+        "conversion",
+        "randomization",
+        "bias",
+        "sample"
       ],
       "relatedKeys": [
-        "da-20",
         "da-22",
-        "da-19"
+        "da-23",
+        "da-34"
       ]
     },
     {
@@ -398,17 +385,16 @@
       "prompt": "How do you choose a sample size for an experiment?",
       "sampleAnswer": "Based on baseline rate, minimum detectable effect, significance level, and power. Smaller effects need larger samples.\n\nIf formulas aren’t memorized, explain the inputs and that you’d use a power calculator—then interpret outputs.",
       "keywords": [
-        "statistics",
-        "experimentation",
-        "choose",
         "sample",
-        "size",
-        "experiment"
+        "power",
+        "effect",
+        "significance",
+        "confidence"
       ],
       "relatedKeys": [
-        "da-21",
         "da-23",
-        "da-20"
+        "da-34",
+        "da-35"
       ]
     },
     {
@@ -417,17 +403,16 @@
       "prompt": "Explain correlation vs causation with a business example.",
       "sampleAnswer": "Correlation is association; causation means intervening on X changes Y. Ice cream and drowning correlate via summer. In business, use experiments or strong causal designs before claiming drivers.\n\nAnalysts protect companies from false stories.",
       "keywords": [
-        "statistics",
-        "experimentation",
-        "explain",
         "correlation",
         "causation",
-        "business"
+        "confounder",
+        "experiment",
+        "revenue"
       ],
       "relatedKeys": [
-        "da-22",
-        "da-21",
-        "da-20"
+        "da-34",
+        "da-35",
+        "da-18"
       ]
     },
     {
@@ -436,17 +421,16 @@
       "prompt": "How do you explain technical findings to a non-technical audience?",
       "sampleAnswer": "Lead with the decision and recommendation, then 1–2 supporting charts, then caveats. Adjust depth to audience; avoid jargon or define it.\n\nPractice with non-technical friends if needed—Coursera’s tip.",
       "keywords": [
-        "visualization",
-        "communication",
-        "explain",
-        "technical",
-        "findings",
-        "non-technical"
+        "audience",
+        "chart",
+        "recommendation",
+        "jargon",
+        "insight"
       ],
       "relatedKeys": [
         "da-25",
         "da-26",
-        "da-37"
+        "da-27"
       ]
     },
     {
@@ -455,17 +439,16 @@
       "prompt": "What makes a dashboard useful versus noisy?",
       "sampleAnswer": "Clear purpose, few critical metrics, definitions documented, freshness indicators, and actionable filters. Avoid vanity metrics and chartjunk.\n\nIterate with users after launch.",
       "keywords": [
-        "visualization",
-        "communication",
-        "makes",
         "dashboard",
-        "useful",
-        "versus"
+        "filter",
+        "comparison",
+        "action",
+        "noise"
       ],
       "relatedKeys": [
-        "da-24",
         "da-26",
-        "da-37"
+        "da-27",
+        "da-28"
       ]
     },
     {
@@ -474,17 +457,16 @@
       "prompt": "Which chart types do you choose for trends vs compositions vs relationships?",
       "sampleAnswer": "Trends: line. Comparisons: bar. Composition: stacked bar/careful pie. Relationships: scatter. Distributions: histogram/box.\n\nJustify choices by the question being answered.",
       "keywords": [
-        "visualization",
-        "communication",
+        "trend",
+        "composition",
+        "relationship",
         "chart",
-        "types",
-        "choose",
-        "trends"
+        "bar"
       ],
       "relatedKeys": [
-        "da-25",
-        "da-24",
-        "da-37"
+        "da-27",
+        "da-28",
+        "da-29"
       ]
     },
     {
@@ -493,12 +475,11 @@
       "prompt": "How would you measure the performance of our company or product?",
       "sampleAnswer": "Show research: north-star metric candidates, input metrics, and guardrails. Tie to industry context and available data.\n\nPropose a starter scorecard and questions you’d ask stakeholders.",
       "keywords": [
-        "business",
-        "sense",
-        "measure",
-        "performance",
-        "company",
-        "product"
+        "conversion",
+        "retention",
+        "revenue",
+        "definition",
+        "metric"
       ],
       "relatedKeys": [
         "da-28",
@@ -512,17 +493,16 @@
       "prompt": "How would you estimate … (Fermi question, e.g., best month for a shoe discount)?",
       "sampleAnswer": "Think aloud: needed data, proxies, assumptions, calculation, and uncertainty. Then say how you’d validate with real data.\n\nInterviewers score structure more than exact numbers.",
       "keywords": [
-        "business",
-        "sense",
         "estimate",
-        "fermi",
-        "question",
-        "e.g"
+        "assumption",
+        "range",
+        "sanity",
+        "bound"
       ],
       "relatedKeys": [
-        "da-27",
         "da-29",
-        "da-38"
+        "da-38",
+        "da-24"
       ]
     },
     {
@@ -531,17 +511,16 @@
       "prompt": "A metric dropped 10% week-over-week. How do you investigate?",
       "sampleAnswer": "Check instrumentation bugs, seasonality, segment the drop, correlate with releases/marketing, and form hypotheses with quick SQL pulls. Communicate early if data is broken.\n\nStructured triage beats panic.",
       "keywords": [
-        "business",
-        "sense",
-        "metric",
-        "dropped",
-        "week-over-week",
-        "investigate"
+        "segment",
+        "seasonality",
+        "tracking",
+        "regression",
+        "drop"
       ],
       "relatedKeys": [
-        "da-28",
-        "da-27",
-        "da-38"
+        "da-38",
+        "da-24",
+        "da-25"
       ]
     },
     {
@@ -550,12 +529,11 @@
       "prompt": "What data analytics software and tools are you familiar with?",
       "sampleAnswer": "List tools by stage: SQL warehouses, Excel/Sheets, BI (Tableau/Looker), Python/R. Match the job posting; show transferable learning speed for unfamiliar tools.\n\nGive a concrete task you did in each.",
       "keywords": [
-        "tools",
-        "programming",
-        "data",
-        "analytics",
-        "software",
-        "familiar"
+        "python",
+        "tableau",
+        "warehouse",
+        "excel",
+        "sql"
       ],
       "relatedKeys": [
         "da-31",
@@ -569,17 +547,16 @@
       "prompt": "What scripting languages are you trained in (SQL, Python, R)? Which do you prefer and why?",
       "sampleAnswer": "Be truthful; explain strengths (SQL for relational queries; Python for flexible analysis/ML-lite; R for stats). Show enthusiasm to learn the team’s stack.\n\nMention favourite SQL functions with examples.",
       "keywords": [
-        "tools",
-        "programming",
-        "scripting",
-        "languages",
-        "trained",
+        "python",
+        "dataframe",
+        "query",
+        "script",
         "sql"
       ],
       "relatedKeys": [
-        "da-30",
         "da-32",
-        "da-33"
+        "da-33",
+        "da-30"
       ]
     },
     {
@@ -588,17 +565,16 @@
       "prompt": "How have you used Excel (or Sheets) in analysis?",
       "sampleAnswer": "Discuss pivots, VLOOKUP/XLOOKUP or INDEX-MATCH, cleaning, and limitations at scale that push you to SQL. Know function vs formula distinction.\n\nSpreadsheets remain ubiquitous in interviews.",
       "keywords": [
-        "tools",
-        "programming",
-        "have",
-        "used",
-        "excel",
-        "sheets"
+        "pivot",
+        "formula",
+        "spreadsheet",
+        "chart",
+        "table"
       ],
       "relatedKeys": [
-        "da-31",
         "da-33",
-        "da-30"
+        "da-30",
+        "da-31"
       ]
     },
     {
@@ -607,17 +583,16 @@
       "prompt": "Explain VLOOKUP limitations and when INDEX/MATCH or joins are better.",
       "sampleAnswer": "VLOOKUP needs lookup column left of values (classic), breaks on column inserts, and struggles with large data. INDEX/MATCH more flexible; SQL joins scale better.\n\nShow practical migration judgment.",
       "keywords": [
-        "tools",
-        "programming",
-        "explain",
-        "vlookup",
-        "limitations",
+        "lookup",
+        "match",
+        "join",
+        "approximate",
         "index"
       ],
       "relatedKeys": [
-        "da-32",
+        "da-30",
         "da-31",
-        "da-30"
+        "da-32"
       ]
     },
     {
@@ -626,17 +601,16 @@
       "prompt": "Define mean, variance, and standard deviation for a stakeholder.",
       "sampleAnswer": "Mean is a centre value; variance/SD describe spread around it. Use a salary or delivery-time example to show why averages hide risk.\n\nOffer median when skew matters.",
       "keywords": [
-        "statistics",
-        "experimentation",
-        "define",
         "mean",
         "variance",
-        "standard"
+        "deviation",
+        "spread",
+        "average"
       ],
       "relatedKeys": [
         "da-35",
-        "da-23",
-        "da-22"
+        "da-18",
+        "da-19"
       ]
     },
     {
@@ -645,17 +619,16 @@
       "prompt": "What is regression analysis used for in business analytics?",
       "sampleAnswer": "Estimate relationships between variables, control for confounders (cautiously), and predict outcomes. Stress assumptions and that observational regression ≠ automatic causation.\n\nExample: relating spend to conversions with caveats.",
       "keywords": [
-        "statistics",
-        "experimentation",
         "regression",
-        "analysis",
-        "used",
-        "business"
+        "prediction",
+        "coefficient",
+        "relationship",
+        "trend"
       ],
       "relatedKeys": [
-        "da-34",
-        "da-23",
-        "da-22"
+        "da-18",
+        "da-19",
+        "da-20"
       ]
     },
     {
@@ -664,17 +637,16 @@
       "prompt": "What is your greatest strength as a data analyst? A weakness you are improving?",
       "sampleAnswer": "Strength with evidence (clear storytelling, SQL performance, careful validation). Weakness that is real and under active improvement (public speaking, a tool gap) with actions taken.\n\nAvoid cliché “perfectionism” without substance.",
       "keywords": [
-        "motivation",
-        "fit",
-        "greatest",
         "strength",
-        "data",
-        "analyst"
+        "weakness",
+        "communication",
+        "insight",
+        "stakeholder"
       ],
       "relatedKeys": [
         "da-40",
-        "da-02",
-        "da-01"
+        "da-01",
+        "da-02"
       ]
     },
     {
@@ -683,16 +655,16 @@
       "prompt": "How do you ensure your analysis is reproducible?",
       "sampleAnswer": "Version SQL/notebooks, document assumptions, seed random steps, freeze data pulls with timestamps, and peer review. Prefer modular pipelines over one-off spreadsheets when stakes are high.\n\nReproducibility builds trust.",
       "keywords": [
-        "visualization",
-        "communication",
-        "ensure",
-        "analysis",
+        "notebook",
+        "version",
+        "query",
+        "documentation",
         "reproducible"
       ],
       "relatedKeys": [
-        "da-26",
-        "da-25",
-        "da-24"
+        "da-07",
+        "da-08",
+        "da-09"
       ]
     },
     {
@@ -701,17 +673,16 @@
       "prompt": "How would you prioritize multiple stakeholder analytics requests?",
       "sampleAnswer": "Assess decision urgency, impact, effort, and data readiness. Communicate timelines transparently; offer lightweight interim answers when useful.\n\nShows product sense for analyst roles.",
       "keywords": [
-        "business",
-        "sense",
-        "prioritize",
-        "multiple",
+        "priority",
         "stakeholder",
-        "analytics"
+        "impact",
+        "deadline",
+        "request"
       ],
       "relatedKeys": [
-        "da-29",
-        "da-28",
-        "da-27"
+        "da-24",
+        "da-25",
+        "da-26"
       ]
     },
     {
@@ -720,17 +691,16 @@
       "prompt": "Explain clustered vs non-clustered indexes at a high level (analyst view).",
       "sampleAnswer": "Clustered index defines physical row order (often the primary key); non-clustered provides alternate lookup structures. Knowing this helps interpret why some filters are fast.\n\nDefer deep DBA detail unless asked.",
       "keywords": [
-        "SQL",
-        "data",
-        "explain",
         "clustered",
-        "non-clustered",
-        "indexes"
+        "index",
+        "scan",
+        "range",
+        "lookup"
       ],
       "relatedKeys": [
-        "da-17",
-        "da-16",
-        "da-15"
+        "da-11",
+        "da-12",
+        "da-13"
       ]
     },
     {
@@ -739,17 +709,16 @@
       "prompt": "What questions do you have for us about data culture, metrics ownership, or tooling?",
       "sampleAnswer": "Ask how metrics are defined/governed, how analysts partner with engineers, dashboard sprawl control, and success in the first 90 days.\n\nCoursera advises preparing questions about day-to-day, expectations, and culture.",
       "keywords": [
-        "motivation",
-        "fit",
-        "questions",
-        "have",
-        "data",
-        "culture"
+        "metric",
+        "ownership",
+        "tooling",
+        "culture",
+        "dashboard"
       ],
       "relatedKeys": [
-        "da-36",
+        "da-01",
         "da-02",
-        "da-01"
+        "da-03"
       ]
     }
   ]

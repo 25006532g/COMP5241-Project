@@ -32,6 +32,33 @@ test("v2 question routing, word count and bank schema", () => {
   assert.deepEqual(v2.chooseNext({ presentedAfter: 2, relatedIds: [follow], askedIds: ["current"], plannedRemaining: ["next"], keywordMatched: true }), { type: "ask", id: follow, reason: "keyword" });
   const ai = v2.chooseNext({ presentedAfter: 2, relatedIds: [follow], askedIds: ["current"], plannedRemaining: ["next"], keywordMatched: false });
   assert.equal(ai.type, "ai");
+  assert.deepEqual(v2.chooseNext({
+    presentedAfter: 2, relatedIds: ["rate", "tree"], askedIds: ["current"], plannedRemaining: ["planned"], keywordMatched: false,
+    answer: "I would use a token bucket so bursts stay within the limit.",
+    related: [
+      { id: "rate", prompt: "How would you design a rate limiter for an API?", keywords: ["bucket", "limiter"] },
+      { id: "tree", prompt: "When is a balanced tree better than a plain one?", keywords: ["avl", "rotation"] },
+    ],
+  }), { type: "ask", id: "rate", reason: "keyword" });
+  assert.equal(v2.bridgeLead("I would use a token bucket so bursts stay small.", ["bucket"]), "Since you mentioned token bucket, ");
+  assert.match(v2.bridgeLead("I have been building rate limiters for the API.", ["building"]) ?? "", /^As you said you have been /);
+  const partial = v2.chooseNext({
+    presentedAfter: 2, relatedIds: ["cache", "tree"], askedIds: ["current"], plannedRemaining: ["planned"], keywordMatched: false,
+    answer: "The read path used a cache.",
+    related: [
+      { id: "cache", prompt: "How does a cache change a read path?", keywords: ["invalidation"] },
+      { id: "tree", prompt: "When is a balanced tree better?", keywords: ["rotation"] },
+    ],
+  });
+  assert.equal(partial.type, "ai");
+  assert.deepEqual(partial.candidates, ["cache"]);
+  const missed = v2.chooseNext({
+    presentedAfter: 2, relatedIds: ["cache"], askedIds: ["current"], plannedRemaining: ["planned"], keywordMatched: false,
+    answer: "I enjoyed the team lunch and the office.",
+    related: [{ id: "cache", prompt: "How does a cache change a read path?", keywords: ["invalidation"] }],
+  });
+  assert.equal(missed.type, "ai");
+  assert.deepEqual(missed.candidates, ["cache"]);
   assert.deepEqual(v2.chooseAfterSkip({ presentedAfter: 2, askedIds: ["current"], plannedRemaining: ["next"] }), { type: "ask", id: "next", reason: "planned" });
   assert.equal(v2.chooseReplacement({ currentId: "current", relatedIds: ["rel", "asked"], askedIds: ["current", "asked"], poolIds: ["current", "rel", "asked", "other"], random: () => 0 }), "rel");
   assert.equal(v2.chooseReplacement({ currentId: "current", relatedIds: [], askedIds: ["current"], poolIds: ["current", "a", "b"], random: () => 0 }), "a");
@@ -171,11 +198,13 @@ test("v2 migration, bank, session and rating stay off the original interview tab
   const keyword = await h.actions.submitAnswer({ id: intro.view.session.id, revision: intro.view.session.revision, text: "I would add an index." });
   assert.equal(keyword.code, "ok");
   assert.equal(h.payloads.length, before);
-  assert.equal(keyword.view.bubble, "How does the index change the lookup?");
+  assert.equal(keyword.view.bubble, "Since you mentioned add an index, How does the index change the lookup?");
+  assert.equal(keyword.view.followUp, "keyword");
   h.state.provider = async () => JSON.stringify({ questionId: (await db.query("select id from forge_v2_questions where prompt=$1", ["When would you skip an index?"])).rows[0].id });
   const related = await h.actions.submitAnswer({ id: keyword.view.session.id, revision: keyword.view.session.revision, text: "It avoids scanning every row." });
   assert.equal(related.code, "ok");
-  assert.equal(related.view.bubble, "When would you skip an index?");
+  assert.match(related.view.bubble, /When would you skip an index\?$/);
+  assert.equal(related.view.followUp, "ai");
   assert.equal(h.payloads.length, before + 1);
   const turnsBefore = related.view.turns.length;
   const changed = await h.actions.changeQuestion({ id: related.view.session.id, revision: related.view.session.revision });

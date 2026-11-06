@@ -7,12 +7,11 @@
       "prompt": "Why do you want to study Computer Science at university?",
       "sampleAnswer": "Open with a concrete spark: a project, competition, course, or problem that made computing feel personally meaningful—not a generic “I like computers.” Connect that spark to what CS actually trains (abstraction, algorithms, systems thinking) rather than only consumer tech.\n\nThen name 1–2 programme features you researched (labs, first-year foundation, AI/data electives, industry links) and say how they match your goals. Close with a near-term academic plan (e.g., build strong programming + discrete maths foundations in Year 1) and a longer-term direction you are curious about, while staying open to discovery.",
       "keywords": [
-        "motivation",
-        "fit",
-        "want",
-        "study",
         "computer",
-        "science"
+        "science",
+        "project",
+        "problem",
+        "university"
       ],
       "relatedKeys": [
         "ug-02",
@@ -26,17 +25,16 @@
       "prompt": "Tell me about yourself and what led you toward Computer Science.",
       "sampleAnswer": "Give a 45–60 second narrative: academic strengths → a defining CS-related experience → what you hope to explore next. Avoid listing every activity; pick two that show progression (e.g., self-taught Python → school robotics → a personal web app).\n\nHighlight transferable traits interviewers listen for: curiosity, persistence when debugging, and communication. End by linking your story to why a CS bachelor’s programme is the logical next step.",
       "keywords": [
-        "motivation",
-        "fit",
-        "tell",
-        "yourself",
-        "led",
-        "toward"
+        "programming",
+        "project",
+        "curiosity",
+        "problem",
+        "science"
       ],
       "relatedKeys": [
-        "ug-01",
         "ug-03",
-        "ug-04"
+        "ug-04",
+        "ug-05"
       ]
     },
     {
@@ -45,17 +43,16 @@
       "prompt": "Why this university / this Computer Science programme specifically?",
       "sampleAnswer": "Show specific research: a course, lab, teaching style, dual-degree option, or student society—not rankings alone. Explain fit between your learning style and the programme structure (e.g., common foundation year then specialism).\n\nMention how you would contribute (clubs, peer mentoring, open-source, outreach). If interviewing for a scheme that covers multiple majors, explain why CS within that scheme is your intended path and what evidence supports readiness.",
       "keywords": [
-        "motivation",
-        "fit",
-        "university",
-        "computer",
-        "science",
-        "programme"
+        "programme",
+        "course",
+        "faculty",
+        "research",
+        "campus"
       ],
       "relatedKeys": [
-        "ug-02",
         "ug-04",
-        "ug-01"
+        "ug-05",
+        "ug-06"
       ]
     },
     {
@@ -64,17 +61,16 @@
       "prompt": "What subjects interest you most, and how do they connect to Computer Science?",
       "sampleAnswer": "Pick 1–2 subjects with honest depth. For maths, mention discrete structures, proofs, or modelling; for physics/ICT, mention systems thinking or programming labs. Explain how those skills transfer to CS topics (algorithms, complexity, data representation).\n\nGive a short example of applying another subject’s idea in a computing context (e.g., probability in game AI, geometry in graphics). Show intellectual range without claiming expertise you do not have.",
       "keywords": [
-        "motivation",
-        "fit",
-        "subjects",
-        "interest",
-        "most",
-        "connect"
+        "mathematics",
+        "logic",
+        "programming",
+        "physics",
+        "subject"
       ],
       "relatedKeys": [
-        "ug-03",
         "ug-05",
-        "ug-02"
+        "ug-06",
+        "ug-35"
       ]
     },
     {
@@ -83,17 +79,16 @@
       "prompt": "Where do you see yourself in five to ten years, and how does a CS degree help?",
       "sampleAnswer": "Describe a plausible direction (software product engineering, data systems, cybersecurity, research pathway) while acknowledging UG study may refine it. Emphasize skills you expect to gain: rigorous problem decomposition, collaboration on large codebases, and ethical judgment about technology’s impact.\n\nAvoid over-confident claims of founding a unicorn. Prefer “I want to be someone who can design reliable software for real users” plus one concrete milestone (internship, capstone, open-source contributions).",
       "keywords": [
-        "motivation",
-        "fit",
-        "see",
-        "yourself",
-        "five",
-        "ten"
+        "software",
+        "research",
+        "graduate",
+        "career",
+        "degree"
       ],
       "relatedKeys": [
-        "ug-04",
-        "ug-03",
-        "ug-02"
+        "ug-06",
+        "ug-35",
+        "ug-38"
       ]
     },
     {
@@ -102,17 +97,16 @@
       "prompt": "Which school subjects have prepared you best for CS, and why?",
       "sampleAnswer": "Discuss maths (logic, algebra, problem solving), ICT/CS if available, and any science with experimental method. Be specific: describe a hard problem you solved and the method (break into subproblems, test cases, revise approach).\n\nIf your school lacked CS courses, explain self-study or online courses and what you built. Admissions interviews value evidence of preparation more than perfect coursework access.",
       "keywords": [
-        "academic",
-        "preparation",
-        "school",
-        "subjects",
-        "have",
-        "prepared"
+        "mathematics",
+        "programming",
+        "logic",
+        "project",
+        "subject"
       ],
       "relatedKeys": [
-        "ug-07",
-        "ug-08",
-        "ug-09"
+        "ug-35",
+        "ug-38",
+        "ug-40"
       ]
     },
     {
@@ -121,17 +115,16 @@
       "prompt": "What is a favourite class you have taken, and what did you learn from it beyond the syllabus?",
       "sampleAnswer": "Choose a class where you can show depth: a proof that clicked, a programming lab that failed then worked, or a project that required independent reading. Explain the concept briefly in plain English.\n\nThen reflect on learning habits gained (seeking help early, writing explanations, peer teaching). Interviewers often use favourite-class questions to probe intellectual vitality, not only grades.",
       "keywords": [
-        "academic",
-        "preparation",
-        "favourite",
-        "class",
-        "have",
-        "taken"
+        "project",
+        "concept",
+        "problem",
+        "curiosity",
+        "learned"
       ],
       "relatedKeys": [
-        "ug-06",
         "ug-08",
-        "ug-09"
+        "ug-09",
+        "ug-34"
       ]
     },
     {
@@ -140,17 +133,16 @@
       "prompt": "How have you challenged yourself academically in the past two years?",
       "sampleAnswer": "Use STAR: Situation (demanding course/contest/project), Task (what success required), Action (study plan, tutoring, extra problems), Result (grade improvement, contest rank, working prototype) and a short learning.\n\nShow agency: you chose difficulty intentionally. If results were mixed, focus on process upgrades you kept afterward.",
       "keywords": [
-        "academic",
-        "preparation",
-        "have",
-        "challenged",
-        "yourself",
-        "academically"
+        "challenge",
+        "mathematics",
+        "competition",
+        "project",
+        "course"
       ],
       "relatedKeys": [
-        "ug-07",
         "ug-09",
-        "ug-06"
+        "ug-34",
+        "ug-37"
       ]
     },
     {
@@ -159,17 +151,16 @@
       "prompt": "How comfortable are you with mathematics, and which topics feel strongest or weakest?",
       "sampleAnswer": "Be honest and specific. Strengths might be algebra, combinatorics basics, or coordinate geometry; weaknesses might be formal proofs or probability. Show a remediation plan (worked examples, tutoring, summer prep).\n\nLink maths to CS: counting for complexity, graphs for networks, modular arithmetic for hashing. Confidence without arrogance is the goal.",
       "keywords": [
-        "academic",
-        "preparation",
-        "comfortable",
-        "mathematics",
-        "topics",
-        "feel"
+        "algebra",
+        "calculus",
+        "proof",
+        "discrete",
+        "confidence"
       ],
       "relatedKeys": [
-        "ug-08",
-        "ug-07",
-        "ug-06"
+        "ug-34",
+        "ug-37",
+        "ug-07"
       ]
     },
     {
@@ -178,12 +169,11 @@
       "prompt": "In plain language, what is an algorithm? Give a simple everyday example.",
       "sampleAnswer": "An algorithm is a finite, unambiguous sequence of steps that transforms inputs into outputs. Everyday example: sorting exam papers by student ID, or following a cooking recipe with clear stop conditions.\n\nThen give a computing example: binary search on a sorted list—compare middle element, discard half—mention that clarity and termination matter. Avoid jargon dumps; show you can teach the idea.",
       "keywords": [
-        "CS",
-        "fundamentals",
-        "plain",
-        "language",
         "algorithm",
-        "give"
+        "steps",
+        "recipe",
+        "sorting",
+        "repeat"
       ],
       "relatedKeys": [
         "ug-11",
@@ -197,17 +187,16 @@
       "prompt": "What is the difference between a program and a programming language?",
       "sampleAnswer": "A programming language is a formal notation with syntax and semantics used to express computations. A program is a particular set of instructions written in a language to solve a problem.\n\nAnalogy: English vs a specific essay. Mention that languages differ in abstraction (Python vs C) and that compilers/interpreters turn programs into machine-executable behaviour. Keep it accurate and short.",
       "keywords": [
-        "CS",
-        "fundamentals",
-        "difference",
-        "between",
         "program",
-        "programming"
+        "language",
+        "compiler",
+        "instruction",
+        "syntax"
       ],
       "relatedKeys": [
-        "ug-10",
         "ug-12",
-        "ug-13"
+        "ug-13",
+        "ug-14"
       ]
     },
     {
@@ -216,17 +205,16 @@
       "prompt": "Explain what a variable and a data type are, with examples.",
       "sampleAnswer": "A variable is a named storage location whose value can change during execution. A data type describes the kind of values and allowed operations (integers, floating-point numbers, strings, booleans).\n\nExample: `score = 95` (integer) vs `name = \"Jordan\"` (string). Note that some languages are statically typed and others dynamically typed, but the idea of type constraints remains. Tie to why types prevent bugs.",
       "keywords": [
-        "CS",
-        "fundamentals",
-        "explain",
         "variable",
-        "data",
+        "integer",
+        "string",
+        "memory",
         "type"
       ],
       "relatedKeys": [
-        "ug-11",
         "ug-13",
-        "ug-10"
+        "ug-14",
+        "ug-15"
       ]
     },
     {
@@ -235,17 +223,16 @@
       "prompt": "What is the difference between compiling and interpreting a program?",
       "sampleAnswer": "Compilation translates source code into machine code (or bytecode) ahead of running, often catching many errors early and enabling optimization. Interpretation executes source (or bytecode) more directly, which can aid rapid iteration.\n\nModern languages blur the line (e.g., Java bytecode + JIT). For admissions, show you understand the trade-off: performance/early checking vs flexibility/speed of development.",
       "keywords": [
-        "CS",
-        "fundamentals",
-        "difference",
-        "between",
-        "compiling",
-        "interpreting"
+        "compiler",
+        "interpreter",
+        "bytecode",
+        "source",
+        "machine"
       ],
       "relatedKeys": [
-        "ug-12",
         "ug-14",
-        "ug-11"
+        "ug-15",
+        "ug-16"
       ]
     },
     {
@@ -254,17 +241,16 @@
       "prompt": "What does Big-O notation mean at a high level, and why might it matter?",
       "sampleAnswer": "Big-O describes how an algorithm’s time or space grows as input size grows, focusing on dominant growth (e.g., linear vs quadratic). It helps compare approaches before coding every detail.\n\nExample: scanning a list once is roughly O(n); nested loops over the list can be O(n²). Emphasize that constants and real hardware matter too, but Big-O guides scalable thinking. Keep math light unless asked to deepen.",
       "keywords": [
-        "CS",
-        "fundamentals",
-        "big-o",
-        "notation",
-        "mean",
-        "high"
+        "complexity",
+        "growth",
+        "input",
+        "scaling",
+        "algorithm"
       ],
       "relatedKeys": [
-        "ug-13",
         "ug-15",
-        "ug-12"
+        "ug-16",
+        "ug-18"
       ]
     },
     {
@@ -273,50 +259,11 @@
       "prompt": "Describe arrays (or lists) versus dictionaries (or maps). When would you use each?",
       "sampleAnswer": "Arrays/lists store ordered elements accessed by index—good for sequences and ordered traversal. Dictionaries/maps store key→value associations—good for fast lookups by name/ID.\n\nExample: a list of daily temperatures vs a map from student ID to grade. Mention trade-offs: arrays have contiguous indexing; maps need good key design. Relate to a small project you built if possible.",
       "keywords": [
-        "CS",
-        "fundamentals",
-        "describe",
-        "arrays",
-        "lists",
-        "versus"
-      ],
-      "relatedKeys": [
-        "ug-14",
-        "ug-13",
-        "ug-12"
-      ]
-    },
-    {
-      "key": "ug-16",
-      "kind": "primary",
-      "prompt": "Walk me through how you would approach a logic or puzzle problem you have not seen before.",
-      "sampleAnswer": "State a method: (1) restate the problem and constraints, (2) try tiny examples by hand, (3) look for patterns or invariants, (4) propose a brute-force idea, (5) improve if needed, (6) check edge cases.\n\nVerbalize assumptions and ask clarifying questions. Admissions interviewers often care more about structured thinking than the final trick. Mention staying calm and writing steps clearly.",
-      "keywords": [
-        "Problem-Solving",
-        "walk",
-        "through",
-        "approach",
-        "logic",
-        "puzzle"
-      ],
-      "relatedKeys": [
-        "ug-17",
-        "ug-18",
-        "ug-19"
-      ]
-    },
-    {
-      "key": "ug-17",
-      "kind": "primary",
-      "prompt": "Describe a time you debugged a program or technical project that was not working.",
-      "sampleAnswer": "STAR: Situation (what broke), Task (needed correct behaviour before a deadline), Action (reproduce bug, isolate with prints/tests, form hypothesis, fix, add regression check), Result (working feature + what you learned about systematic debugging).\n\nEmphasize evidence over guessing. If you used AI tools, say how you verified outputs yourself—integrity matters.",
-      "keywords": [
-        "Problem-Solving",
-        "describe",
-        "time",
-        "debugged",
-        "program",
-        "technical"
+        "array",
+        "dictionary",
+        "lookup",
+        "index",
+        "key"
       ],
       "relatedKeys": [
         "ug-16",
@@ -325,22 +272,57 @@
       ]
     },
     {
+      "key": "ug-16",
+      "kind": "primary",
+      "prompt": "Walk me through how you would approach a logic or puzzle problem you have not seen before.",
+      "sampleAnswer": "State a method: (1) restate the problem and constraints, (2) try tiny examples by hand, (3) look for patterns or invariants, (4) propose a brute-force idea, (5) improve if needed, (6) check edge cases.\n\nVerbalize assumptions and ask clarifying questions. Admissions interviewers often care more about structured thinking than the final trick. Mention staying calm and writing steps clearly.",
+      "keywords": [
+        "constraint",
+        "pattern",
+        "example",
+        "check",
+        "brute"
+      ],
+      "relatedKeys": [
+        "ug-18",
+        "ug-19",
+        "ug-36"
+      ]
+    },
+    {
+      "key": "ug-17",
+      "kind": "primary",
+      "prompt": "Describe a time you debugged a program or technical project that was not working.",
+      "sampleAnswer": "STAR: Situation (what broke), Task (needed correct behaviour before a deadline), Action (reproduce bug, isolate with prints/tests, form hypothesis, fix, add regression check), Result (working feature + what you learned about systematic debugging).\n\nEmphasize evidence over guessing. If you used AI tools, say how you verified outputs yourself—integrity matters.",
+      "keywords": [
+        "reproduce",
+        "hypothesis",
+        "error",
+        "print",
+        "bug"
+      ],
+      "relatedKeys": [
+        "ug-20",
+        "ug-21",
+        "ug-22"
+      ]
+    },
+    {
       "key": "ug-18",
       "kind": "primary",
       "prompt": "How would you estimate how many searches a busy school library catalogue might handle in a day?",
       "sampleAnswer": "This is a Fermi/guesstimate: define assumptions (students, visits/day, searches per visit), multiply, and state uncertainty ranges. Speak your arithmetic aloud.\n\nThen discuss what data you would collect to validate (logs, surveys). Show comfort with rough quantitative reasoning—useful for CS and for later systems thinking.",
       "keywords": [
-        "Problem-Solving",
         "estimate",
-        "many",
-        "searches",
-        "busy",
-        "school"
+        "assumption",
+        "query",
+        "bound",
+        "student"
       ],
       "relatedKeys": [
-        "ug-17",
         "ug-19",
-        "ug-16"
+        "ug-36",
+        "ug-10"
       ]
     },
     {
@@ -349,17 +331,16 @@
       "prompt": "If you had to teach a younger student how to sort a list of numbers, how would you explain it?",
       "sampleAnswer": "Pick a simple method (e.g., selection sort or insertion sort) and explain with a short numeric example. Emphasize comparison and swapping, and that computers follow exact steps.\n\nOptionally contrast with a faster idea at high level (divide-and-conquer) without claiming full merge-sort proofs. Teaching clarity signals mastery appropriate for UG interviews.",
       "keywords": [
-        "Problem-Solving",
-        "had",
-        "teach",
-        "younger",
-        "student",
-        "sort"
+        "sorting",
+        "compare",
+        "swap",
+        "insertion",
+        "bubble"
       ],
       "relatedKeys": [
-        "ug-18",
-        "ug-17",
-        "ug-16"
+        "ug-36",
+        "ug-10",
+        "ug-11"
       ]
     },
     {
@@ -368,17 +349,16 @@
       "prompt": "Tell me about a computing project you built. What was your contribution?",
       "sampleAnswer": "Describe problem, users, tech stack at a high level, and your personal contribution if it was a team project. Include one hard decision (data model, UI, algorithm) and the outcome (demo, users, contest).\n\nShow iteration: what you would improve next. Bring a portfolio link if allowed. Avoid buzzword lists without substance.",
       "keywords": [
-        "extracurriculars",
-        "projects",
-        "tell",
-        "computing",
         "project",
-        "built"
+        "feature",
+        "contribution",
+        "demo",
+        "bug"
       ],
       "relatedKeys": [
         "ug-21",
         "ug-22",
-        "ug-37"
+        "ug-17"
       ]
     },
     {
@@ -387,17 +367,16 @@
       "prompt": "How did you first get involved in programming, robotics, or another STEM activity?",
       "sampleAnswer": "Tell an origin story with a first “hello world” or club joining moment, then how involvement deepened. Mention people who helped (teacher, peers) and a milestone that raised standards for yourself.\n\nConnect the activity to skills: teamwork, documentation, time management. Keep it authentic rather than polished marketing.",
       "keywords": [
-        "extracurriculars",
-        "projects",
-        "first",
-        "get",
-        "involved",
-        "programming"
+        "programming",
+        "robotics",
+        "club",
+        "project",
+        "curiosity"
       ],
       "relatedKeys": [
-        "ug-20",
         "ug-22",
-        "ug-37"
+        "ug-17",
+        "ug-20"
       ]
     },
     {
@@ -406,17 +385,16 @@
       "prompt": "What is an achievement you are proud of that is not a test score?",
       "sampleAnswer": "Choose impact over prestige: mentoring classmates, building a tool for a community group, sustaining a long project. Use STAR and quantify if possible (hours, users, improvement).\n\nReflect on character traits shown (responsibility, creativity). Admissions interviews weigh contribution quality, not only trophies.",
       "keywords": [
-        "extracurriculars",
-        "projects",
-        "achievement",
+        "leadership",
+        "competition",
+        "community",
         "proud",
-        "test",
-        "score"
+        "project"
       ],
       "relatedKeys": [
-        "ug-21",
+        "ug-17",
         "ug-20",
-        "ug-37"
+        "ug-21"
       ]
     },
     {
@@ -425,16 +403,16 @@
       "prompt": "Describe a time you worked in a team on a project. What role did you play?",
       "sampleAnswer": "STAR with clear personal actions: how you divided work, resolved a disagreement, integrated modules, and communicated status. Mention tools (shared docs, Git) if used.\n\nShow you can both lead and follow. Result should include team outcome and a lesson about collaboration in technical work.",
       "keywords": [
-        "teamwork",
+        "team",
         "communication",
-        "describe",
-        "time",
-        "worked",
-        "team"
+        "deadline",
+        "contribution",
+        "role"
       ],
       "relatedKeys": [
         "ug-24",
-        "ug-25"
+        "ug-25",
+        "ug-26"
       ]
     },
     {
@@ -443,16 +421,16 @@
       "prompt": "Tell me about a disagreement with a teammate and how you handled it.",
       "sampleAnswer": "Focus on respect: listen to their constraint, share your evidence, seek a test or experiment to decide (prototype A/B, timer trial). Avoid villain narratives.\n\nResult: better design or clearer split of responsibilities. Learning: document decisions early. This probes maturity for group projects in CS programmes.",
       "keywords": [
-        "teamwork",
-        "communication",
-        "tell",
         "disagreement",
-        "teammate",
-        "handled"
+        "compromise",
+        "listen",
+        "decision",
+        "team"
       ],
       "relatedKeys": [
-        "ug-23",
-        "ug-25"
+        "ug-25",
+        "ug-26",
+        "ug-27"
       ]
     },
     {
@@ -461,16 +439,16 @@
       "prompt": "How would you explain a technical idea to someone without a CS background?",
       "sampleAnswer": "State the audience goal first, use analogy, then one concrete example, and check understanding. Example: explaining caching as “keeping frequently used notes on your desk instead of walking to the library.”\n\nMention avoiding unnecessary jargon and visual aids. Communication skill is explicitly valued in programme interviews conducted in English.",
       "keywords": [
-        "teamwork",
-        "communication",
-        "explain",
-        "technical",
-        "idea",
-        "someone"
+        "analogy",
+        "jargon",
+        "audience",
+        "simple",
+        "example"
       ],
       "relatedKeys": [
-        "ug-24",
-        "ug-23"
+        "ug-26",
+        "ug-27",
+        "ug-28"
       ]
     },
     {
@@ -479,12 +457,11 @@
       "prompt": "Tell me about a time you faced a significant challenge and how you responded.",
       "sampleAnswer": "Pick an academic or project challenge with stakes. STAR: diagnose the obstacle, actions taken (plan, seek help, practice), measurable result, and emotional regulation.\n\nEnd with a lasting habit change. Authenticity beats dramatic fiction; interviewers probe follow-ups.",
       "keywords": [
-        "behavioural",
-        "STAR",
-        "tell",
-        "time",
-        "faced",
-        "significant"
+        "challenge",
+        "persistence",
+        "learned",
+        "plan",
+        "help"
       ],
       "relatedKeys": [
         "ug-27",
@@ -498,17 +475,16 @@
       "prompt": "What are your greatest strengths and one area you are improving?",
       "sampleAnswer": "Choose strengths evidenced by stories (persistence in debugging, clear writing, maths). For improvement, pick a real, coachable area (public speaking, time estimates) and show actions already underway.\n\nNever disguise a strength as a fake weakness. Balance confidence with humility.",
       "keywords": [
-        "behavioural",
-        "STAR",
-        "greatest",
-        "strengths",
-        "one",
-        "area"
+        "strength",
+        "practice",
+        "feedback",
+        "weakness",
+        "communication"
       ],
       "relatedKeys": [
-        "ug-26",
         "ug-28",
-        "ug-29"
+        "ug-29",
+        "ug-39"
       ]
     },
     {
@@ -517,17 +493,16 @@
       "prompt": "Describe a time you showed leadership without necessarily having a formal title.",
       "sampleAnswer": "Leadership can mean organizing study groups, setting coding standards, unblocking teammates, or escalating a risk early. STAR with impact on others.\n\nTie to how you would contribute on campus (peer helpers, club officers). Admissions seek initiative, not only titles.",
       "keywords": [
-        "behavioural",
-        "STAR",
-        "describe",
-        "time",
-        "showed",
-        "leadership"
+        "leadership",
+        "initiative",
+        "organized",
+        "project",
+        "team"
       ],
       "relatedKeys": [
-        "ug-27",
         "ug-29",
-        "ug-26"
+        "ug-39",
+        "ug-23"
       ]
     },
     {
@@ -536,17 +511,16 @@
       "prompt": "Tell me about a failure or mistake and what you learned.",
       "sampleAnswer": "Own the mistake without over-apologizing. Explain cause analysis, repair actions, and prevention (checklists, tests, earlier feedback). Show growth mindset.\n\nAvoid blaming others or choosing a trivial “failure.” Interviewers use this to assess resilience and integrity.",
       "keywords": [
-        "behavioural",
-        "STAR",
-        "tell",
-        "failure",
         "mistake",
-        "learned"
+        "learned",
+        "responsibility",
+        "feedback",
+        "retry"
       ],
       "relatedKeys": [
-        "ug-28",
-        "ug-27",
-        "ug-26"
+        "ug-39",
+        "ug-23",
+        "ug-24"
       ]
     },
     {
@@ -555,12 +529,11 @@
       "prompt": "What does academic honesty mean to you in programming courses?",
       "sampleAnswer": "Define honesty as submitting work that reflects your own understanding, properly acknowledging collaboration and sources, and following course collaboration policies.\n\nDiscuss grey areas: discussing approaches vs copying code; using generative AI for explanation vs submitting AI code as your own. Affirm you would ask instructors when unsure.",
       "keywords": [
-        "ethics",
-        "academic",
-        "integrity",
+        "citation",
         "honesty",
-        "mean",
-        "programming"
+        "plagiarism",
+        "credit",
+        "collaboration"
       ],
       "relatedKeys": [
         "ug-31",
@@ -574,17 +547,16 @@
       "prompt": "If a classmate asked to copy your assignment code the night before the deadline, what would you do?",
       "sampleAnswer": "Refuse copying, offer legitimate help (explain concepts, point to docs, suggest meeting the TA), and acknowledge deadline pressure without enabling misconduct.\n\nExplain long-term harm: they miss learning, both risk disciplinary action, and trust erodes. Show empathy plus firmness—maturity signal for admissions.",
       "keywords": [
-        "ethics",
-        "academic",
-        "integrity",
-        "classmate",
-        "asked",
-        "copy"
+        "deadline",
+        "honesty",
+        "explain",
+        "refuse",
+        "help"
       ],
       "relatedKeys": [
-        "ug-30",
         "ug-32",
-        "ug-33"
+        "ug-33",
+        "ug-30"
       ]
     },
     {
@@ -593,17 +565,16 @@
       "prompt": "How should students use generative AI tools ethically when learning to code?",
       "sampleAnswer": "Propose a personal policy: use AI to explain errors and suggest approaches, but re-implement and understand every line you submit; never paste solutions blindly; disclose when required.\n\nCompare to calculator use in maths: helpful after you know the method. Mention verifying outputs because AI can be wrong. Align with course rules first.",
       "keywords": [
-        "ethics",
-        "academic",
-        "integrity",
-        "students",
-        "use",
-        "generative"
+        "citation",
+        "assistant",
+        "disclosure",
+        "learning",
+        "honesty"
       ],
       "relatedKeys": [
-        "ug-31",
         "ug-33",
-        "ug-30"
+        "ug-30",
+        "ug-31"
       ]
     },
     {
@@ -612,17 +583,16 @@
       "prompt": "Give an example of a technology ethics issue that concerns you (privacy, bias, misinformation, etc.).",
       "sampleAnswer": "Pick one issue and explain stakeholders and harm concretely (e.g., facial recognition false matches). Suggest responsible design ideas (consent, audit, human oversight) at a level appropriate for UG applicants.\n\nShow you see CS as socio-technical, not only coding. Avoid partisan ranting; stay analytical.",
       "keywords": [
-        "ethics",
-        "academic",
-        "integrity",
-        "give",
-        "example",
-        "technology"
+        "privacy",
+        "bias",
+        "misinformation",
+        "consent",
+        "data"
       ],
       "relatedKeys": [
-        "ug-32",
+        "ug-30",
         "ug-31",
-        "ug-30"
+        "ug-32"
       ]
     },
     {
@@ -631,17 +601,16 @@
       "prompt": "How do you usually prepare for a difficult exam or timed problem set?",
       "sampleAnswer": "Describe a concrete system: spaced practice, past papers under time, error log of mistakes, teaching a peer, sleep and schedule buffers.\n\nShow metacognition—adjusting strategy after a midterm. Time management stories matter for demanding CS curricula.",
       "keywords": [
-        "Problem-Solving",
-        "usually",
-        "prepare",
-        "difficult",
-        "exam",
-        "timed"
+        "practice",
+        "outline",
+        "timing",
+        "questions",
+        "exam"
       ],
       "relatedKeys": [
-        "ug-19",
-        "ug-18",
-        "ug-17"
+        "ug-37",
+        "ug-07",
+        "ug-08"
       ]
     },
     {
@@ -650,16 +619,16 @@
       "prompt": "What questions do you have for us about the CS programme?",
       "sampleAnswer": "Prepare 2–3 genuine questions: first-year project opportunities, research exposure for UGs, exchange, advising, or how students choose specialisms. Avoid questions answered clearly on the homepage.\n\nGood questions show maturity and help you evaluate fit. Thank the interviewer and listen actively.",
       "keywords": [
-        "motivation",
-        "fit",
-        "questions",
-        "have",
-        "programme"
+        "course",
+        "research",
+        "internship",
+        "faculty",
+        "support"
       ],
       "relatedKeys": [
+        "ug-38",
         "ug-40",
-        "ug-05",
-        "ug-04"
+        "ug-01"
       ]
     },
     {
@@ -668,17 +637,16 @@
       "prompt": "What is the internet at a high level, and what happens roughly when you visit a website?",
       "sampleAnswer": "Explain layered picture simply: your device sends a request for a page; DNS helps find the server address; HTTP(S) fetches content; the browser renders HTML/CSS/JS.\n\nAcknowledge simplification. Relating daily experience to systems concepts shows CS curiosity valued in admissions.",
       "keywords": [
-        "CS",
-        "fundamentals",
-        "internet",
-        "high",
-        "level",
-        "happens"
+        "server",
+        "browser",
+        "packet",
+        "website",
+        "request"
       ],
       "relatedKeys": [
-        "ug-15",
-        "ug-14",
-        "ug-13"
+        "ug-10",
+        "ug-11",
+        "ug-12"
       ]
     },
     {
@@ -687,17 +655,16 @@
       "prompt": "How do you balance academics with extracurricular activities?",
       "sampleAnswer": "Give a scheduling method (weekly plan, priority matrix, saying no). Share a time conflict you resolved and the outcome for grades and commitments.\n\nProgrammes want contributors who can sustain workload—not burnout stories without coping strategies.",
       "keywords": [
-        "extracurriculars",
-        "projects",
-        "balance",
-        "academics",
-        "extracurricular",
-        "activities"
+        "schedule",
+        "priority",
+        "rest",
+        "club",
+        "study"
       ],
       "relatedKeys": [
-        "ug-22",
-        "ug-21",
-        "ug-20"
+        "ug-07",
+        "ug-08",
+        "ug-09"
       ]
     },
     {
@@ -706,17 +673,16 @@
       "prompt": "If admitted, how would you use your first year to build a strong CS foundation?",
       "sampleAnswer": "Outline concrete plan: master programming fundamentals, discrete maths, and study skills; join a coding club; complete small projects each term; seek help early via office hours.\n\nMention exploring subfields through seminars without over-specializing too soon. Shows intentionality aligned with scheme foundations.",
       "keywords": [
-        "academic",
-        "preparation",
-        "admitted",
-        "use",
-        "first",
-        "year"
+        "foundation",
+        "mathematics",
+        "programming",
+        "project",
+        "course"
       ],
       "relatedKeys": [
-        "ug-09",
-        "ug-08",
-        "ug-07"
+        "ug-40",
+        "ug-01",
+        "ug-02"
       ]
     },
     {
@@ -725,17 +691,16 @@
       "prompt": "Describe a time you received critical feedback. What did you change?",
       "sampleAnswer": "STAR: feedback content, initial reaction managed professionally, specific changes (code style, presentation clarity, maths practice), and improved later result.\n\nEmphasize gratitude and iteration—key for studio/project-based CS learning.",
       "keywords": [
-        "behavioural",
-        "STAR",
-        "describe",
-        "time",
-        "received",
-        "critical"
+        "feedback",
+        "practice",
+        "improvement",
+        "specific",
+        "changed"
       ],
       "relatedKeys": [
-        "ug-29",
-        "ug-28",
-        "ug-27"
+        "ug-23",
+        "ug-24",
+        "ug-25"
       ]
     },
     {
@@ -744,17 +709,16 @@
       "prompt": "What do you hope to contribute to the CS student community?",
       "sampleAnswer": "Name concrete contributions: peer study groups, diversity in STEM outreach, open-source, hackathon organizing, or documenting labs for juniors.\n\nTie contributions to skills you already practice. Admissions look for mutual benefit—what you gain and what you give.",
       "keywords": [
-        "motivation",
-        "fit",
-        "hope",
-        "contribute",
-        "student",
-        "community"
+        "community",
+        "tutoring",
+        "mentoring",
+        "club",
+        "project"
       ],
       "relatedKeys": [
-        "ug-35",
-        "ug-05",
-        "ug-04"
+        "ug-01",
+        "ug-02",
+        "ug-03"
       ]
     }
   ]

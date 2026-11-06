@@ -7,16 +7,16 @@
       "prompt": "Why backend engineering, and what problems do you enjoy owning?",
       "sampleAnswer": "Describe preference for APIs, data integrity, reliability, and scale. Cite a service you built (auth, payments, data pipeline) and the hard part (consistency, latency).\n\nAlign with the team’s domain (commerce, messaging, infra).",
       "keywords": [
-        "motivation",
-        "fit",
-        "backend",
-        "engineering",
-        "problems",
-        "enjoy"
+        "reliability",
+        "ownership",
+        "latency",
+        "scale",
+        "backend"
       ],
       "relatedKeys": [
+        "be-02",
         "be-36",
-        "be-40"
+        "be-38"
       ]
     },
     {
@@ -25,17 +25,16 @@
       "prompt": "Tell me about a time you improved reliability or reduced incidents for a service.",
       "sampleAnswer": "STAR with SLOs, before/after error rates or MTTR, and concrete changes (timeouts, retries with jitter, circuit breakers, better alerts).\n\nShow on-call empathy.",
       "keywords": [
-        "behavioural",
-        "STAR",
-        "tell",
-        "time",
-        "improved",
-        "reliability"
+        "incident",
+        "reliability",
+        "mitigation",
+        "rollback",
+        "oncall"
       ],
       "relatedKeys": [
-        "be-03",
-        "be-31",
-        "be-38"
+        "be-36",
+        "be-38",
+        "be-40"
       ]
     },
     {
@@ -44,17 +43,16 @@
       "prompt": "Describe a time you had to make a data model or API change that affected clients.",
       "sampleAnswer": "Explain versioning strategy, backwards compatibility, migration plan, communication, and monitoring during rollout.\n\nContract stewardship is core backend craft.",
       "keywords": [
-        "behavioural",
-        "STAR",
-        "describe",
-        "time",
-        "had",
-        "make"
+        "migration",
+        "client",
+        "version",
+        "compatibility",
+        "contract"
       ],
       "relatedKeys": [
-        "be-02",
-        "be-31",
-        "be-38"
+        "be-04",
+        "be-05",
+        "be-06"
       ]
     },
     {
@@ -63,12 +61,11 @@
       "prompt": "How do you design a REST API for pagination?",
       "sampleAnswer": "Prefer cursor/keyset pagination over fragile offset for large datasets. Define limit, opaque cursor, stable sort keys, and consistent filters.\n\nDiscuss total counts as optional expensive fields.",
       "keywords": [
-        "backend",
-        "tech",
-        "design",
-        "rest",
-        "api",
-        "pagination"
+        "pagination",
+        "cursor",
+        "offset",
+        "limit",
+        "consistent"
       ],
       "relatedKeys": [
         "be-05",
@@ -82,17 +79,16 @@
       "prompt": "REST vs gRPC vs GraphQL—when would you choose each on the backend?",
       "sampleAnswer": "REST: broad ecosystem, HTTP caching. gRPC: efficient internal service meshes, strong schemas. GraphQL: flexible client queries with cost controls.\n\nDiscuss operational complexity and team skills.",
       "keywords": [
-        "backend",
-        "tech",
-        "rest",
         "grpc",
         "graphql",
-        "choose"
+        "protobuf",
+        "latency",
+        "schema"
       ],
       "relatedKeys": [
-        "be-04",
         "be-06",
-        "be-07"
+        "be-07",
+        "be-28"
       ]
     },
     {
@@ -101,17 +97,16 @@
       "prompt": "What are webhooks, and how do you make webhook delivery reliable?",
       "sampleAnswer": "Webhooks notify external systems of events via HTTP callbacks. Reliability: retries with backoff, signatures for authenticity, idempotent receivers, and dead-letter queues.\n\nDocument delivery guarantees clearly.",
       "keywords": [
-        "backend",
-        "tech",
-        "webhooks",
-        "make",
         "webhook",
-        "delivery"
+        "retry",
+        "signature",
+        "delivery",
+        "idempotent"
       ],
       "relatedKeys": [
-        "be-05",
         "be-07",
-        "be-04"
+        "be-28",
+        "be-30"
       ]
     },
     {
@@ -120,17 +115,16 @@
       "prompt": "Explain idempotency keys for payment or mutating APIs.",
       "sampleAnswer": "Client sends a unique key per logical operation; server stores first result and replays it on retries—preventing double charges after timeouts.\n\nCover key TTL, concurrency, and scope (per user/endpoint).",
       "keywords": [
-        "backend",
-        "tech",
-        "explain",
         "idempotency",
-        "keys",
-        "payment"
+        "payment",
+        "retry",
+        "duplicate",
+        "key"
       ],
       "relatedKeys": [
-        "be-06",
-        "be-05",
-        "be-04"
+        "be-28",
+        "be-30",
+        "be-03"
       ]
     },
     {
@@ -139,12 +133,11 @@
       "prompt": "How do you approach database schema design for a new feature?",
       "sampleAnswer": "Start from access patterns, entities/relationships, keys/indexes, constraints, and migration strategy. Consider read/write ratio and future scale.\n\nNormalize first; denormalize with measured cause.",
       "keywords": [
-        "databases",
-        "storage",
-        "approach",
-        "database",
         "schema",
-        "design"
+        "normalization",
+        "migration",
+        "constraint",
+        "index"
       ],
       "relatedKeys": [
         "be-09",
@@ -158,17 +151,16 @@
       "prompt": "Explain isolation levels and a scenario for choosing one.",
       "sampleAnswer": "Read committed vs repeatable read vs serializable trade concurrency for anomaly prevention. Example: inventory reservation may need stronger isolation or careful locking.\n\nMention ORM defaults can surprise.",
       "keywords": [
-        "databases",
-        "storage",
-        "explain",
         "isolation",
-        "levels",
-        "scenario"
+        "serializable",
+        "phantom",
+        "transaction",
+        "repeatable"
       ],
       "relatedKeys": [
-        "be-08",
         "be-10",
-        "be-11"
+        "be-11",
+        "be-12"
       ]
     },
     {
@@ -177,17 +169,16 @@
       "prompt": "Optimistic vs pessimistic locking—when each?",
       "sampleAnswer": "Optimistic: version checks, good for low contention. Pessimistic: row locks, good for high contention critical sections. Ticketing/seat booking often discussed.\n\nExplain user experience under conflicts.",
       "keywords": [
-        "databases",
-        "storage",
         "optimistic",
         "pessimistic",
-        "locking",
-        "each"
+        "lock",
+        "conflict",
+        "version"
       ],
       "relatedKeys": [
-        "be-09",
         "be-11",
-        "be-08"
+        "be-12",
+        "be-13"
       ]
     },
     {
@@ -196,17 +187,16 @@
       "prompt": "How do connection pools work, and what failures occur when misconfigured?",
       "sampleAnswer": "Pools reuse DB connections to avoid setup overhead. Too small → latency; too large → DB overload. Discuss timeouts, leak detection, and serverless challenges.\n\nRelate to production incident if possible.",
       "keywords": [
-        "databases",
-        "storage",
+        "pool",
+        "timeout",
         "connection",
-        "pools",
-        "work",
-        "failures"
+        "exhaustion",
+        "latency"
       ],
       "relatedKeys": [
-        "be-10",
         "be-12",
-        "be-09"
+        "be-13",
+        "be-35"
       ]
     },
     {
@@ -215,17 +205,16 @@
       "prompt": "SQL vs NoSQL for a high-write event log with simple key lookups?",
       "sampleAnswer": "Often append-optimized stores or partitioned logs; relational may still work at moderate scale with careful indexing. Emphasize query patterns and retention.\n\nAvoid absolutism; propose measurement.",
       "keywords": [
-        "databases",
-        "storage",
-        "sql",
         "nosql",
-        "high-write",
-        "event"
+        "relational",
+        "event",
+        "lookup",
+        "write"
       ],
       "relatedKeys": [
-        "be-11",
         "be-13",
-        "be-10"
+        "be-35",
+        "be-08"
       ]
     },
     {
@@ -234,17 +223,16 @@
       "prompt": "How do you design indexes for a slow query?",
       "sampleAnswer": "Read EXPLAIN, match WHERE/JOIN/ORDER BY columns, consider composite index order, selectivity, and write amplification. Cover covering indexes and bloat.\n\nValidate with production-like data volumes.",
       "keywords": [
-        "databases",
-        "storage",
-        "design",
-        "indexes",
-        "slow",
-        "query"
+        "index",
+        "selectivity",
+        "covering",
+        "query",
+        "explain"
       ],
       "relatedKeys": [
-        "be-12",
-        "be-11",
-        "be-10"
+        "be-35",
+        "be-08",
+        "be-09"
       ]
     },
     {
@@ -253,12 +241,11 @@
       "prompt": "Design a URL shortener focused on backend concerns.",
       "sampleAnswer": "ID generation (hash vs counter + base62), datastore, cache, redirect path, analytics pipeline, and abuse controls. Discuss collision handling and multi-region.\n\nCapacity estimates optional but valued.",
       "keywords": [
-        "systems",
-        "architecture",
-        "design",
-        "url",
         "shortener",
-        "focused"
+        "redirect",
+        "cache",
+        "collision",
+        "shard"
       ],
       "relatedKeys": [
         "be-15",
@@ -272,17 +259,16 @@
       "prompt": "Design a rate limiter for a multi-node API tier.",
       "sampleAnswer": "Token bucket/sliding window in Redis, consistent keying, local+global limits, and fail-open vs fail-closed policy. Discuss clock skew and fairness.\n\nReturn standard 429 semantics.",
       "keywords": [
-        "systems",
-        "architecture",
-        "design",
-        "rate",
         "limiter",
-        "multi-node"
+        "bucket",
+        "distributed",
+        "fairness",
+        "quota"
       ],
       "relatedKeys": [
-        "be-14",
         "be-16",
-        "be-17"
+        "be-17",
+        "be-18"
       ]
     },
     {
@@ -291,17 +277,16 @@
       "prompt": "How would you design a distributed task scheduler?",
       "sampleAnswer": "Requirements: delayed jobs, retries, at-least-once execution, leases/visibility timeouts, and dead letters. Discuss partitioning and exactly-once illusions.\n\nMention idempotent consumers.",
       "keywords": [
-        "systems",
-        "architecture",
-        "design",
-        "distributed",
-        "task",
-        "scheduler"
+        "scheduler",
+        "queue",
+        "retry",
+        "lease",
+        "worker"
       ],
       "relatedKeys": [
-        "be-15",
         "be-17",
-        "be-14"
+        "be-18",
+        "be-21"
       ]
     },
     {
@@ -310,17 +295,16 @@
       "prompt": "Explain caching strategies (cache-aside, write-through) and invalidation pitfalls.",
       "sampleAnswer": "Cache-aside common for read-heavy apps; write-through/write-behind variants. Pitfalls: stampede, stale data, thundering herd—mitigate with locks, jittered TTL, and explicit invalidation.\n\nMeasure hit rate.",
       "keywords": [
-        "systems",
-        "architecture",
-        "explain",
-        "caching",
-        "strategies",
-        "cache-aside"
+        "cache",
+        "invalidation",
+        "ttl",
+        "stale",
+        "aside"
       ],
       "relatedKeys": [
-        "be-16",
         "be-18",
-        "be-15"
+        "be-21",
+        "be-22"
       ]
     },
     {
@@ -329,17 +313,16 @@
       "prompt": "When do you introduce a message queue between services?",
       "sampleAnswer": "Use queues to absorb spikes, decouple producers/consumers, and enable async workflows. Discuss ordering, poison messages, and dual-write problems.\n\nNot every sync call should become async.",
       "keywords": [
-        "systems",
-        "architecture",
-        "introduce",
-        "message",
         "queue",
-        "between"
+        "async",
+        "decoupling",
+        "retry",
+        "consumer"
       ],
       "relatedKeys": [
-        "be-17",
-        "be-16",
-        "be-15"
+        "be-21",
+        "be-22",
+        "be-29"
       ]
     },
     {
@@ -348,17 +331,16 @@
       "prompt": "How do you define SLIs/SLOs for a user-facing API?",
       "sampleAnswer": "Pick user-centric SLIs (availability, latency percentiles, error ratio). Set SLOs with error budgets guiding release velocity. Alert on symptoms, not only causes.\n\nGive example numbers thoughtfully.",
       "keywords": [
-        "reliability",
-        "scalability",
-        "define",
-        "slis",
-        "slos",
-        "user-facing"
+        "latency",
+        "availability",
+        "error",
+        "budget",
+        "objective"
       ],
       "relatedKeys": [
         "be-20",
-        "be-21",
-        "be-22"
+        "be-31",
+        "be-32"
       ]
     },
     {
@@ -367,17 +349,16 @@
       "prompt": "Explain retry strategies and why naive retries are dangerous.",
       "sampleAnswer": "Use capped exponential backoff with jitter; only retry idempotent/safe operations; respect Retry-After; add circuit breakers. Naive retries amplify outages.\n\nCorrelate with load-shedding.",
       "keywords": [
-        "reliability",
-        "scalability",
-        "explain",
         "retry",
-        "strategies",
-        "naive"
+        "backoff",
+        "jitter",
+        "timeout",
+        "storm"
       ],
       "relatedKeys": [
-        "be-19",
-        "be-21",
-        "be-22"
+        "be-31",
+        "be-32",
+        "be-19"
       ]
     },
     {
@@ -386,17 +367,16 @@
       "prompt": "How do you approach horizontal sharding of a relational database?",
       "sampleAnswer": "Choose shard key by access pattern, avoid hotspots, plan cross-shard queries carefully, and design resharding strategy. Discuss lookup services and secondary indexes.\n\nStart with vertical + read replicas if sufficient.",
       "keywords": [
-        "reliability",
-        "scalability",
-        "approach",
-        "horizontal",
-        "sharding",
-        "relational"
+        "shard",
+        "rebalance",
+        "hotspot",
+        "relational",
+        "key"
       ],
       "relatedKeys": [
-        "be-20",
         "be-22",
-        "be-19"
+        "be-29",
+        "be-33"
       ]
     },
     {
@@ -405,16 +385,16 @@
       "prompt": "What is backpressure, and how do you implement it in a pipeline?",
       "sampleAnswer": "Backpressure signals consumers are overrun—slow producers, buffer with limits, drop/sample with policy, or autoscale. Unbounded queues hide problems until OOM.\n\nExample: log ingestion.",
       "keywords": [
-        "reliability",
-        "scalability",
         "backpressure",
-        "implement",
-        "pipeline"
+        "queue",
+        "bounded",
+        "slow",
+        "consumer"
       ],
       "relatedKeys": [
-        "be-21",
-        "be-20",
-        "be-19"
+        "be-29",
+        "be-33",
+        "be-34"
       ]
     },
     {
@@ -423,17 +403,15 @@
       "prompt": "How do you store passwords and design authentication sessions securely?",
       "sampleAnswer": "Hash passwords with modern KDFs (Argon2/bcrypt), never reverse; use secure cookies/httpOnly; rotate refresh tokens; protect against CSRF/XSS; consider MFA.\n\nDiscuss OAuth when integrating IdPs.",
       "keywords": [
-        "security",
-        "store",
-        "passwords",
-        "design",
-        "authentication",
-        "sessions"
+        "password",
+        "hash",
+        "session",
+        "cookie",
+        "token"
       ],
       "relatedKeys": [
         "be-24",
-        "be-25",
-        "be-35"
+        "be-25"
       ]
     },
     {
@@ -442,17 +420,14 @@
       "prompt": "What is the OWASP Top vulnerability class you watch for in APIs?",
       "sampleAnswer": "Discuss broken access control / IDOR: always authorize on resource ownership server-side. Mention injection, SSRF, and excessive data exposure.\n\nGive a concrete check you perform in code review.",
       "keywords": [
-        "security",
-        "owasp",
-        "top",
-        "vulnerability",
-        "class",
-        "watch"
+        "injection",
+        "authentication",
+        "authorization",
+        "exposure"
       ],
       "relatedKeys": [
-        "be-23",
         "be-25",
-        "be-35"
+        "be-23"
       ]
     },
     {
@@ -461,16 +436,15 @@
       "prompt": "How do you securely handle secrets in services?",
       "sampleAnswer": "Use a secret manager, short-lived credentials, least privilege IAM, no secrets in git/images, and rotation. Audit access.\n\nContrast with .env anti-patterns in production.",
       "keywords": [
-        "security",
-        "securely",
-        "handle",
-        "secrets",
-        "services"
+        "secret",
+        "vault",
+        "rotation",
+        "environment",
+        "credential"
       ],
       "relatedKeys": [
-        "be-24",
         "be-23",
-        "be-35"
+        "be-24"
       ]
     },
     {
@@ -479,12 +453,11 @@
       "prompt": "How would you efficiently compute top-k frequently occurring events from a large log?",
       "sampleAnswer": "Hash counting if fits memory; otherwise count-min sketch / external sort / MapReduce style aggregation. Discuss accuracy trade-offs.\n\nRelate to analytics pipelines.",
       "keywords": [
-        "algorithms",
-        "complexity",
-        "efficiently",
-        "compute",
-        "top-k",
-        "frequently"
+        "heap",
+        "frequency",
+        "stream",
+        "count",
+        "memory"
       ],
       "relatedKeys": [
         "be-27",
@@ -497,16 +470,15 @@
       "prompt": "Explain consistent hashing and why it helps rebalancing.",
       "sampleAnswer": "Consistent hashing maps keys and nodes onto a ring so node add/remove moves fewer keys than modulo hashing. Virtual nodes improve balance.\n\nUsed in caches and distributed stores.",
       "keywords": [
-        "algorithms",
-        "complexity",
-        "explain",
-        "consistent",
         "hashing",
-        "helps"
+        "rebalance",
+        "vnode",
+        "ring",
+        "consistent"
       ],
       "relatedKeys": [
-        "be-26",
-        "be-39"
+        "be-39",
+        "be-26"
       ]
     },
     {
@@ -515,17 +487,16 @@
       "prompt": "How do you design APIs to be backwards compatible?",
       "sampleAnswer": "Additive changes preferred; avoid removing/renaming fields; use explicit versioning when breaking; expand-contract migrations for data.\n\nContract tests with consumers.",
       "keywords": [
-        "backend",
-        "tech",
-        "design",
-        "apis",
-        "backwards",
-        "compatible"
+        "compatibility",
+        "version",
+        "deprecation",
+        "contract",
+        "client"
       ],
       "relatedKeys": [
-        "be-34",
-        "be-07",
-        "be-06"
+        "be-30",
+        "be-03",
+        "be-04"
       ]
     },
     {
@@ -534,17 +505,16 @@
       "prompt": "Explain transactions and when to use sagas instead of a single distributed transaction.",
       "sampleAnswer": "Local ACID transactions within one DB are ideal. Cross-service: sagas with compensating actions, because 2PC is operationally heavy.\n\nPayment + inventory example.",
       "keywords": [
-        "databases",
-        "storage",
-        "explain",
-        "transactions",
-        "use",
-        "sagas"
+        "saga",
+        "transaction",
+        "compensation",
+        "rollback",
+        "consistency"
       ],
       "relatedKeys": [
         "be-33",
-        "be-13",
-        "be-12"
+        "be-34",
+        "be-37"
       ]
     },
     {
@@ -553,17 +523,16 @@
       "prompt": "Design a simplified payment authorization and capture flow—what can go wrong?",
       "sampleAnswer": "Idempotent authorize/capture, ledger entries, reconciliation, retries, and partial failures. Double-entry thinking helps auditability.\n\nEmphasize exactly-once effects via idempotency + ledger.",
       "keywords": [
-        "systems",
-        "architecture",
-        "design",
-        "simplified",
-        "payment",
-        "authorization"
+        "authorization",
+        "capture",
+        "idempotency",
+        "refund",
+        "duplicate"
       ],
       "relatedKeys": [
-        "be-37",
-        "be-18",
-        "be-17"
+        "be-03",
+        "be-04",
+        "be-05"
       ]
     },
     {
@@ -572,17 +541,16 @@
       "prompt": "Tell me about a difficult production debugging story involving multiple services.",
       "sampleAnswer": "STAR using traces/logs/metrics across boundaries, hypothesis, mitigation, fix, and cross-team communication.\n\nDistributed debugging skill signal.",
       "keywords": [
-        "behavioural",
-        "STAR",
-        "tell",
-        "difficult",
-        "production",
-        "debugging"
+        "tracing",
+        "logs",
+        "correlation",
+        "latency",
+        "dependency"
       ],
       "relatedKeys": [
-        "be-38",
-        "be-03",
-        "be-02"
+        "be-32",
+        "be-19",
+        "be-20"
       ]
     },
     {
@@ -591,17 +559,16 @@
       "prompt": "How do you load test a service before a major launch?",
       "sampleAnswer": "Define scenarios and SLOs, generate realistic traffic mixes, ramp gradually, watch saturation points, and fix bottlenecks iteratively. Include failure injection if mature.\n\nShare capacity numbers carefully.",
       "keywords": [
-        "reliability",
-        "scalability",
         "load",
-        "test",
-        "service",
-        "before"
+        "latency",
+        "throughput",
+        "saturation",
+        "bottleneck"
       ],
       "relatedKeys": [
-        "be-22",
-        "be-21",
-        "be-20"
+        "be-19",
+        "be-20",
+        "be-31"
       ]
     },
     {
@@ -610,17 +577,16 @@
       "prompt": "What is change data capture (CDC), and when is it useful?",
       "sampleAnswer": "CDC streams DB changes to downstream search indexes/analytics without dual writes. Discuss ordering, schema evolution, and lag.\n\nUseful for event-driven architectures.",
       "keywords": [
-        "databases",
-        "storage",
-        "change",
-        "data",
         "capture",
-        "cdc"
+        "stream",
+        "replication",
+        "outbox",
+        "change"
       ],
       "relatedKeys": [
-        "be-29",
-        "be-13",
-        "be-12"
+        "be-34",
+        "be-37",
+        "be-14"
       ]
     },
     {
@@ -629,17 +595,16 @@
       "prompt": "How do you handle long-running requests or report generation?",
       "sampleAnswer": "Prefer async job + polling/webhook for completion; set timeouts on sync paths; store results in object storage; authorize download links.\n\nPrevents worker pileups.",
       "keywords": [
-        "backend",
-        "tech",
-        "handle",
-        "long-running",
-        "requests",
-        "report"
+        "async",
+        "report",
+        "queue",
+        "worker",
+        "timeout"
       ],
       "relatedKeys": [
-        "be-28",
-        "be-07",
-        "be-06"
+        "be-37",
+        "be-14",
+        "be-15"
       ]
     },
     {
@@ -648,17 +613,16 @@
       "prompt": "Explain SQL injection and how parameterized queries prevent it.",
       "sampleAnswer": "Untrusted input concatenated into SQL alters query structure. Parameter binding separates code from data. Also least-privilege DB users and input validation.\n\nORM ≠ automatic safety if raw SQL is used carelessly.",
       "keywords": [
-        "security",
-        "explain",
-        "sql",
         "injection",
         "parameterized",
-        "queries"
+        "query",
+        "prepared",
+        "statement"
       ],
       "relatedKeys": [
-        "be-25",
-        "be-24",
-        "be-23"
+        "be-08",
+        "be-09",
+        "be-10"
       ]
     },
     {
@@ -667,14 +631,14 @@
       "prompt": "Which backend domain are you deepest in—data stores, APIs, or distributed systems—and what is your evidence?",
       "sampleAnswer": "Pick one with metrics and architecture decisions you owned. Name a growth area and how you learn (postmortems, books, labs).\n\nCalibration question for interviewers.",
       "keywords": [
-        "motivation",
-        "fit",
-        "backend",
-        "domain",
-        "deepest",
-        "data"
+        "datastore",
+        "distributed",
+        "latency",
+        "scale",
+        "evidence"
       ],
       "relatedKeys": [
+        "be-38",
         "be-40",
         "be-01"
       ]
@@ -685,17 +649,16 @@
       "prompt": "How would you design search autocomplete backend components?",
       "sampleAnswer": "Prefix indexes/tries, caching popular prefixes, ranking, and freshness updates. Discuss personalization and abuse (scraping).\n\nLatency budgets are tight.",
       "keywords": [
-        "systems",
-        "architecture",
-        "design",
-        "search",
         "autocomplete",
-        "backend"
+        "prefix",
+        "trie",
+        "cache",
+        "suggestion"
       ],
       "relatedKeys": [
-        "be-30",
-        "be-18",
-        "be-17"
+        "be-14",
+        "be-15",
+        "be-16"
       ]
     },
     {
@@ -704,16 +667,15 @@
       "prompt": "Describe a time you said no to a feature request for reliability or security reasons.",
       "sampleAnswer": "Explain risk, proposed safer alternatives, stakeholder management, and eventual outcome. Courage + communication.\n\nError-budget thinking helps.",
       "keywords": [
-        "behavioural",
-        "STAR",
-        "describe",
-        "time",
-        "said",
-        "feature"
+        "reliability",
+        "security",
+        "tradeoff",
+        "stakeholder",
+        "risk"
       ],
       "relatedKeys": [
-        "be-31",
-        "be-03",
+        "be-40",
+        "be-01",
         "be-02"
       ]
     },
@@ -723,16 +685,15 @@
       "prompt": "How do you find median latency from a large stream of request timings with limited memory?",
       "sampleAnswer": "Exact: external selection or two heaps for streaming median. Approximate: t-digest/HDR histograms common in metrics systems.\n\nConnect algorithms to SRE dashboards.",
       "keywords": [
-        "algorithms",
-        "complexity",
-        "find",
         "median",
-        "latency",
-        "large"
+        "quantile",
+        "reservoir",
+        "percentile",
+        "latency"
       ],
       "relatedKeys": [
-        "be-27",
-        "be-26"
+        "be-26",
+        "be-27"
       ]
     },
     {
@@ -741,16 +702,16 @@
       "prompt": "What questions do you have about our service’s SLOs, on-call, or data stores?",
       "sampleAnswer": "Ask about error budgets, incident frequency, primary databases, migration history, and local ownership boundaries. Shows operational seriousness.\n\nTailor to what you heard in the interview.",
       "keywords": [
-        "motivation",
-        "fit",
-        "questions",
-        "have",
-        "service",
-        "slos"
+        "oncall",
+        "objective",
+        "datastore",
+        "ownership",
+        "tooling"
       ],
       "relatedKeys": [
-        "be-36",
-        "be-01"
+        "be-01",
+        "be-02",
+        "be-36"
       ]
     }
   ]
