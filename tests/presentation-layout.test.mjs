@@ -70,7 +70,7 @@ test("presentation geometry in the portal shell, responsive panels, unclipped pr
         assert.ok(geometry.canvas.w>=minCanvas,`Canvas below ${minCanvas}px: ${JSON.stringify(geometry)}`);
         assert.ok(geometry.workspace.bottom<=height,JSON.stringify(geometry));
         assert.ok(geometry.canvas.bottom<=height);
-        for(const name of ["Save","Save and publish","Export editable PPTX","Fullscreen preview","Undo","Redo","Add text","Add slide","Lesson settings","Quiz","Help"]){
+        for(const name of ["Save","Save and publish","Export editable PPTX","Fullscreen preview","Undo","Redo","Add text","Add slide","AI Slide Assistant","Lesson settings","Quiz","Help"]){
           const button=page.getByRole("button",{name,exact:true});
           const r=await button.boundingBox();
           assert.ok(r&&r.y>=0&&r.y+r.height<=height,`${width}: ${name} outside initial viewport`);
@@ -84,6 +84,8 @@ test("presentation geometry in the portal shell, responsive panels, unclipped pr
           return boxes.slice(1).map((r,i)=>r.x-boxes[i].right);
         }));
         assert.ok(gaps.every(gap=>gap>=6),`Crowded tool gaps: ${gaps}`);
+        const ribbonRows=await page.locator(".presentation-ribbon > *").evaluateAll(groups=>groups.map(group=>group.getBoundingClientRect().y));
+        assert.ok(ribbonRows.every(y=>y===ribbonRows[0]),`Ribbon groups must share one desktop row: ${ribbonRows}`);
       }else{
         assert.equal(await page.locator(".presentation-slides").getAttribute("open"),null);
         assert.equal(await page.locator(".presentation-properties").getAttribute("open"),null);
