@@ -210,6 +210,14 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
       <img className={styles.office} data-layer="office" src={roomArt.office} alt="" width={1280} height={720} />
       <img className={styles.interviewer} data-layer="interviewer" src={roomArt.interviewer[interviewerLook]} alt={interviewerAlt} width={interviewerBox[0]} height={interviewerBox[1]} />
       <img className={styles.table} data-layer="table" src={roomArt.table} alt="" width={1014} height={523} />
+      {(intro || asking) && <div className={styles.sceneAnswer}>
+        <div className={styles.answerLabel}>
+          <label htmlFor="v2-answer">{intro ? "Your introduction" : "Your answer"}</label>
+          {intro && <span className={styles.count} id="intro-word-count" data-tone={wordTone}>{words}/130</span>}
+        </div>
+        <textarea id="v2-answer" form="v2-desk" value={draft} disabled={busy} maxLength={4000} onChange={event => setDraft(event.target.value)} placeholder={intro ? "Type your introduction" : "Type your answer, or use the microphone"} />
+        {livePreview && <p className={styles.preview}><span>Preview</span>{livePreview}</p>}
+      </div>}
       <img className={styles.interviewee} data-layer="interviewee" src={roomArt.interviewee[intervieweeLook]} alt="" width={intervieweeBox[0]} height={intervieweeBox[1]} />
       <div className={styles.bubbleWrap} data-layer="question">
         <div className={styles.bubbleCard} tabIndex={0} role="region" aria-label={asking ? "Interview question" : intro ? "Introduction prompt" : "Interviewer"}>
@@ -223,19 +231,13 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
     {notice && <p className={`${styles.notice} ${styles.progressNote}`} role="status">{v2Notices[notice]}</p>}
     {(intro || asking) && <InterviewV2Dictation draft={draft} allowed={voiceOn} cancelRef={cancelDictation} insert={setDraft} onPreview={setLivePreview} onMic={listening => { micOn.current = listening; setHearing(listening); if (listening) stopSpeech(); }}>
       {speech => <div className={styles.composer}>
-        <form className={styles.desk} onSubmit={event => {
+        <form id="v2-desk" className={styles.desk} onSubmit={event => {
           event.preventDefault();
           const text = draft.trim();
           if (!text) return;
           void run(() => intro ? submitIntro({ id: view.session.id, revision: view.session.revision, text }) : submitAnswer({ id: view.session.id, revision: view.session.revision, text }));
         }}>
           <div className={styles.answerMain}>
-            <div className={styles.answerLabel}>
-              <label htmlFor="v2-answer">{intro ? "Your introduction" : "Your answer"}</label>
-              {intro && <span className={styles.count} id="intro-word-count" data-tone={wordTone}>{words}/130</span>}
-            </div>
-            <textarea id="v2-answer" value={draft} disabled={busy} maxLength={4000} onChange={event => setDraft(event.target.value)} placeholder={intro ? "Type your introduction" : "Type your answer, or use the microphone"} />
-            {livePreview && <p className={styles.preview}><span>Preview</span>{livePreview}</p>}
             <p className={styles.micNote} role="status">{speech.status}</p>
           </div>
           <div className={styles.toolCol}>

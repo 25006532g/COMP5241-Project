@@ -72,7 +72,7 @@ test("simulator v2 room keeps the side bubble, word count and end control", asyn
     src: node.getAttribute("src") || "",
   })));
   assert.deepEqual(layers.map(layer => layer.layer), ["office", "interviewer", "table", "interviewee", "question"]);
-  assert.deepEqual(layers.map(layer => layer.z), ["1", "2", "3", "4", "5"]);
+  assert.deepEqual(layers.map(layer => layer.z), ["1", "2", "3", "5", "6"]);
   assert.equal(layers[1].src, "/interviews-v2/room/01-interviewer-male.png");
   assert.equal(layers[3].src, "/interviews-v2/room/03-interviewee-male-back.png");
   await page.getByRole("button", { name: "Record" }).waitFor();
