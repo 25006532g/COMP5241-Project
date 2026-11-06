@@ -336,13 +336,8 @@ h1, h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; }
 .portal-topbar { height: 66px; position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: flex-end; gap: 18px; padding: 0 35px; border-bottom: 1px solid var(--line); background: rgba(245,243,237,.95); backdrop-filter: blur(12px); }
 .catalog-shortcut { color: var(--ink); font-size: 11px; font-weight: 800; text-decoration: none; }.portal-avatar { width: 33px; height: 33px; text-decoration: none; }
 .portal-page { width: min(1180px, 100%); margin: auto; padding: 45px 40px 75px; }
-.game-frame { position: relative; overflow: hidden; border: 1px solid var(--line); background: #080f1c; }
-.game-frame:fullscreen { width: 100vw; height: 100vh; border: 0; }
+.game-frame { overflow: hidden; border: 1px solid var(--line); background: #080f1c; }
 .game-frame iframe { display: block; width: 100%; min-height: 900px; border: 0; }
-.game-frame:fullscreen iframe { height: 100%; min-height: 0; }
-.game-frame-controls { position: absolute; z-index: 1; top: 14px; right: 14px; }
-.game-frame-controls .secondary-button { border-color: white; background: #080f1ce6; color: white; }
-.game-frame-error { position: absolute; z-index: 2; top: 14px; left: 14px; max-width: min(460px, calc(100% - 190px)); margin: 0; }
 .portal-heading { display: flex; align-items: end; justify-content: space-between; gap: 25px; margin-bottom: 30px; }
 .portal-heading h1, .course-banner h1, .lesson-article h1, .danger-page h1 { margin-bottom: 8px; font-size: clamp(34px, 4.5vw, 50px); line-height: 1.05; }
 .portal-heading p, .course-banner p { margin: 0; color: var(--muted); font-size: 12px; }

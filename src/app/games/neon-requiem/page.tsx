@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { GamePlayer } from "@/components/game-player";
 import { LearnerShell } from "@/components/learner-shell";
 
 export default function NeonRequiemPage() {
@@ -13,8 +12,8 @@ export default function NeonRequiemPage() {
         </div>
         <Link className="text-link" href="/dashboard">Back to dashboard</Link>
       </header>
-      <section aria-label="Neon Requiem learning game">
-        <GamePlayer />
+      <section className="game-frame" aria-label="Neon Requiem learning game">
+        <iframe title="Neon Requiem learning game" src="/games/neon-requiem.html" />
       </section>
     </div>
   </LearnerShell>;
