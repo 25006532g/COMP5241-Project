@@ -2,13 +2,15 @@ import { z } from "zod";
 
 export const SLIDE_WIDTH = 960;
 export const SLIDE_HEIGHT = 540;
+export const MAX_PRESENTATION_SLIDES = 30;
+export const MAX_TEXTBOX_CHARACTERS = 10000;
 export const PRESENTATION_FONTS = ["Arial", "Calibri", "Times New Roman", "Courier New", "Noto Sans CJK SC"] as const;
 const color = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 export const runStyleSchema = z.object({
   font: z.enum(PRESENTATION_FONTS), size: z.number().min(8).max(120),
   color, bold: z.boolean(), italic: z.boolean(), underline: z.boolean(),
 }).strict();
-export const textRunSchema = runStyleSchema.extend({ text: z.string().max(10000).refine(t => !/[\u0000-\u0008\u000b-\u001f]/u.test(t)) }).strict();
+export const textRunSchema = runStyleSchema.extend({ text: z.string().max(MAX_TEXTBOX_CHARACTERS).refine(t => !/[\u0000-\u0008\u000b-\u001f]/u.test(t)) }).strict();
 const box = {
   id: z.uuid(), x: z.number().min(0).max(960), y: z.number().min(0).max(540),
   w: z.number().min(1).max(960), h: z.number().min(1).max(540),
@@ -32,7 +34,7 @@ export const elementSchema = z.discriminatedUnion("type", [
     const px=e.x+x*Math.cos(radians)-y*Math.sin(radians),py=e.y+x*Math.sin(radians)+y*Math.cos(radians);
     if(px<-.01||px>960.01||py<-.01||py>540.01){ctx.addIssue({code:"custom",message:"The rotated object must fit within the slide."});break;}
   }
-  if (e.type === "text" && textOf(e).length > 10000) ctx.addIssue({code:"custom",message:"A textbox supports at most 10,000 characters."});
+  if (e.type === "text" && textOf(e).length > MAX_TEXTBOX_CHARACTERS) ctx.addIssue({code:"custom",message:"A textbox supports at most 10,000 characters."});
   if (e.type === "image" && Math.abs(e.w / e.h / e.ratio - 1) > .02) ctx.addIssue({code:"custom",message:"Keep the image aspect ratio."});
 });
 export const presentationSlideSchema = z.object({
@@ -41,7 +43,7 @@ export const presentationSlideSchema = z.object({
 }).strict();
 export const presentationSchema = z.object({
   schemaVersion: z.literal(1), width: z.literal(960), height: z.literal(540),
-  slides: z.array(presentationSlideSchema).min(1).max(30),
+  slides: z.array(presentationSlideSchema).min(1).max(MAX_PRESENTATION_SLIDES),
 }).strict().superRefine((doc,ctx) => {
   const ids = doc.slides.flatMap(s=>[s.id,...s.elements.map(e=>e.id)]);
   if(new Set(ids).size !== ids.length) ctx.addIssue({code:"custom",message:"Slide and object IDs must be unique."});
@@ -83,7 +85,9 @@ export function legacyPresentation(legacy:{title:string;audience:PresentationAut
       const style={...defaultRun,color:s.style?.color??defaultRun.color,size:s.style?.size??28};
       return {...newSlide(),title:s.title || "Untitled slide",background:s.style?.background??"#fffefa",elements:[
         {...newText(s.title),y:40,h:85,align:s.style?.align??"left",paragraphs:paragraphs(s.title,{...style,size:40,bold:true})},
-        {...newText(s.body),y:145,h:340,align:s.style?.align??"left",paragraphs:paragraphs(s.body,style)},
+        // Literal newlines in one run retain all imported text without turning
+        // a newline-heavy file into more than the existing 100 paragraphs.
+        {...newText(s.body),y:145,h:340,align:s.style?.align??"left",paragraphs:[{runs:[{...style,text:s.body}]}]},
       ]};
     }),
   }};

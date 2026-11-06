@@ -6,6 +6,42 @@ For a presentation-ready overview of features, design choices and prototype scre
 
 Track remaining work, blockers, acceptance criteria and verification updates in [IMPLEMENTATION_TRACKER.md](IMPLEMENTATION_TRACKER.md).
 
+## 6 November 2026 — retired Create lesson upload limits removed
+
+Legacy Title/Body authoring and PPTX slide imports now support **1–30 slides**
+and **10,000 characters per body/textbox**, matching the existing presentation
+editor. One/two-slide PPTX stays one/two slides, with no blank-slide padding.
+Text mode preserves every extracted character and grows its chunks as necessary
+to fit the parser's full 60,000-character budget within 30 slides. The old 3–6,
+400-character author-body and total 2,400-character import restrictions described
+in the historical 5 November entry below are superseded.
+
+**SQL adjustment (provided, not applied remotely):**
+[20261106090000_lesson_authoring_limits.sql](supabase/migrations/20261106090000_lesson_authoring_limits.sql).
+Apply only after the base schema and all earlier migrations in order, including
+`20261105093000_slide_authoring_ran.sql` followed by
+`20261105140000_presentations_ran.sql`. The latter renamed the legacy validator;
+the new SQL updates that function, **not** the presentation wrapper. It also
+expands only legacy slide-template resume bounds. It is locally tested twice
+idempotently, retains historical rows and service-only grants, and is intentionally
+not marked `_ran`.
+
+Remaining safeguards: 30 presentation slides, 10,000 characters per textbox,
+1.5 million document characters, geometry/text-fit and private-asset validation;
+4 MiB uploads, 60,000 raw parser characters per file, 12,000 per page/slide,
+60 parser units and existing archive/signature/security checks. Parser newline
+normalization is unchanged. Image-only slides still reject; originals are not
+retained or sent to AI. Large imports may need size/layout adjustments before
+canvas-fit validation permits saving. Standard/AI lessons remain **4–6 slides,
+400-character bodies and ten questions**; auth/privacy/AI safeguards are unchanged.
+
+Local Windows/Node 25.2.1 evidence: **44/44 focused offline tests**, scoped ESLint
+and direct offline TypeScript passed. Real upload actions, PGlite create/update/
+read/resume, migration prerequisites/idempotency and mounted keyboard/responsive
+preview-save-reopen flows are covered. See the tracker for exact commands,
+fixture corrections and cleanup. **Independent QA requested; not release approval.**
+No remote services, environment-file reads, deployment, connected tests or commit.
+
 ## 5 November 2026 — remaining CI fractional resize: exact UI publication readiness
 
 The original narrow test passed locally, but holding React's real scheduler

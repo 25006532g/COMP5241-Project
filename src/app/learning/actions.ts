@@ -6,7 +6,7 @@ import { accessibleLesson, currentUser, database, enrolledLesson, isAdmin, canEd
 import { coachReply } from "@/lib/openrouter";
 import { startGeneration } from "@/lib/lesson-generation-server";
 import { coachSlides, isPresentation, gradeQuiz, lessonSchema, versionEvidence, type VersionEvidence } from "@/lib/learning";
-import { presentationResumeSchema,resumeSchema, type ResumeState } from "@/lib/resume";
+import { resumeSchemaForLesson, type ResumeState } from "@/lib/resume";
 import { requireAiAccess } from "@/lib/ai-eligibility-server";
 import { FAMILIES, readMetadata, selectionFromForm, subjectSelection, validateCurriculumContent } from "@/lib/curriculum";
 import { authorLessonSchema, toStoredLesson,toPresentationLesson } from "@/lib/slide-lesson";
@@ -40,7 +40,7 @@ function creationAcknowledgement(data: { id?: unknown } | null, error: { code?: 
   // Only definite statement/schema rejections prove that retrying cannot duplicate a row.
   // Response-shaping and transport failures can happen after commit.
   if (error) {
-    if (!data && error.code === "23514") return { error: "The database rejected the lesson CHECK constraint (23514). Ask the administrator to check and apply 20261105093000_slide_authoring_ran.sql and, for presentations, 20261105140000_presentations_ran.sql as needed, then refresh the Supabase schema cache. Nothing was saved; your input is retained." };
+    if (!data && error.code === "23514") return { error: "The database rejected the lesson CHECK constraint (23514). Ask the administrator to check and apply 20261105093000_slide_authoring_ran.sql, then 20261105140000_presentations_ran.sql, then 20261106090000_lesson_authoring_limits_ran.sql as needed, then refresh the Supabase schema cache. Nothing was saved; your input is retained." };
     if (!data && ["42P01", "42703", "PGRST204", "PGRST205"].includes(error.code ?? "")) {
       return { error: "Lesson storage is unavailable. Check the learning database migrations and schema cache, then try again. Nothing was saved." };
     }
@@ -291,7 +291,7 @@ export async function saveResume(id: string, version: number, revision: number, 
     const lesson = await enrolledLesson(z.uuid().parse(id), user);
     if (lesson.version !== version) return { error: "This lesson changed. Reload to start at the updated version.", conflict: true };
     z.number().int().min(0).parse(revision);
-    const progress = (isPresentation(lesson.content)?presentationResumeSchema:resumeSchema).parse(state);
+    const progress = resumeSchemaForLesson(lesson.content).parse(state);
     if (progress.answers.length !== lesson.content.questions.length ||
       lesson.content.template === "slides" && (progress.stage === "activity" || !lesson.content.questions.length && progress.stage === "quiz")) throw new Error("Invalid lesson stage or answer count.");
     if (progress.slide >= lesson.content.slides.length || progress.ordering.length !== lesson.content.activity.steps.length || new Set(progress.ordering).size !== progress.ordering.length || progress.ordering.some(index => index >= progress.ordering.length)) throw new Error("Invalid lesson position.");

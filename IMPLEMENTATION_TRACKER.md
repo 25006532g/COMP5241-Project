@@ -1,6 +1,129 @@
 # Implementation Tracker
 
-Last reviewed: 2026-11-05
+Last reviewed: 2026-11-06
+
+## 6 November 2026 — bounded removal of retired author/import limits
+
+**Owner: implementer; coordinator owns traceability/handover and acceptance. Independent QA requested.**
+Initial status was clean using existing GitHub Desktop Git (not on PATH).
+Requested sibling skill paths were absent; loaded repository
+`.github/skills/forge-{delivery,security,verification}/SKILL.md` and implementer
+instructions. No environment files were read. Historical entries below retain
+their original evidence; their 3–6/400/2,400 author/import limits are superseded.
+
+### Hypothesis, changes and scope
+
+Before edits inspected author/stored schemas, real import actions/parser, current
+presentation adapter/editor, resume actions/player/route, both controlling SQL
+migrations and offline harness/tests. Falsifiable hypothesis: retired legacy
+limits independently reject content representable by the existing presentation
+capacity, and <=5 resume readers/writers reject expanded author positions.
+Chosen first check was the real upload action regression; it failed specifically
+with the old **“Slide import requires 3–6 source slides”** error.
+
+* Author/stored legacy slides now 1–30; bodies retain exact text up to the existing
+  10,000-character textbox ceiling and retain nonempty/control-character safety.
+  Standard/AI schema remains 4–6/400/ten quiz questions. Existing optional-quiz
+  rules, default draft, styles, authorization and privacy remain.
+* PPTX keeps source boundaries/order, including one/two slides, without blank
+  padding. Text splits into 400-character chunks for small imports and grows only
+  enough to fit 60,000 characters into 30 slides. Nothing is clipped/discarded.
+  Short lessons use three meaningful fallback activity steps, not blank slides.
+* Legacy presentation bodies use one literal run containing their newlines,
+  avoiding accidental >100-paragraph rejection while keeping that existing
+  presentation safety ceiling. Shared 30/10,000 constants do not change native
+  capacity. Canvas-fit validation and presentation document/parser limits remain.
+* Legacy editor can add past six, remove down to one and type >400 characters.
+  Upload copy states current bounds and required canvas-fit adjustment.
+* Resume writers/readers/player restore use expanded slide-template bounds only,
+  retaining standard <=5 and actual slide-count checks. **Necessary coupled file
+  outside the main list:** lesson route reader, otherwise saved index6+ is lost
+  on reopen. **Necessary coupled test:** presentation-integration replaces its
+  obsolete legacy-30 rejection with preserved standard rejection, and tests the
+  real legacy-seven route restoring index6.
+* New additive SQL updates **forge_legacy_lesson_content_valid**, not the wrapper;
+  only legacy slides-template resume changes. Existing rows, presentation
+  geometry/assets/privileges and standard behavior are retained. CHECK guidance
+  now includes the new migration after both prerequisites. No `_ran` edits.
+
+Changed files: `src/lib/{slide-lesson,learning,resume,presentation}.ts`,
+`src/components/{create-lesson,learning-controls}.tsx`,
+`src/app/learning/actions.ts`,
+`src/app/courses/[slug]/lessons/[lesson]/page.tsx`,
+`tests/{teaching-material,slide-authoring,slide-authoring-ui,slide-acceptance,presentation-integration}.test.mjs`,
+new `tests/lesson-authoring-limits.test.mjs`,
+new `supabase/migrations/20261106090000_lesson_authoring_limits.sql`,
+README and this tracker. No harness, dependencies or configuration changes.
+
+### Commands and actual outcomes
+
+All Node commands use the existing OS-only/network-denying runner.
+Let `N = node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1`.
+No skips/cancellations in these runs.
+
+| Command (in execution order) | Actual result |
+| --- | --- |
+| `N --test-name-pattern="template upload" tests\teaching-material.test.mjs` before source change | RED 0/1, exit1, old 3–6 error |
+| Same command immediately after import/schema change | GREEN 1/1, exit0 |
+| `N tests\slide-authoring.test.mjs tests\slide-acceptance.test.mjs tests\resume.test.mjs` first iteration | 6 passed/11 failed, exit1: unnecessary new player runtime import absent from offline module maps |
+| Same command after removing that unnecessary dependency (retain explicit template/count validation) | 17/17, exit0 |
+| `N tests\slide-authoring-ui.test.mjs` original flows | 1/1, exit0 |
+| `N tests\lesson-authoring-limits.test.mjs` first two iterations | 2/3 each, exit1: synthetic user omitted required age, then fixture appended two-digit index past 10,000 |
+| Same after fixture corrections | 3/3, exit0; later new-cap migration-guidance addition also 3/3, exit0 |
+| `N tests\slide-authoring-ui.test.mjs` expanded keyboard/save/reopen flows | 1/1, exit0 |
+| `N --test-name-pattern="template upload" tests\teaching-material.test.mjs` attempted long PDF fixture | 0/1, exit1: actual PDF extraction 488, not 60,000 (text positioned off-page); fixture was invalid evidence |
+| `N tests\teaching-material.test.mjs tests\lesson-authoring-limits.test.mjs tests\presentation-storage.test.mjs` with initial PPTX near-ceiling fixture | 19/20, exit1: parser correctly counts raw paragraph/separator newlines, rejecting fixture above existing per-unit ceiling |
+| `N --test-name-pattern="template upload" tests\teaching-material.test.mjs` corrected raw-boundary fixture | 1/1, exit0 |
+| `N tests\presentation-integration.test.mjs tests\presentation-model.test.mjs tests\presentation-compatibility.test.mjs` | 4/4, exit0 |
+| FINAL grouped command below | **44/44, exit0, 61203.6013ms** |
+| `node tests\offline-run.mjs node_modules\typescript\bin\tsc --noEmit --incremental false` FINAL | Exit0, no diagnostics; no typegen/build/env loader |
+| Scoped ESLint command below FINAL | Exit0, no diagnostics |
+| Existing Desktop Git `--no-pager diff --check` FINAL | Exit0; explicit cleanup probe found zero Node processes |
+
+```powershell
+node tests\offline-run.mjs --experimental-strip-types --test --test-concurrency=1 tests\teaching-material.test.mjs tests\slide-authoring.test.mjs tests\slide-authoring-ui.test.mjs tests\slide-acceptance.test.mjs tests\lesson-authoring-limits.test.mjs tests\resume.test.mjs tests\presentation-storage.test.mjs tests\presentation-integration.test.mjs tests\presentation-model.test.mjs tests\presentation-upload.test.mjs tests\presentation-compatibility.test.mjs
+node tests\offline-run.mjs node_modules\eslint\bin\eslint.js src/lib/slide-lesson.ts src/lib/learning.ts src/lib/resume.ts src/lib/presentation.ts src/components/create-lesson.tsx src/components/learning-controls.tsx src/app/learning/actions.ts 'src/app/courses/[slug]/lessons/[lesson]/page.tsx' tests/teaching-material.test.mjs tests/slide-authoring.test.mjs tests/slide-acceptance.test.mjs tests/slide-authoring-ui.test.mjs tests/lesson-authoring-limits.test.mjs tests/presentation-integration.test.mjs
+```
+
+Coverage: actual upload actions accept1/2/7 PPTX and10,000 bodies, reject31/
+10,001/image-only/mode tampering; 2,401 and >12,000 total file text preserve
+exact normalized content/order. The corrected real PPTX uses the entire **60,000
+raw parser budget**, producing **59,995** extracted characters (existing newline
+normalization); helper/schema checks independently preserve exactly **60,000**
+and newline-heavy text within30 slides. Real legacy1/2/7/30 create/update/read,
+short activity fallback, index6+/29 resume and invalid actual-count denial pass.
+New SQL alone after all earlier prerequisites reproduces23514 before adjustment,
+applies twice, preserves row/function/ACL snapshots and rejects malformed/empty/
+31/10,001/standard-expanded positions. Existing privacy/quiz/permissions and
+native wrapper geometry/assets/grants tests remain; historical presentation SQL
+replay still passes its separate storage-policy test.
+
+Mounted offline Chromium153.0.8010.12 verifies keyboard add7/remove1, >400 body,
+legacy index6 restore, real presentation preview→save→Studio reopen→version2 for
+seven ordered slides and2,401 fitting characters, and retained uncertain/stale
+upload behavior. Existing portal tests cover320/1366/1440/1910/1920 widths.
+Opened the expanded320 screenshots: canvas text and controls visible, saved
+notice present, no horizontal overflow; no forced overflow-save shortcuts.
+
+### Unapplied SQL, cleanup and handoff limits
+
+SQL is **provided only**, not applied remotely or marked `_ran`. Prerequisites:
+base schema and all earlier migrations in order, particularly
+`20261105093000_slide_authoring_ran.sql` then
+`20261105140000_presentations_ran.sql`. Remote execution/schema cache/target
+verification requires separately authorized handling; do not reapply the old
+slide-authoring migration over the presentation wrapper.
+
+PGlite/browser/context cleanup runs in `finally`; no server/helper remains.
+The broad exploratory filesystem search was stopped by its tool session ID.
+Final synthetic screenshots remain in OS Temp `forge-slide-authoring-KkLht7`
+and `forge-upload-followup-3vgkVT`; earlier iteration screenshots also retained.
+No remote services, environment contents, production settings, installs, connected
+e2e, full suite, deployment or commit. Local Windows/Node25.2.1 evidence is not
+Ubuntu/Node24 CI or release certification. Request independent focused QA of
+these changes and SQL prerequisite order; coordinator owns acceptance/handover.
+Earlier unrelated full-suite/manual-authoring/CI blockers are not resolved by
+this bounded packet.
 
 ## 5 November 2026 — new fractional-resize CI failure: bounded publication repair
 

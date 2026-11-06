@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { presentationSchema } from "./presentation.ts";
+import { MAX_PRESENTATION_SLIDES, presentationSchema, textRunSchema } from "./presentation.ts";
 
 export const slideStyleSchema = z.object({
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
@@ -36,7 +36,9 @@ export const lessonSchema = z.object({
 // author slides have a separate contract; never relax the AI response schema.
 export const slideLessonSchema = lessonSchema.extend({
   template: z.literal("slides"),
-  slides: z.array(lessonSchema.shape.slides.element).min(3).max(6),
+  slides: z.array(lessonSchema.shape.slides.element.extend({
+    body: textRunSchema.shape.text.min(1).refine(text => Boolean(text.trim()), "A slide needs text."),
+  })).min(1).max(MAX_PRESENTATION_SLIDES),
   questions: z.array(lessonSchema.shape.questions.element).max(10).refine(
     questions => questions.length === 0 || questions.length >= 3, "Use no quiz or 3 to 10 questions."),
 });

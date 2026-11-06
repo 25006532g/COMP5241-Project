@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { extractLessonUpload } from "@/app/teaching/actions";
 import { createManualLesson, updateLesson, type ActionState } from "@/app/learning/actions";
 import { authorLessonSchema, emptyAuthorLesson, type AuthorLesson } from "@/lib/slide-lesson";
+import { MAX_PRESENTATION_SLIDES, MAX_TEXTBOX_CHARACTERS } from "@/lib/presentation";
 const PresentationLessonEditor=lazy(()=>import("./presentation-editor").then(m=>({default:m.PresentationLessonEditor})));
 
 // Mount inside Suspense so focus moves only after the lazy editor is ready,
@@ -75,7 +76,7 @@ export function UploadLessonPage() {
         <label className="checkbox-field"><input type="radio" name="mode" checked={mode === "text"} onChange={() => { setMode("text"); invalidate(); }} /> Copy the text only</label>
         <label className="checkbox-field"><input type="radio" name="mode" checked={mode === "powerpoint"} onChange={() => { setMode("powerpoint"); invalidate(); }} /> Import the PowerPoint as slides</label>
       </fieldset>
-      <p>{mode === "text" ? "PDF, DOCX and PPTX text only: at most 2,400 characters, in up to six slides. Complete any blank slides before saving." : "PPTX only: 3–6 slides, at most 400 text characters per slide. Real slide order is retained, not original layout."} Binary PPT and DOC cannot be imported safely; export as PPTX or DOCX first. Images, original fonts, positioning and full formatting are not imported. Files must be at most 4 MiB. Originals are not stored or sent to AI. Over-limit content is rejected, never clipped.</p>
+      <p>{mode === "text" ? "PDF, DOCX and PPTX text only: extracted text is split across up to 30 slides, preserving all text within the parser's 60,000-character file ceiling." : "PPTX only: 1–30 slides, at most 10,000 text characters per slide. Real slide order is retained, not original layout. Image-only slides cannot be imported."} Binary PPT and DOC cannot be imported safely; export as PPTX or DOCX first. Images, original fonts, positioning and full formatting are not imported. Files must be at most 4 MiB. Originals are not stored or sent to AI. Over-limit content is rejected, never clipped. Adjust text size or layout in the preview if needed; text must fit on the canvas before saving.</p>
       <label>File<input type="file" name="material" required disabled={busy || saveLocked} onChange={event => { setFileName(event.currentTarget.files?.[0]?.name ?? ""); invalidate(); }} accept={mode === "powerpoint" ? ".ppt,.pptx" : ".ppt,.pptx,.pdf,.doc,.docx"} /></label>
       <button className="primary-button" type="submit" disabled={busy || saveLocked}>{busy ? "Reading file..." : "Preview slides"}</button>
     </form>
@@ -180,7 +181,7 @@ export function SlideLessonEditor({ lessonId = "", version = 1, initial, onSaveL
     </select></label>
     <h2>Slide {index + 1}</h2>
     <label>Title<textarea value={slide.title} maxLength={100} onChange={event => updateSlide({ title: event.target.value })} /></label>
-    <label>Body<textarea value={slide.body} maxLength={400} onChange={event => updateSlide({ body: event.target.value })} /></label>
+    <label>Body<textarea value={slide.body} maxLength={MAX_TEXTBOX_CHARACTERS} onChange={event => updateSlide({ body: event.target.value })} /></label>
     <label>Text color<input type="color" value={slide.style.color} onChange={event => updateStyle({ color: event.target.value })} /></label>
     <label>Font size<select value={slide.style.size} onChange={event => updateStyle({ size: Number(event.target.value) as AuthorLesson["slides"][number]["style"]["size"] })}>
       <option value={18}>Small</option>
@@ -195,8 +196,8 @@ export function SlideLessonEditor({ lessonId = "", version = 1, initial, onSaveL
     </select></label>
     <label>Background color<input type="color" value={slide.style.background} onChange={event => updateStyle({ background: event.target.value })} /></label>
     <p>
-      <button type="button" className="secondary-button" disabled={draft.slides.length <= 3} onClick={() => { setDraft({ ...draft, slides: draft.slides.filter((_, itemIndex) => itemIndex !== index) }); setIndex(Math.max(0, index - 1)); }}>Remove slide</button>
-      <button type="button" className="secondary-button" disabled={draft.slides.length >= 6} onClick={() => { setDraft({ ...draft, slides: [...draft.slides, { title: "", body: "", style: { ...slide.style } }] }); setIndex(draft.slides.length); }}>Add slide</button>
+      <button type="button" className="secondary-button" disabled={draft.slides.length <= 1} onClick={() => { setDraft({ ...draft, slides: draft.slides.filter((_, itemIndex) => itemIndex !== index) }); setIndex(Math.max(0, index - 1)); }}>Remove slide</button>
+      <button type="button" className="secondary-button" disabled={draft.slides.length >= MAX_PRESENTATION_SLIDES} onClick={() => { setDraft({ ...draft, slides: [...draft.slides, { title: "", body: "", style: { ...slide.style } }] }); setIndex(draft.slides.length); }}>Add slide</button>
     </p>
     <label className="checkbox-field"><input type="checkbox" checked={quizOn} onChange={event => {
       const on = event.target.checked;

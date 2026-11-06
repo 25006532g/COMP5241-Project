@@ -6,8 +6,8 @@ import { LessonCoach } from "@/components/lesson-coach";
 import { LessonMetadata } from "@/components/lesson-metadata";
 import { readMetadata } from "@/lib/curriculum";
 import { isInstructor, accessibleLesson, database, displayName, isAdmin, requireUser } from "@/lib/learning-server";
-import { presentationResumeSchema,resumeSchema } from "@/lib/resume";
-import { isPresentation,collectRows, lessonProgress } from "@/lib/learning";
+import { resumeSchemaForLesson } from "@/lib/resume";
+import { collectRows, lessonProgress } from "@/lib/learning";
 
 export default async function Lesson({ params }: { params: Promise<{ slug: string; lesson: string }> }) {
   const user = await requireUser();
@@ -20,7 +20,7 @@ export default async function Lesson({ params }: { params: Promise<{ slug: strin
   if (error) throw new Error("Could not verify enrollment.");
   if (!data) redirect(`/courses/${lesson.id}`);
   const { data: saved, error: resumeError } = await database().from("forge_resume").select("lesson_version,revision,stage,slide,ordering,answers").eq("user_id", user.id).eq("lesson_id", lesson.id).maybeSingle();
-  const restored = !resumeError && saved?.lesson_version === lesson.version ? (isPresentation(lesson.content)?presentationResumeSchema:resumeSchema).safeParse(saved) : null;
+  const restored = !resumeError && saved?.lesson_version === lesson.version ? resumeSchemaForLesson(lesson.content).safeParse(saved) : null;
   const attempts = await collectRows((start, end) => database().from("forge_attempts").select("original_lesson_id,lesson_version,score,questions,answers")
     .eq("user_id", user.id).eq("original_lesson_id", lesson.id).eq("lesson_version", lesson.version).order("id").range(start, end));
   const evidence = lessonProgress(data, attempts, lesson.id, lesson.version);

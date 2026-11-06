@@ -6,7 +6,7 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { chromium } from "@playwright/test";
-import { harness, draft, transpile } from "./slide-authoring-harness.mjs";
+import { harness, draft, slides, presentation, transpile } from "./slide-authoring-harness.mjs";
 import {sources as presentationSources} from "./presentation-browser-harness.mjs";
 
 const require = createRequire(import.meta.url);
@@ -41,7 +41,7 @@ test("mounted author/upload/player: same-tick guard, versions, uncertainty, styl
   const requests = [], errors = [];
   await bc.route("**/*",route => { requests.push(route.request().url()); return route.abort(); });
   const artifacts = await mkdtemp(join(tmpdir(),"forge-slide-authoring-"));
-  let gate = null, uploadFailure = false, uploads = 0;
+  let gate = null, uploadFailure = false, uploads = 0, uploadedSlides = draft().slides;
   try {
     async function mount(component,props = {}) {
       const page = await bc.newPage();
@@ -58,7 +58,7 @@ test("mounted author/upload/player: same-tick guard, versions, uncertainty, styl
       await page.exposeFunction("extract",async () => {
         uploads++;
         if (uploadFailure) throw new Error("PRIVATE_TRANSPORT");
-        return { name:"Imported lesson",slides:draft().slides };
+        return { name:"Imported lesson",slides:uploadedSlides };
       });
       await page.exposeFunction("studioUser",() => h.state.user);
       await page.exposeFunction("studioLesson",(id,user,review) => h.server.accessibleLesson(id,user,review));
@@ -265,6 +265,66 @@ test("mounted author/upload/player: same-tick guard, versions, uncertainty, styl
     assert.equal(imported.content.format,"presentation");
     assert.deepEqual(imported.content.slides.map(s=>s.elements[1].paragraphs.map(p=>p.runs.map(r=>r.text).join("")).join("\n")),draft().slides.map(s=>s.body));
     await upload.screenshot({path:join(artifacts,"upload-review320.png"),fullPage:true});
+    // New boundaries in the actual legacy editor, using keyboard at 320px.
+    const expanded=await mount("SlideLessonEditor",{initial:draft()});
+    await expanded.setViewportSize({width:320,height:900});
+    for(let i=0;i<4;i++) {
+      await expanded.getByRole("button",{name:"Add slide",exact:true}).focus();
+      await expanded.keyboard.press("Enter");
+      await expanded.getByLabel("Title",{exact:true}).fill(`Added ${i}`);
+      await expanded.getByLabel("Body",{exact:true}).fill("Long legacy body ".repeat(30));
+    }
+    await expanded.getByRole("button",{name:"Save",exact:true}).click();
+    await expanded.getByRole("status").filter({hasText:"Version 1"}).waitFor();
+    const legacy=(await h.db.query("select * from forge_lessons where title='Author lesson' order by created_at desc")).rows[0];
+    assert.equal(legacy.content.slides.length,7);
+    assert.equal(legacy.content.slides[6].body,"Long legacy body ".repeat(30));
+    await h.db.query("insert into forge_enrollments(user_id,lesson_id) values($1,$2)",[h.owner,legacy.id]);
+    const longPlayer=await mount("LessonPlayer",{id:legacy.id,version:1,ownerId:h.owner,
+      content:legacy.content,saved:{stage:"slides",slide:6,ordering:[2,1,0],answers:[]},revision:0,resumeAvailable:true});
+    await longPlayer.getByRole("heading",{name:"Added 3",exact:true}).waitFor();
+    await longPlayer.getByRole("button",{name:"Previous",exact:true}).click();
+    await longPlayer.getByRole("heading",{name:"Added 2",exact:true}).waitFor();
+    const reduced=await mount("SlideLessonEditor",{lessonId:legacy.id,version:1,initial:slides.fromStoredLesson(legacy.content)});
+    for(let i=0;i<6;i++) await reduced.getByRole("button",{name:"Remove slide",exact:true}).click();
+    assert.equal(await reduced.getByRole("button",{name:"Remove slide",exact:true}).isDisabled(),true);
+    await reduced.getByRole("button",{name:"Save",exact:true}).focus();
+    await reduced.keyboard.press("Enter");
+    await reduced.getByRole("status").filter({hasText:"Version 2"}).waitFor();
+    assert.equal((await h.server.accessibleLesson(legacy.id,h.state.user)).content.slides.length,1);
+    // Upload transport fixtures feed the actual presentation preview/save/reopen;
+    // real parser/action extraction is independently exercised in teaching-material.
+    const importCases=[
+      {name:"Seven imported slides",mode:"powerpoint",material:{text:"",slides:Array.from({length:7},(_,i)=>`Ordered source slide ${i+1}`)}},
+      {name:"2401 imported characters",mode:"text",material:{text:"a ".repeat(1200)+"a"}},
+    ];
+    for(const fixture of importCases) {
+      uploadedSlides=slides.slidesFromMaterial(fixture.material,fixture.mode);
+      const importedPage=await mount("UploadLessonPage");
+      assert.doesNotMatch(await importedPage.locator("body").innerText(),/2,400|3–6|six slides|400 text characters/);
+      if(fixture.mode==="powerpoint") await importedPage.getByLabel("Import the PowerPoint as slides",{exact:true}).check();
+      await importedPage.getByLabel("File",{exact:true}).setInputFiles(file);
+      await importedPage.getByRole("button",{name:"Preview slides",exact:true}).focus();
+      await importedPage.keyboard.press("Enter");
+      await importedPage.getByLabel("Lesson title",{exact:true}).waitFor();
+      await importedPage.getByLabel("Lesson title",{exact:true}).fill(fixture.name);
+      await importedPage.getByRole("button",{name:"Save",exact:true}).focus();
+      await importedPage.keyboard.press("Enter");
+      await importedPage.getByRole("status").filter({hasText:"Version 1"}).waitFor();
+      const record=(await h.db.query("select * from forge_lessons where title=$1",[fixture.name])).rows[0];
+      assert.equal(record.content.format,"presentation");
+      assert.deepEqual(record.content.slides.map(s=>presentation.textOf(s.elements[1])),uploadedSlides.map(s=>s.body));
+      const reopened=await mount("Studio",{edit:record.id});
+      await reopened.getByLabel("Lesson title",{exact:true}).waitFor();
+      assert.equal(await reopened.getByLabel("Lesson title",{exact:true}).inputValue(),fixture.name);
+      await reopened.getByRole("button",{name:"Save",exact:true}).click();
+      await reopened.getByRole("status").filter({hasText:"Version 2"}).waitFor();
+      assert.deepEqual((await h.server.accessibleLesson(record.id,h.state.user)).content.slides,record.content.slides);
+      await importedPage.setViewportSize({width:320,height:900});
+      await importedPage.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+      assert.ok(await importedPage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+      await importedPage.screenshot({path:join(artifacts,`${fixture.mode}-expanded320.png`),fullPage:true});
+    }
     assert.deepEqual(requests,[]); assert.deepEqual(errors,[]);
     context.diagnostic(`Offline Chromium ${browser.version()}; screenshots ${artifacts}`);
   } finally { await bc.close(); await browser.close(); await h.db.close(); }
