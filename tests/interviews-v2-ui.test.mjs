@@ -72,13 +72,16 @@ test("simulator v2 room keeps the side bubble, word count and end control", asyn
     src: node.getAttribute("src") || "",
   })));
   assert.deepEqual(layers.map(layer => layer.layer), ["office", "interviewer", "table", "interviewee", "question"]);
-  assert.deepEqual(layers.map(layer => layer.z), ["1", "2", "3", "5", "6"]);
+  assert.deepEqual(layers.map(layer => layer.z), ["1", "2", "3", "5", "7"]);
   assert.equal(layers[1].src, "/interviews-v2/room/01-interviewer-male.png");
   assert.equal(layers[3].src, "/interviews-v2/room/03-interviewee-male-back.png");
   await page.getByRole("button", { name: "Record" }).waitFor();
   await page.getByRole("button", { name: "Send answer" }).waitFor();
-  await page.getByRole("button", { name: "Stop" }).waitFor();
-  await page.getByRole("button", { name: "Insert" }).waitFor();
+  await page.getByRole("button", { name: "Mute interviewer" }).waitFor();
+  assert.equal(await page.getByRole("button", { name: "Stop" }).count(), 0);
+  assert.equal(await page.getByRole("button", { name: "Insert" }).count(), 0);
+  assert.equal(await page.getByText("Typing is always available.").count(), 0);
+  assert.equal(await page.getByText("Senior engineer").count(), 0);
   assert.equal(await page.locator("#intro-word-count").innerText(), "0/130");
   await page.locator("#v2-answer").fill("one two three");
   assert.equal(await page.locator("#intro-word-count").innerText(), "3/130");

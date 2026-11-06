@@ -32,6 +32,10 @@ function storedLook(key: string): Look | null {
   } catch { return null; }
 }
 
+function clock(ms: number) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+}
 function englishVoice(synth: SpeechSynthesis) {
   const voices = synth.getVoices();
   return voices.find(voice => voice.lang.toLowerCase() === "en-us")
@@ -64,8 +68,8 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
   const keepAlive = useRef<ReturnType<typeof setInterval> | null>(null);
   const micOn = useRef(false);
   const [hearing, setHearing] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
   const [voiceOn, setVoiceOn] = useState(true);
-  const [livePreview, setLivePreview] = useState("");
   const professor = view.session.interviewer === "professor";
   const [interviewerLook, setInterviewerLook] = useState<Look>(professor ? "female" : "male");
   const [intervieweeLook, setIntervieweeLook] = useState<Look>("male");
@@ -125,6 +129,12 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
       start();
     }
   }
+  useEffect(() => {
+    if (!hearing) { setElapsed(0); return; }
+    const started = Date.now();
+    const timer = window.setInterval(() => setElapsed(Date.now() - started), 250);
+    return () => window.clearInterval(timer);
+  }, [hearing]);
   useEffect(() => {
     try { setVoiceOn(sessionStorage.getItem("forge-v2-voice") !== "0"); }
     catch { setVoiceOn(true); }
@@ -186,7 +196,6 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
     <header className={styles.roomHead}>
       <div>
         <h2>{view.session.label}</h2>
-        <p>{professor ? "Professor" : "Senior engineer"}</p>
       </div>
       <fieldset className={styles.cast}>
         <legend>Appearance</legend>
@@ -210,14 +219,6 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
       <img className={styles.office} data-layer="office" src={roomArt.office} alt="" width={1280} height={720} />
       <img className={styles.interviewer} data-layer="interviewer" src={roomArt.interviewer[interviewerLook]} alt={interviewerAlt} width={interviewerBox[0]} height={interviewerBox[1]} />
       <img className={styles.table} data-layer="table" src={roomArt.table} alt="" width={1014} height={523} />
-      {(intro || asking) && <div className={styles.sceneAnswer}>
-        <div className={styles.answerLabel}>
-          <label htmlFor="v2-answer">{intro ? "Your introduction" : "Your answer"}</label>
-          {intro && <span className={styles.count} id="intro-word-count" data-tone={wordTone}>{words}/130</span>}
-        </div>
-        <textarea id="v2-answer" form="v2-desk" value={draft} disabled={busy} maxLength={4000} onChange={event => setDraft(event.target.value)} placeholder={intro ? "Type your introduction" : "Type your answer, or use the microphone"} />
-        {livePreview && <p className={styles.preview}><span>Preview</span>{livePreview}</p>}
-      </div>}
       <img className={styles.interviewee} data-layer="interviewee" src={roomArt.interviewee[intervieweeLook]} alt="" width={intervieweeBox[0]} height={intervieweeBox[1]} />
       <div className={styles.bubbleWrap} data-layer="question">
         <div className={styles.bubbleCard} tabIndex={0} role="region" aria-label={asking ? "Interview question" : intro ? "Introduction prompt" : "Interviewer"}>
@@ -229,7 +230,7 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
       </div>
     </section>
     {notice && <p className={`${styles.notice} ${styles.progressNote}`} role="status">{v2Notices[notice]}</p>}
-    {(intro || asking) && <InterviewV2Dictation draft={draft} allowed={voiceOn} cancelRef={cancelDictation} insert={setDraft} onPreview={setLivePreview} onMic={listening => { micOn.current = listening; setHearing(listening); if (listening) stopSpeech(); }}>
+    {(intro || asking) && <InterviewV2Dictation draft={draft} allowed={voiceOn} cancelRef={cancelDictation} insert={setDraft} onMic={listening => { micOn.current = listening; setHearing(listening); if (listening) stopSpeech(); }}>
       {speech => <div className={styles.composer}>
         <form id="v2-desk" className={styles.desk} onSubmit={event => {
           event.preventDefault();
@@ -238,20 +239,25 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
           void run(() => intro ? submitIntro({ id: view.session.id, revision: view.session.revision, text }) : submitAnswer({ id: view.session.id, revision: view.session.revision, text }));
         }}>
           <div className={styles.answerMain}>
-            <p className={styles.micNote} role="status">{speech.status}</p>
+            <div className={styles.answerLabel}>
+              <label htmlFor="v2-answer">{intro ? "Your introduction" : "Your answer"}</label>
+              {intro && <span className={styles.count} id="intro-word-count" data-tone={wordTone}>{words}/130</span>}
+            </div>
+            <textarea id="v2-answer" value={draft} disabled={busy} maxLength={4000} onChange={event => setDraft(event.target.value)} placeholder={intro ? "Type your introduction" : "Type your answer, or use the microphone"} />
+            {speech.status && <p className={styles.micNote} role="status">{speech.status}</p>}
           </div>
           <div className={styles.toolCol}>
-            <button type="button" className={styles.stop} disabled={!speech.active} onClick={speech.stop}>Stop</button>
-            <button type="button" className={styles.mic} aria-pressed={speech.active} disabled={!speech.canRecord} onClick={speech.start}>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z" /><path d="M6 11a6 6 0 0 0 12 0M12 17v3M8.5 20.5h7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
-              Record
-            </button>
+            <button type="button" className={styles.mute} aria-pressed={muted} onClick={() => setMuted(value => !value)}>{muted ? "Unmute interviewer" : "Mute interviewer"}</button>
             <button className="primary-button" disabled={busy || !draft.trim()}>Send answer</button>
-            <button type="button" className={styles.insert} disabled={!speech.canInsert} onClick={speech.insertText}>Insert</button>
             {intro && <button type="button" className={styles.skip} disabled={busy} onClick={() => void run(() => skipIntro({ id: view.session.id, revision: view.session.revision }))}>Skip introduction</button>}
             {asking && <button type="button" className={styles.change} disabled={busy} onClick={() => void run(() => changeQuestion({ id: view.session.id, revision: view.session.revision }))}>Change question</button>}
             <button className={styles.end} type="button" disabled={busy} onClick={() => void run(() => endSession({ id: view.session.id, revision: view.session.revision }))}>End interview</button>
-            <button type="button" className={styles.mute} aria-pressed={muted} onClick={() => setMuted(value => !value)}>{muted ? "Unmute interviewer" : "Mute interviewer"}</button>
+            <button type="button" className={speech.active ? styles.recording : styles.mic} aria-pressed={speech.active} aria-label={speech.active ? "Stop" : undefined} disabled={!speech.active && !speech.canRecord} onClick={speech.active ? speech.stop : speech.start}>
+              {speech.active ? <>Stop <span className={styles.timer} aria-hidden="true">{clock(elapsed)}</span></> : <>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z" /><path d="M6 11a6 6 0 0 0 12 0M12 17v3M8.5 20.5h7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                Record
+              </>}
+            </button>
           </div>
         </form>
       </div>}

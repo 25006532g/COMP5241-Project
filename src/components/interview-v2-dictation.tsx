@@ -23,12 +23,13 @@ export function InterviewV2Dictation({ draft, insert, cancelRef, onMic, onPrevie
   children: (speech: V2Speech) => ReactNode;
 }) {
   const { browserSupportsSpeechRecognition, isMicrophoneAvailable } = useSpeechRecognition({ transcribing: false });
-  const [preview, setPreview] = useState("");
+  const [, setPreview] = useState("");
   const [active, setActive] = useState(false);
-  const [message, setMessage] = useState("Typing is always available.");
+  const [message, setMessage] = useState("");
   const [ready, setReady] = useState(false);
   const mounted = useRef(true);
   const cancel = useRef<() => void>(() => {});
+  const baseRef = useRef(draft);
   const previewSink = useRef(onPreview);
   previewSink.current = onPreview;
   function publish(text: string) {
@@ -59,12 +60,19 @@ export function InterviewV2Dictation({ draft, insert, cancelRef, onMic, onPrevie
     let stoppedByUser = false;
     let recovering = false;
     let retries = 1;
-    setActive(true); publish(""); setMessage("Listening. Speak your whole answer, then press Stop. Nothing is sent yet.");
+    baseRef.current = draft;
+    setActive(true); publish(""); setMessage("Listening. Words are added to the answer. Nothing is sent yet.");
     // Stay inside this click. Opening the mic ourselves, or cancelling the interviewer, makes Chrome abort dictation at once.
     onMic?.(true);
+    const writeSpoken = (spoken: string) => {
+      const base = baseRef.current.trim();
+      insert(spoken ? (base ? `${base} ${spoken}` : spoken) : baseRef.current);
+    };
     const result = (event: SpeechRecognitionEvent) => {
       if (!accepting || !mounted.current || owner !== ticket) return;
-      publish(Array.from(event.results, item => item[0].transcript.trim()).filter(Boolean).join(" "));
+      const spoken = Array.from(event.results, item => item[0].transcript.trim()).filter(Boolean).join(" ");
+      publish(spoken);
+      writeSpoken(spoken);
     };
     const finish = (note: string) => {
       accepting = false;
@@ -127,7 +135,7 @@ export function InterviewV2Dictation({ draft, insert, cancelRef, onMic, onPrevie
     };
     cancel.current = () => {
       if (owner !== ticket && owner !== null) return;
-      finish("Stopped. Press Insert to put the preview in your answer, or type instead.");
+      finish("Recording stopped. Review the answer before sending.");
       void SpeechRecognition.abortListening();
     };
     recognition.addEventListener("result", result);
@@ -139,9 +147,8 @@ export function InterviewV2Dictation({ draft, insert, cancelRef, onMic, onPrevie
       finish("Could not start the microphone. Allow microphone access, or type instead.");
     }
   }
-  const combined = [draft, preview.trim()].filter(Boolean).join(draft.trim() ? " " : "");
   const blocked = !ready
-    ? "Typing is always available."
+    ? ""
     : !browserSupportsSpeechRecognition
       ? "Speech recognition is unavailable in this browser. Type instead."
       : !allowed
@@ -153,14 +160,9 @@ export function InterviewV2Dictation({ draft, insert, cancelRef, onMic, onPrevie
     status: blocked ?? message,
     active,
     canRecord: ready && allowed && browserSupportsSpeechRecognition && isMicrophoneAvailable && !active,
-    canInsert: !!preview.trim(),
+    canInsert: false,
     start: () => void start(),
     stop: () => cancel.current(),
-    insertText: () => {
-      cancel.current();
-      insert(combined);
-      publish("");
-      setMessage("Inserted into the answer. Review it before sending.");
-    },
+    insertText: () => {},
   });
 }
