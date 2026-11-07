@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { changeQuestion, endSession, skipIntro, submitAnswer, submitIntro } from "@/app/interviews-v2/actions";
 import { InterviewV2Dictation } from "@/components/interview-v2-dictation";
 import { sessionQuestionCap, v2Notices, wordCount, type V2Code, type V2View } from "@/lib/interviews-v2";
@@ -30,6 +30,27 @@ function storedLook(key: string): Look | null {
     const value = sessionStorage.getItem(key);
     return value === "male" || value === "female" ? value : null;
   } catch { return null; }
+}
+const lookBus = new Set<() => void>();
+const lookMemory = new Map<string, Look>();
+function subscribeLooks(onChange: () => void) {
+  lookBus.add(onChange);
+  return () => { lookBus.delete(onChange); };
+}
+function readStoredLook(key: string) {
+  return lookMemory.get(key) ?? storedLook(key);
+}
+function writeLook(key: string, look: Look) {
+  lookMemory.set(key, look);
+  try { sessionStorage.setItem(key, look); } catch { /* The scene still changes for this visit. */ }
+  for (const notify of lookBus) notify();
+}
+function subscribeVoice() {
+  return () => {};
+}
+function readVoice() {
+  try { return sessionStorage.getItem("forge-v2-voice") !== "0"; }
+  catch { return true; }
 }
 
 function clock(ms: number) {
@@ -61,10 +82,10 @@ function newerView(current: V2View, incoming: V2View) {
 }
 
 export function InterviewV2Room({ initial }: { initial: V2View }) {
-  const [view, setView] = useState(initial);
-  useEffect(() => {
-    setView(current => newerView(current, initial));
-  }, [initial]);
+  const [localView, setLocalView] = useState<V2View | null>(null);
+  const view = localView?.session.id === initial.session.id
+    ? (localView.session.revision >= initial.session.revision ? localView : initial)
+    : initial;
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<V2Code | null>(null);
@@ -76,11 +97,14 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
   const keepAlive = useRef<ReturnType<typeof setInterval> | null>(null);
   const micOn = useRef(false);
   const [hearing, setHearing] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
-  const [voiceOn, setVoiceOn] = useState(true);
+  const [hearingSince, setHearingSince] = useState<number | null>(null);
+  const [now, setNow] = useState<number | null>(null);
+  const voiceOn = useSyncExternalStore(subscribeVoice, readVoice, () => true);
   const professor = view.session.interviewer === "professor";
-  const [interviewerLook, setInterviewerLook] = useState<Look>(professor ? "female" : "male");
-  const [intervieweeLook, setIntervieweeLook] = useState<Look>("male");
+  const savedInterviewer = useSyncExternalStore(subscribeLooks, () => readStoredLook("forge-v2-interviewer-look"), () => null);
+  const savedInterviewee = useSyncExternalStore(subscribeLooks, () => readStoredLook("forge-v2-interviewee-look"), () => null);
+  const interviewerLook = savedInterviewer ?? (professor ? "female" : "male");
+  const intervieweeLook = savedInterviewee ?? "male";
   const words = wordCount(draft);
   const interviewerAlt = professor ? "Cartoon professor" : "Cartoon senior interviewer";
   const asking = view.canAnswer && view.session.state === "asking";
@@ -91,7 +115,8 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
   const progress = Math.min(100, Math.round((shown / cap) * 100));
   const wordTone = words > 130 ? "over" : words >= 110 ? "near" : "ok";
 
-  function stopSpeech() {
+  const elapsed = hearing && hearingSince !== null ? Math.max(0, (now ?? hearingSince) - hearingSince) : 0;
+  const stopSpeech = useCallback(() => {
     if (speakTimer.current) window.clearTimeout(speakTimer.current);
     speakTimer.current = null;
     if (keepAlive.current) window.clearInterval(keepAlive.current);
@@ -100,8 +125,8 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
     const synth = window.speechSynthesis;
     // Pause, do not cancel. Chrome drops the microphone if cancel() was the last speech call.
     if (synth && (synth.speaking || synth.pending) && !synth.paused) synth.pause();
-  }
-  function speakText(text: string) {
+  }, []);
+  const speakText = useCallback((text: string) => {
     const synth = window.speechSynthesis;
     if (!text || !synth || typeof synth.speak !== "function" || micOn.current) return;
     if (speakTimer.current) window.clearTimeout(speakTimer.current);
@@ -137,26 +162,14 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
     } else {
       start();
     }
-  }
+  }, [professor]);
   useEffect(() => {
-    if (!hearing) { setElapsed(0); return; }
-    const started = Date.now();
-    const timer = window.setInterval(() => setElapsed(Date.now() - started), 250);
+    if (!hearing) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 250);
     return () => window.clearInterval(timer);
   }, [hearing]);
-  useEffect(() => {
-    try { setVoiceOn(sessionStorage.getItem("forge-v2-voice") !== "0"); }
-    catch { setVoiceOn(true); }
-    const savedInterviewer = storedLook("forge-v2-interviewer-look");
-    const savedInterviewee = storedLook("forge-v2-interviewee-look");
-    setInterviewerLook(savedInterviewer ?? (professor ? "female" : "male"));
-    setIntervieweeLook(savedInterviewee ?? "male");
-  }, [professor]);
   function chooseLook(who: "interviewer" | "interviewee", look: Look) {
-    if (who === "interviewer") setInterviewerLook(look);
-    else setIntervieweeLook(look);
-    try { sessionStorage.setItem(who === "interviewer" ? "forge-v2-interviewer-look" : "forge-v2-interviewee-look", look); }
-    catch { /* The scene still changes for this visit. */ }
+    writeLook(who === "interviewer" ? "forge-v2-interviewer-look" : "forge-v2-interviewee-look", look);
   }
   useEffect(() => {
     const synth = window.speechSynthesis;
@@ -169,7 +182,7 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
       cancelDictation.current?.();
       stopSpeech();
     };
-  }, []);
+  }, [stopSpeech]);
   useEffect(() => {
     if (complete) {
       const motion = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
@@ -186,7 +199,7 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
       window.clearTimeout(timer);
       stopSpeech();
     };
-  }, [view.bubble, view.session.revision, muted, professor]);
+  }, [view.bubble, view.session.revision, muted, speakText, stopSpeech]);
   async function run(action: () => Promise<{ code: V2Code; view?: V2View }>) {
     cancelDictation.current?.();
     stopSpeech();
@@ -196,7 +209,7 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
       setNotice(result.code === "ok" ? null : result.code);
       if (result.view) {
         const incoming = result.view;
-        setView(current => newerView(current, incoming));
+        setLocalView(current => newerView(current ?? initial, incoming));
         setDraft("");
       }
     } catch { setNotice("unavailable"); }
@@ -243,7 +256,7 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
       </div>
     </section>
     {notice && <p className={`${styles.notice} ${styles.progressNote}`} role="status">{v2Notices[notice]}</p>}
-    {(intro || asking) && <InterviewV2Dictation draft={draft} allowed={voiceOn} cancelRef={cancelDictation} insert={setDraft} onMic={listening => { micOn.current = listening; setHearing(listening); if (listening) stopSpeech(); }}>
+    {(intro || asking) && <InterviewV2Dictation draft={draft} allowed={voiceOn} cancelRef={cancelDictation} insert={setDraft} onMic={listening => { micOn.current = listening; setHearing(listening); if (listening) { const stamp = Date.now(); setHearingSince(stamp); setNow(stamp); stopSpeech(); } }}>
       {speech => <div className={styles.composer}>
         <form id="v2-desk" className={styles.desk} onSubmit={event => {
           event.preventDefault();

@@ -10,6 +10,8 @@
 | `COMP5241-Interview-Question-Bank.csv` | `All` 分頁的 UTF-8 CSV 匯出 |
 | `COMP5241-Interview-Question-Bank-README.md` | 本說明（繁體中文） |
 | `import/*.json` | 六個 interviews-v2 Import JSON（每軌 40 題，見下方） |
+| `import/interview-v2-main.sql` | 給 main 的 Supabase SQL editor：先建 interview v2 資料表，再載入 240 題 |
+| `import/interview-v2-questions.sql` | 只有 240 題。資料表尚未建立時會失敗 |
 
 ## 貼上 Import JSON（interviews-v2 題庫）
 
@@ -36,7 +38,15 @@
 6. 該 profile 的 **目前 active 題數 + 這次新題數必須 ≤ 40**。每個檔案已是 40 題，所以該軌要先是 0 題 active，才能整份貼上。超過時畫面顯示 “A profile can have at most 40 active questions.”
 7. 六個 profile 各貼一次。不要把兩份 JSON 接在同一個文字框。
 
-CSV 與 Excel 仍是題幹與來源的原稿。關鍵字與 related 題只存在於這些 Import JSON。
+CSV 與 Excel 仍是題幹與來源的原稿。關鍵字與 related 題在 Import JSON 和 `import/interview-v2-questions.sql`。
+
+## SQL for main（給 Ken）
+
+在 main 的 Supabase SQL editor 貼上並執行 **`import/interview-v2-main.sql`** 一次。這一份會先建立 interview v2 資料表，再載入 240 題。題幹、參考答案、關鍵字和 related 題與上面六份 JSON 一致。檔案不含使用者、作答、評分或 API key。
+
+保留 main 現有的 Supabase URL、anon key、service-role key 和 `OPENROUTER_API_KEY`。如果 `forge_v2_questions` 已經存在，這份 SQL 會停下來，不會覆蓋。
+
+`interview-v2-questions.sql` 只有題目。資料表還沒建立時會出現 `Apply the interview v2 migrations before this import.` 請改跑 `interview-v2-main.sql`。
 
 ## 題庫規模
 

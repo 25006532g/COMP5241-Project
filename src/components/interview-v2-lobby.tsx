@@ -1,11 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { deleteSession, startSession } from "@/app/interviews-v2/actions";
 import { v2Notices, v2Profiles, type ProfileId, type V2Code } from "@/lib/interviews-v2";
 import styles from "./interview-v2.module.css";
+
+const voiceBus = new Set<() => void>();
+let voiceMemory: boolean | null = null;
+function subscribeVoice(onChange: () => void) {
+  voiceBus.add(onChange);
+  return () => { voiceBus.delete(onChange); };
+}
+function readVoice() {
+  if (voiceMemory !== null) return voiceMemory;
+  try { return sessionStorage.getItem("forge-v2-voice") !== "0"; }
+  catch { return true; }
+}
+function writeVoice(on: boolean) {
+  voiceMemory = on;
+  try { sessionStorage.setItem("forge-v2-voice", on ? "1" : "0"); } catch { /* Typing still works without storage. */ }
+  for (const notify of voiceBus) notify();
+}
 
 function stateLabel(state: string) {
   if (state === "intro") return "Introduction";
@@ -23,17 +40,10 @@ export function InterviewV2Lobby({ sessions, staff = false }: {
   const [profileId, setProfileId] = useState<ProfileId>("cs_degree");
   const [notice, setNotice] = useState<V2Code | null>(null);
   const [busy, setBusy] = useState(false);
-  const [voice, setVoice] = useState(true);
+  const voice = useSyncExternalStore(subscribeVoice, readVoice, () => true);
   const [hidden, setHidden] = useState<string[]>([]);
-  useEffect(() => {
-    try {
-      const stored = sessionStorage.getItem("forge-v2-voice");
-      if (stored === "0" || stored === "1") setVoice(stored === "1");
-    } catch { /* Keep the default when storage is blocked. */ }
-  }, []);
   function chooseVoice(on: boolean) {
-    setVoice(on);
-    try { sessionStorage.setItem("forge-v2-voice", on ? "1" : "0"); } catch { /* Typing still works without storage. */ }
+    writeVoice(on);
   }
   return <div className={styles.lobby}>
     <form className={`${styles.panel} ${styles.setup}`} onSubmit={async event => {
