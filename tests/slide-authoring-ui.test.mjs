@@ -73,10 +73,7 @@ test("mounted author/upload/player: same-tick guard, versions, uncertainty, styl
           if (name === "fabric") return fabric;
           if (name === "./presentation-editor"||name === "@/components/presentation-editor") return load("editor");
           if (name === "@/app/presentation/actions") return new Proxy({},{get:()=>async()=>({error:"Image actions are covered by presentation-assets.test.mjs"})});
-          if (name === "@/app/presentation/ai-actions") return {
-            generatePresentationSuggestions: async () => ({ error: "AI actions are covered by presentation tests." }),
-            authorizePresentationAiApply: async () => ({ error: "AI actions are covered by presentation tests." }),
-          };
+          if (name === "@/app/presentation/ai-actions") return new Proxy({},{get:()=>async()=>({error:"AI actions are covered by presentation-ai.test.mjs"})});
           if (name === "@/components/create-lesson") return load("author");
           if (name === "@/components/learning-controls") return load("player");
           if (name === "@/components/learner-shell") return {LearnerShell:({children})=>load("react").createElement("main",{},children)};
@@ -261,7 +258,7 @@ test("mounted author/upload/player: same-tick guard, versions, uncertainty, styl
     await upload.keyboard.press("Enter");
     await upload.getByRole("textbox",{name:"Lesson title",exact:true}).waitFor();
     await upload.getByLabel("Lesson title",{exact:true}).fill("Uploaded accepted lesson");
-    await upload.getByRole("button",{name:"Save and publish",exact:true}).focus();
+    await upload.getByRole("button",{name:"Save & request approval",exact:true}).focus();
     await upload.keyboard.press("Enter");
     await upload.getByRole("status").filter({hasText:"Version 1"}).waitFor();
     const imported = (await h.db.query("select * from forge_lessons where title='Uploaded accepted lesson'")).rows[0];

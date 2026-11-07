@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Award, BarChart3, BookOpen, GraduationCap, LayoutDashboard, Library, LogOut, Menu, MessageSquare, MessagesSquare, Route, Settings, ShieldCheck, Users, X, Zap } from "lucide-react";
+import { Award, BarChart3, BookOpen, Gamepad2, GraduationCap, LayoutDashboard, Library, LogOut, Menu, MessageSquare, MessagesSquare, Route, Settings, ShieldCheck, Users, X, Zap } from "lucide-react";
 import { logOut } from "@/app/auth/actions";
 
 const links = [
   ["Dashboard", "/dashboard", LayoutDashboard],
   ["Course catalog", "/catalog", Library],
   ["Learning paths", "/paths", Route],
+  ["Learning game", "/games/neon-requiem", Gamepad2],
   ["Interview simulator", "/interviews", MessageSquare],
   ["Interview simulator v2", "/interviews-v2", MessagesSquare],
   ["Create lesson", "/studio", BookOpen],
@@ -30,6 +31,7 @@ export function LearnerShell({ children, active, name = "Learner", admin = false
   const mobile = useSyncExternalStore(subscribeToMobileNavigation, isMobileNavigation, serverMobileNavigation);
   const menuButton = useRef<HTMLButtonElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
+  const content = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!open || !mobile) return;
     closeButton.current?.focus();
@@ -44,7 +46,10 @@ export function LearnerShell({ children, active, name = "Learner", admin = false
   }, [open, mobile]);
   function closeMenu() { setOpen(false); menuButton.current?.focus(); }
   const initials = name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
-  return <main className="portal-shell">
+  return <div className="portal-shell">
+    <a className="portal-skip" href="#page-content" onClick={event => {
+      event.preventDefault(); content.current?.focus(); content.current?.scrollIntoView({ block: "start" });
+    }}>Skip to page content</a>
     <aside id="learner-navigation" className={`portal-sidebar ${open ? "portal-sidebar-open" : ""}`} inert={mobile && !open}>
       <div className="brand-row"><Link href="/dashboard" className="portal-brand"><span><Zap size={18} /></span><strong>FORGE</strong></Link><button ref={closeButton} className="portal-close" onClick={closeMenu} aria-label="Close navigation"><X size={19} /></button></div>
       <Link href="/profile" className="portal-profile"><span className="avatar">{initials}</span><span><strong>{name}</strong><small>{admin ? "Administrator" : instructor ? "Instructor" : "Learner"}</small></span></Link>
@@ -53,9 +58,9 @@ export function LearnerShell({ children, active, name = "Learner", admin = false
       <div className="portal-foot"><form action={logOut}><button type="submit"><LogOut size={17} /> Log out</button></form></div>
     </aside>
     <section className="portal-workspace">
-      <header className="portal-topbar"><button ref={menuButton} className="portal-menu" onClick={() => setOpen(true)} aria-label="Open navigation" aria-controls="learner-navigation" aria-expanded={open}><Menu size={20} /></button><Link href="/catalog" className="catalog-shortcut">Explore courses</Link><Link href="/profile" className="avatar portal-avatar">{initials}</Link></header>
-      {children}
+      <header className="portal-topbar"><button ref={menuButton} className="portal-menu" onClick={() => setOpen(true)} aria-label="Open navigation" aria-controls="learner-navigation" aria-expanded={open}><Menu size={20} /></button><Link href="/catalog" className="catalog-shortcut">Explore courses</Link><Link href="/profile" className="avatar portal-avatar" aria-label="Profile & settings">{initials}</Link></header>
+      <main ref={content} id="page-content" tabIndex={-1}>{children}</main>
     </section>
     {open && mobile && <button className="portal-scrim" onClick={closeMenu} aria-label="Close navigation overlay" />}
-  </main>;
+  </div>;
 }

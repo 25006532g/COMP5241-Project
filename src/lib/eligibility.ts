@@ -2,8 +2,8 @@ export function isDemoAge(age: unknown): age is number {
   return typeof age === "number" && Number.isInteger(age) && age >= 13 && age <= 120;
 }
 
-export function isAiEligible(profileAge: unknown, user: { app_metadata?: Record<string, unknown>; user_metadata?: unknown }): boolean {
-  return isDemoAge(profileAge) && profileAge >= 18 && user.app_metadata?.ai_access === true;
+export function isAiEligible(user: { app_metadata?: Record<string, unknown>; user_metadata?: unknown }): boolean {
+  return user.app_metadata?.ai_access === true;
 }
 
 export function ageRangeFor(age: number): string {

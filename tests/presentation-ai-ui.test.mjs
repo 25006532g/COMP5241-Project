@@ -4,8 +4,10 @@ import {mkdtemp} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
 import {chromium,expect} from "@playwright/test";
-import {harness,presentation as model} from "./slide-authoring-harness.mjs";
+import {z} from "zod";
+import {load,harness,presentation as model} from "./slide-authoring-harness.mjs";
 import {mountPresentation} from "./presentation-browser-harness.mjs";
+const {aiRequestSchema,validateAiPatch}=load("../src/lib/presentation-ai.ts",{zod:{z},"./presentation":model});
 
 function draft(){
   const value=model.blankPresentation();value.title="AI author regression";
@@ -44,6 +46,213 @@ async function generate(page){
   await page.getByLabel("I consent",{exact:false}).check();
   await page.getByRole("button",{name:"Generate suggestions",exact:true}).click();
 }
+// These acceptance cases deliberately do not use select()'s Fabric state setup,
+// evaluate-clicks, forced clicks, disabled-attribute edits or a consent reset.
+async function tabFromInstructionToGenerate(page){
+  await page.getByLabel("Instruction",{exact:true}).press("Tab");
+  await expect(page.getByLabel("Allow simple")).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByLabel("I consent",{exact:false})).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button",{name:"Generate suggestions",exact:true})).toBeFocused();
+}
+for(const width of [1440,320]){
+  for(const activation of ["click","Enter"]){
+    test(`exact core Generate ${width}px ${activation}: text scope, consent FIRST, native typing, no reconfirmation, one valid review`,async()=>{
+      await browserFixture(async page=>{
+        await page.setViewportSize({width,height:width===320?850:1000});
+        const value=draft(),calls=[];
+        await page.exposeFunction("persist",()=>{assert.fail("Review must not save");});
+        await page.exposeFunction("presentationAi",(kind,request)=>{
+          assert.equal(kind,"generate");
+          aiRequestSchema.parse(request);
+          const response=result(request);validateAiPatch(response.patch,request);
+          calls.push({kind,request});return response;
+        });
+        await mountPresentation(page,{initial:value});await open(page);
+        await page.getByLabel("Suggestion scope").selectOption("slides");
+        await page.getByLabel("1. SDLC").check();
+        const consent=page.getByLabel("I consent",{exact:false});
+        await consent.check();
+        const instruction=page.getByLabel("Instruction",{exact:true});
+        await instruction.click();
+        await instruction.pressSequentially("Simplify SDLC.");
+        await expect(consent).toBeChecked();
+        await expect(page.getByLabel("Allow simple")).not.toBeChecked();
+        await expect(page.getByRole("dialog")).not.toContainText("confirm consent again");
+        const button=page.getByRole("button",{name:"Generate suggestions",exact:true});
+        await expect(button).toBeEnabled();assert.equal(calls.length,0);
+        const artifacts=activation==="Enter"?await mkdtemp(join(tmpdir(),`forge-ai-exact-${width}-`)):null;
+        if(artifacts){
+          await button.scrollIntoViewIfNeeded();
+          await page.screenshot({path:join(artifacts,"enabled.png"),fullPage:true});
+        }
+        // No scope, formatting or consent interaction occurs between typing
+        // and the first native activation of this idle Generate button.
+        if(activation==="click")await button.click();
+        else{await tabFromInstructionToGenerate(page);await page.keyboard.press("Enter");}
+        const review=page.getByRole("region",{name:"AI suggestions"});
+        await expect(review).toBeVisible();await expect(review).toBeFocused();
+        await expect(review).toContainText("Review before applying");
+        assert.match(await review.innerText(),/Before[\s\S]*Complex SDLC requirements[\s\S]*After[\s\S]*Simple SDLC requirements/);
+        assert.equal(calls.length,1);
+        const request=calls[0].request;
+        assert.deepEqual(request.scope,{kind:"slides",slideIds:[value.document.slides[0].id]});
+        assert.equal(request.instruction,"Simplify SDLC.");assert.equal(request.consent,true);
+        assert.equal(request.allowFormatting,false);assert.equal(request.reference.length,1);
+        assert.equal(model.textOf(request.reference[0]),"Complex SDLC requirements");
+        assert.ok(!JSON.stringify(request).includes("Unrelated text"));
+        await expect(page.getByRole("alert")).toHaveCount(0);
+        assert.equal(await page.evaluate(()=>editCanvas.getObjects()[0].text),"Complex SDLC requirements");
+        assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+        if(artifacts){
+          await review.scrollIntoViewIfNeeded();
+          await page.screenshot({path:join(artifacts,"review.png"),fullPage:true});
+          console.log(`Exact consent-first ${width}px screenshots:`,artifacts);
+        }
+      });
+    });
+  }
+  test(`exact core validation ${width}px: focused instruction/consent errors, empty NEW slide Tab/Enter zero calls, outside-modal target and keyboard recovery`,async()=>{
+    await browserFixture(async page=>{
+      await page.setViewportSize({width,height:width===320?850:1000});
+      const calls=[];
+      await page.exposeFunction("persist",()=>{assert.fail("Validation/review must not save");});
+      await page.exposeFunction("presentationAi",(kind,request)=>{
+        assert.equal(kind,"generate");aiRequestSchema.parse(request);
+        const response=result(request,"Recovered teaching text");validateAiPatch(response.patch,request);
+        calls.push(request);return response;
+      });
+      await mountPresentation(page,{initial:draft()});await open(page);
+      const button=page.getByRole("button",{name:"Generate suggestions",exact:true});
+      await expect(button).toBeEnabled();await button.click();
+      await expect(page.getByRole("alert")).toContainText("Enter an instruction describing how to change");
+      await expect(page.getByRole("alert")).toBeFocused();assert.equal(calls.length,0);
+      await page.getByLabel("Instruction",{exact:true}).click();
+      await page.getByLabel("Instruction",{exact:true}).pressSequentially("Explain SDLC.");
+      await expect(button).toBeEnabled();await button.click();
+      await expect(page.getByRole("alert")).toContainText("Confirm consent to sending the selected teaching text");
+      await expect(page.getByRole("alert")).toBeFocused();assert.equal(calls.length,0);
+      await page.keyboard.press("Escape");
+      await page.evaluate(()=>presentationRoot.unmount());
+      const empty=draft();empty.document.slides[0].title="New empty slide";empty.document.slides[0].elements=[];
+      await mountPresentation(page,{initial:empty});await open(page);
+      await expect(page.getByLabel("Suggestion scope")).toHaveValue("slide");
+      await page.getByLabel("I consent",{exact:false}).check();
+      await page.getByLabel("Instruction",{exact:true}).click();
+      await page.getByLabel("Instruction",{exact:true}).pressSequentially("Explain SDLC.");
+      await expect(button).toBeEnabled();await tabFromInstructionToGenerate(page);
+      await page.keyboard.press("Enter");
+      await expect(page.getByRole("alert")).toContainText("Add or select teaching text, or choose a text-containing slide.");
+      await expect(page.getByRole("alert")).toContainText("empty imported or new slides");
+      await expect(page.getByRole("alert")).toBeFocused();assert.equal(calls.length,0);
+      const artifacts=await mkdtemp(join(tmpdir(),`forge-ai-exact-empty-${width}-`));
+      await page.screenshot({path:join(artifacts,"no-text.png"),fullPage:true});
+      await page.keyboard.press("Escape");
+      await expect(page.getByRole("button",{name:"AI Slide Assistant",exact:true})).toBeFocused();
+      // Select a real text-containing slide outside the modal, then reopen;
+      // no injected text/Fabric selection is used to manufacture recovery.
+      if(await page.locator(".presentation-slides").getAttribute("open")===null){
+        await page.locator(".presentation-slides > summary").click();
+      }
+      await page.getByRole("button",{name:/2\. Other slide$/}).click();
+      await page.waitForFunction(()=>editCanvas.getObjects().length===1&&editCanvas.getObjects()[0].text==="Unrelated text");
+      await open(page);await expect(page.getByLabel("Suggestion scope")).toHaveValue("slide");
+      await page.getByLabel("I consent",{exact:false}).check();
+      await page.getByLabel("Instruction",{exact:true}).click();
+      await page.getByLabel("Instruction",{exact:true}).pressSequentially("Explain SDLC.");
+      await expect(page.getByLabel("I consent",{exact:false})).toBeChecked();
+      await expect(button).toBeEnabled();await tabFromInstructionToGenerate(page);
+      await page.keyboard.press("Enter");
+      const review=page.getByRole("region",{name:"AI suggestions"});
+      await expect(review).toBeVisible();await expect(review).toBeFocused();
+      assert.match(await review.innerText(),/Before[\s\S]*Unrelated text[\s\S]*After[\s\S]*Recovered teaching text/);
+      assert.equal(calls.length,1);assert.equal(calls[0].scope.slideId,empty.document.slides[1].id);
+      assert.equal(calls[0].reference.length,1);assert.equal(model.textOf(calls[0].reference[0]),"Unrelated text");
+      await expect(page.getByRole("alert")).toHaveCount(0);
+      assert.equal(await page.evaluate(()=>editCanvas.getObjects()[0].text),"Unrelated text");
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+      await review.scrollIntoViewIfNeeded();
+      await page.screenshot({path:join(artifacts,"recovered-review.png"),fullPage:true});
+      console.log(`Exact empty-scope ${width}px screenshots:`,artifacts);
+    });
+  });
+}
+test("Generate recovery: consent-first typing preserves consent and native keyboard/320px click reaches exactly one action",async()=>{
+  await browserFixture(async page=>{
+    const calls=[];let release;
+    await page.exposeFunction("persist",()=>({}));
+    await page.exposeFunction("presentationAi",async(kind,request)=>{
+      calls.push({kind,request});await new Promise(resolve=>{release=resolve;});return result(request);
+    });
+    await mountPresentation(page,{initial:draft()});await select(page);await open(page);
+    await page.getByLabel("I consent",{exact:false}).check();
+    await page.getByLabel("Instruction",{exact:true}).pressSequentially("Simplify SDLC.");
+    await expect(page.getByLabel("I consent",{exact:false})).toBeChecked();
+    const button=page.getByRole("button",{name:"Generate suggestions",exact:true});
+    await expect(button).toBeEnabled();
+    const artifacts=await mkdtemp(join(tmpdir(),"forge-ai-generate-recovery-"));
+    await page.screenshot({path:join(artifacts,"1440-enabled.png"),fullPage:true});
+    // Formatting extends the disclosed payload, so visibly reconfirm, not a silent dead button.
+    await page.getByLabel("Allow simple").check();
+    await expect(page.getByLabel("I consent",{exact:false})).not.toBeChecked();
+    await expect(page.getByRole("dialog")).toContainText("Review the changed selection or formatting payload and confirm consent again");
+    await button.click();
+    await expect(page.getByRole("alert")).toContainText("Confirm consent");
+    assert.equal(calls.length,0);
+    await page.getByLabel("I consent",{exact:false}).check();
+    await page.keyboard.press("Tab");await expect(button).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("button",{name:"Generating…",exact:true})).toBeDisabled();
+    await expect(page.getByRole("dialog")).toContainText("Generating suggestions");
+    assert.equal(calls.length,1);release();
+    await expect(page.getByRole("region",{name:"AI suggestions"})).toBeVisible();
+    await page.getByRole("button",{name:"Discard",exact:true}).click();
+    await page.setViewportSize({width:320,height:850});
+    await page.getByLabel("Instruction",{exact:true}).fill("   ");
+    await button.click();await expect(page.getByRole("alert")).toContainText("Enter an instruction");
+    assert.equal(calls.length,1);
+    await page.screenshot({path:join(artifacts,"320-validation.png"),fullPage:true});
+    await page.getByLabel("Instruction",{exact:true}).fill("Summarize SDLC.");
+    await page.getByLabel("I consent",{exact:false}).check();
+    await expect(button).toBeEnabled();
+    await button.scrollIntoViewIfNeeded();
+    await page.screenshot({path:join(artifacts,"320-enabled.png"),fullPage:true});
+    await button.click();assert.equal(calls.length,2);release();
+    await expect(page.getByRole("region",{name:"AI suggestions"})).toBeVisible();
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    console.log("Generate recovery screenshots:",artifacts);
+  });
+});
+test("Generate recovery: empty new/imported/current textbox and missing slide scope never dispatch; selecting text recovers",async()=>{
+  await browserFixture(async page=>{
+    const calls=[];
+    await page.exposeFunction("persist",()=>({}));
+    await page.exposeFunction("presentationAi",(kind,request)=>{calls.push(request);return result(request);});
+    const value=draft();value.document.slides[0].elements=[model.newText("")];
+    await mountPresentation(page,{initial:value});await select(page);await open(page);
+    await page.getByLabel("Instruction",{exact:true}).fill("Explain SDLC.");
+    await page.getByLabel("I consent",{exact:false}).check();
+    const button=page.getByRole("button",{name:"Generate suggestions",exact:true});
+    await expect(button).toBeEnabled();await button.click();
+    await expect(page.getByRole("alert")).toContainText("Add or select teaching text");
+    assert.equal(calls.length,0);
+    await page.getByLabel("Suggestion scope").selectOption("slides");
+    await expect(page.getByLabel("I consent",{exact:false})).not.toBeChecked();
+    await button.click();await expect(page.getByRole("alert")).toContainText("Add or select teaching text");
+    await page.getByLabel("2. Other slide").check();
+    await page.getByLabel("I consent",{exact:false}).check();await button.click();
+    await expect(page.getByRole("region",{name:"AI suggestions"})).toBeVisible();
+    assert.equal(calls.length,1);assert.equal(calls[0].reference[0].paragraphs[0].runs[0].text,"Unrelated text");
+    await page.getByRole("button",{name:"Close",exact:true}).click();await page.evaluate(()=>presentationRoot.unmount());
+    await mountPresentation(page,{initial:model.blankPresentation()});await open(page);
+    await expect(button).toBeEnabled();await button.click();
+    await expect(page.getByRole("alert")).toContainText("Enter an instruction");
+    await page.getByLabel("Instruction",{exact:true}).fill("Explain SDLC.");await button.click();
+    await expect(page.getByRole("alert")).toContainText("Add or select teaching text");
+    assert.equal(calls.length,1);
+  });
+});
 test("mounted AI review/apply exactly one undo/redo, rich styles, manual save/PGlite reopen and responsive focus",async()=>{
   const h=await harness(),calls=[],saves=[];
   try{await browserFixture(async page=>{
@@ -138,7 +347,7 @@ test("duplicate generation, Discard/Close/unmount epochs and stale edit denial r
     assert.equal(calls.length,1);
     await page.getByRole("button",{name:"Discard",exact:true}).click();
     release();gate=null;
-    await expect(page.getByRole("button",{name:"Generate suggestions",exact:true})).toBeDisabled();
+    await expect(page.getByRole("button",{name:"Generate suggestions",exact:true})).toBeEnabled();
     await expect(page.getByRole("region",{name:"AI suggestions"})).toHaveCount(0);
     gate=new Promise(resolve=>{release=resolve;});await generate(page);
     // An edit/undo during the request lifetime changes history identity even
@@ -146,14 +355,28 @@ test("duplicate generation, Discard/Close/unmount epochs and stale edit denial r
     await page.evaluate(()=>{
       const t=editCanvas.getObjects()[0];editCanvas.setActiveObject(t);t.enterEditing();t.text="Manually edited";t.fire("changed");editCanvas.fire("text:changed",{target:t});t.exitEditing();
     });
-    release();gate=null;await expect(page.getByRole("region",{name:"AI suggestions"})).toBeVisible();
+    release();gate=null;
+    await expect(page.getByRole("button",{name:"Generate suggestions",exact:true})).toBeEnabled();
+    await expect(page.getByRole("region",{name:"AI suggestions"})).toHaveCount(0);
+    await expect(page.getByLabel("I consent",{exact:false})).not.toBeChecked();
+    await expect(page.getByRole("dialog")).toContainText("Review the changed selection");
+    // Regenerate for the edited source, then undo while Apply authorization waits.
+    await generate(page);await expect(page.getByRole("region",{name:"AI suggestions"})).toBeVisible();
+    gate=new Promise(resolve=>{release=resolve;});
+    await page.evaluate(()=>{
+      const original=window.presentationAi;
+      window.presentationAi=async(kind,request)=>{
+        if(kind==="authorize")await new Promise(resolve=>{window.releaseStaleApply=resolve;});
+        return original(kind,request);
+      };
+    });
     await page.getByRole("button",{name:"Apply",exact:true}).click();
-    await expect(page.getByRole("alert")).toContainText("source changed");
-    assert.equal(await page.evaluate(()=>editCanvas.getObjects()[0].text),"Manually edited");
     await page.getByRole("button",{name:"Undo",exact:true}).evaluate(b=>b.click());
     await page.waitForFunction(()=>editCanvas.getObjects()[0].text==="Complex SDLC requirements");
-    await page.getByRole("button",{name:"Apply",exact:true}).click();
-    await expect(page.getByRole("alert")).toContainText("source changed");
+    await page.evaluate(()=>releaseStaleApply());release();gate=null;
+    await expect(page.getByRole("button",{name:"Generate suggestions",exact:true})).toBeEnabled();
+    await expect(page.getByRole("region",{name:"AI suggestions"})).toHaveCount(0);
+    assert.equal(await page.evaluate(()=>editCanvas.getObjects()[0].text),"Complex SDLC requirements");
     await page.getByRole("button",{name:"Close",exact:true}).click();
     await open(page);gate=new Promise(resolve=>{release=resolve;});await generate(page);
     await page.getByRole("button",{name:"Close",exact:true}).click();release();gate=null;
@@ -195,7 +418,7 @@ test("duplicate generation, Discard/Close/unmount epochs and stale edit denial r
       await expect(page.getByRole("region",{name:"AI suggestions"})).toBeVisible();
       assert.ok(calls.at(-1).request.reference[0].paragraphs[0].runs.some(r=>r.size===36));
       await page.getByLabel("Suggestion scope").selectOption("slides");
-      assert.equal(await page.getByRole("button",{name:"Generate suggestions",exact:true}).isDisabled(),true);
+      assert.equal(await page.getByRole("button",{name:"Generate suggestions",exact:true}).isDisabled(),false);
       await expect(page.getByRole("dialog")).toContainText("0 selected");
       await page.getByRole("button",{name:"Close",exact:true}).click();await page.evaluate(()=>presentationRoot.unmount());
       const legacy={title:"Imported preview",audience:"learners",difficulty:"foundation",slides:[{title:"Imported",body:"Imported SDLC teaching text"}],quiz:[]};
@@ -206,8 +429,8 @@ test("duplicate generation, Discard/Close/unmount epochs and stale edit denial r
       await page.getByRole("button",{name:"Close",exact:true}).click();await page.evaluate(()=>presentationRoot.unmount());
       const shapes=draft();shapes.document.slides[0].elements=[{id:crypto.randomUUID(),type:"shape",shape:"rect",x:0,y:0,w:30,h:30,rotation:0,fill:"#000000",stroke:"#000000",strokeWidth:0}];
       await mountPresentation(page,{initial:shapes});await open(page);
-      await expect(page.getByRole("dialog")).toContainText("scope has no textbox");
-      assert.equal(await page.getByRole("button",{name:"Generate suggestions",exact:true}).isDisabled(),true);
+      await expect(page.getByRole("dialog")).toContainText("Add or select teaching text");
+      assert.equal(await page.getByRole("button",{name:"Generate suggestions",exact:true}).isDisabled(),false);
     });
   });
 test("Apply rechecks save/upload/export/uncertain locks and late local Discard while authorization waits",async()=>{
@@ -253,6 +476,8 @@ test("Apply rechecks save/upload/export/uncertain locks and late local Discard w
         if(lock==="uncertain"){
           await page.waitForFunction(()=>document.querySelector(".presentation-save-state").textContent.includes("Save needs checking"));
           await expect(page.getByRole("button",{name:"Apply",exact:true})).toBeDisabled();
+          await expect(page.getByRole("button",{name:"Generate suggestions",exact:true})).toBeDisabled();
+          await expect(page.locator("#presentation-ai-state")).toContainText("reconcile Your lessons");
         }else await expect(page.getByRole("button",{name:"Save",exact:true})).toBeEnabled();
       }
       assert.equal(await page.evaluate(()=>editCanvas.getObjects()[0].text),"Complex SDLC requirements");

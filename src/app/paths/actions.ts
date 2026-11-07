@@ -21,7 +21,7 @@ export async function generateLearningPath(_previous: PathState, form: FormData)
     const user = await currentUser().catch(() => null);
     if (!user) return { error: "Your session could not be verified. Log in again before explicitly requesting another path. Local recommendations remain available." };
     try { await requireAiAccess(user); }
-    catch { return { error: "External AI requires a recorded adult age (18+) and administrator-approved AI access. Access could not be confirmed. Local recommendations remain available." }; }
+    catch { return { error: "External AI requires administrator-approved AI access. Access could not be confirmed. Local recommendations remain available." }; }
     const topic = z.enum(["profile", ...TOPICS]).parse(form.get("topic"));
     const goal = z.enum(["profile", ...GOALS]).parse(form.get("goal"));
     if (form.get("shareCourseContent") !== "on") return { error: "Confirm sharing course titles, audience/difficulty metadata and coarse curriculum preferences before generating a path." };

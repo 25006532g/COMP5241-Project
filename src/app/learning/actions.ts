@@ -174,7 +174,7 @@ export async function updateLesson(_previous: ActionState, form: FormData): Prom
     if (data.id !== id) return uncertainCreation();
     if(draft) {writeAttempted=true;await bindImageDraft(form,user.id,id);writeAttempted=false;}
     revalidatePath("/catalog"); revalidatePath(`/courses/${id}`); revalidatePath("/admin"); revalidatePath("/studio");
-    return { success: requestPublication ? "Saved and sent to an administrator for approval." : publish ? "Reviewed lesson published." : "Lesson saved.", lessonId: id, version: expectedVersion + 1 };
+    return { success: requestPublication ? "Saved privately and requested administrator approval. Not published; learners cannot see this draft." : publish ? "Reviewed lesson published." : "Lesson saved.", lessonId: id, version: expectedVersion + 1 };
   } catch (error) { return writeAttempted ? uncertainCreation() : failure(error); }
 }
 
@@ -255,7 +255,7 @@ export async function createManualLesson(_previous: ActionState, form: FormData)
     if (rejected) return rejected;
     if(draft)await bindImageDraft(form,user.id,data!.id);
     revalidatePath("/catalog"); revalidatePath("/dashboard"); revalidatePath("/studio"); revalidatePath("/admin");
-    return { success: requestPublication ? "Saved and sent to an administrator for approval." : slideDraft ? "Lesson saved." : "Lesson created.", lessonId: data!.id, version: 1 };
+    return { success: requestPublication ? "Saved privately and requested administrator approval. Not published; learners cannot see this draft." : slideDraft ? "Lesson saved." : "Lesson created.", lessonId: data!.id, version: 1 };
   } catch (error) {
     // Even a thrown database error may arrive after commit. Also covers a failure after
     // insertion but before the server can finish acknowledging the action.
@@ -280,7 +280,9 @@ export async function askCoach(id: string, history: unknown): Promise<{ reply?: 
     if (!allowed) throw new Error("Your shared 15/day text-AI quota (coach and interviews) has been reached. Lessons and quizzes remain available.");
     const reply = await coachReply({ subject: FAMILIES[selection.family], topic, slides: referenceSlides,
       ...(isPresentation(lesson.content)?{format:"presentation"}:{}) }, messages);
-    await requireAiAccess(await currentUser());
+    const freshUser = await currentUser();
+    if (freshUser.id !== user.id) throw new Error("Your session changed. Reload before asking the coach again.");
+    await requireAiAccess(freshUser);
     return { reply };
   } catch (error) { return failure(error); }
 }

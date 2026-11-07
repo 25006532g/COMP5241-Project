@@ -99,15 +99,22 @@ test("DB leases/revisions/request replay guard parallel tabs, owners, deletion a
   assert.equal((await h.db.query("select deleted_at from forge_lesson_generations where id=$1", [third.id])).rows[0].deleted_at, null);
 });
 
-test("current auth/adult/trusted approval/import role checked before and after every inference", async t => {
+test("approved minor/unknown age works before and after inference without profile authorization", async t => {
   const h = await harness(); t.after(h.close);
   for (const age of [13, 17]) {
     await h.db.query("update profiles set age=$2,age_range=case when $2::integer < 18 then '13-17' else '18-24' end where id=$1", [h.owner, age]);
-    assert.ok((await h.start()).error);
+    const approved=(await h.start()).draft;assert.ok(approved);
+    assert.ok((await h.advance(approved)).draft.parts.length);
+    await h.actions.deleteLessonGeneration(approved.id);
   }
   await h.db.query("delete from profiles where id=$1", [h.owner]);
-  assert.ok((await h.start()).error, "missing/unknown adult age fails closed");
-  await h.db.query("insert into profiles(id,display_name,age,age_range) values($1,'Synthetic',22,'18-24')", [h.owner]);
+  const unknown=(await h.start()).draft;assert.ok(unknown,"missing profile age is not an AI authorization prerequisite");
+  assert.ok((await h.advance(unknown)).draft.parts.length);
+  await h.actions.deleteLessonGeneration(unknown.id);
+});
+
+test("current auth/trusted approval/import role checked before and after every inference", async t => {
+  const h=await harness();t.after(h.close);
   const draft = (await h.start()).draft;
   h.state.user.app_metadata.ai_access = false;
   assert.ok((await h.advance(draft)).error);
@@ -121,7 +128,6 @@ test("current auth/adult/trusted approval/import role checked before and after e
   await h.actions.deleteLessonGeneration(draft.id);
   for (const revoke of [
     () => { h.state.user.app_metadata.ai_access = false; },
-    () => h.db.query("update profiles set age=17,age_range='13-17' where id=$1", [h.owner]),
     () => { h.state.user.app_metadata.role = "learner"; },
     () => { h.state.user = null; },
   ]) {
@@ -142,7 +148,7 @@ test("current auth/adult/trusted approval/import role checked before and after e
 for (const [label, revoke, importing] of [
   ["owner switch", h => { h.state.user = { id: h.other, app_metadata: { role: "admin", ai_access: true } }; }, false],
   ["AI approval revoked", h => { h.state.user.app_metadata.ai_access = false; }, false],
-  ["profile age changed to 17", h => h.db.query("update profiles set age=17,age_range='13-17' where id=$1", [h.owner]), false],
+  ["session lost", h => { h.state.user = null; }, false],
   ["import instructor role revoked", h => { h.state.user.app_metadata.role = "learner"; }, true],
 ]) {
   test(`reservation recheck blocks inference after ${label} and permits explicit pending recovery`, async t => {
@@ -223,6 +229,7 @@ test("bounded attempts/payloads/start quotas and missing migrations fail visibly
 
 test("import extraction/start is consented, bounded, role-protected and contains zero inference", async t => {
   const h = await harness(); t.after(h.close);
+  await h.db.query("update profiles set age=17,age_range='13-17' where id=$1",[h.owner]);
   const form = h.form({ material: new File(["synthetic"], "teaching.pdf") });
   assert.match((await h.teachingActions.importTeachingMaterial({}, form)).error, /Confirm/);
   assert.equal(h.state.extractionCalls, 0);
@@ -233,6 +240,8 @@ test("import extraction/start is consented, bounded, role-protected and contains
   h.state.source = "x".repeat(20001);
   assert.match((await h.teachingActions.importTeachingMaterial({}, form)).error, /20,000/);
   h.state.source = "PRIVATE_REFERENCE requirements";
+  // Approved imports also work when a legacy profile/age is absent.
+  await h.db.query("delete from profiles where id=$1",[h.owner]);
   const started = await h.teachingActions.importTeachingMaterial({}, form);
   assert.ok(started.generationId); assert.equal(h.state.completions.length, 0);
   let draft = (await h.actions.loadLessonGeneration(started.generationId)).draft;

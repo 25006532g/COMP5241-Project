@@ -15,7 +15,7 @@ function AccountEditor({ account }: { account: AccountSummary }) {
       <label>Account role<select name="role" defaultValue={account.role}><option value="learner">Learner</option><option value="instructor">Instructor</option></select></label>
       <p>Recorded age: {account.age ?? "not available"}</p>
       <label><input type="checkbox" name="aiAccess" defaultChecked={account.aiAccess} /> External AI access</label>
-      <label><input type="checkbox" name="confirmAi" /> I have reviewed adult eligibility and consent for external AI processing.</label>
+      <label><input type="checkbox" name="confirmAi" /> As administrator, I have reviewed consent for external AI processing, regardless of profile age.</label>
       <button type="submit" className="secondary-button"><Save size={17} />{pending ? "Saving..." : "Save permissions"}</button>
     </fieldset>}
     {state.error && <p role="alert" className="form-notice notice-error">{state.error}</p>}

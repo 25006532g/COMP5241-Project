@@ -6,7 +6,195 @@ For a presentation-ready overview of features, design choices and prototype scre
 
 Track remaining work, blockers, acceptance criteria and verification updates in [IMPLEMENTATION_TRACKER.md](IMPLEMENTATION_TRACKER.md).
 
+## 6 November 2026 — eight UI/UX enhancements: bounded independent local gates passed
+
+All eight approved enhancements are implemented: private **Save & request
+approval** wording, coach recovery, skip link/**Profile & settings**, teaching
+empty-state guidance, dashboard lesson priorities, bookmark retrieval guidance,
+real Fabric On/Off/Mixed formatting feedback and compact catalog/counts.
+
+Independent narrow follow-up now passes **QA-UX-02 / gate 2**: **six distinct
+cases, 6/6**, zero failures/cancelled/skipped/todo. The previous seven gates
+remain independently passed, with fingerprint proof of unchanged product areas;
+this is **bounded local acceptance, not a new full audit or production release**.
+The appended [native coach focus regression](tests/approved-ui-ux.test.mjs#L504)
+checks pending/typing, identical failures and successful retry at 320/1440px;
+exact drafts/history and explicit-only retries are preserved. Test lint and
+whitespace passed; no new typecheck/build ran in this QA follow-up.
+
+Exact commands, sanitized screenshots, preservation and cleanup are in the
+newest tracker entry. Earlier failed/pending entries below remain dated history.
+No provider/DB/env/deployment/install/commit activity; build/typegen, connected
+services, measured contrast, screen-reader, IME and RTL remain untested.
+
+## 6 November 2026 — QA-UX-02 coach focus repair; independent narrow recheck pending
+
+Initial independent UI/UX QA passed seven gates but blocked gate 2: a second
+explicit retry with an identical transport/quota error left focus on BODY.
+Those findings and the implementation results below remain historical evidence.
+
+The coach now focuses recovery only after pending finishes, including consecutive
+identical failures. Draft/history, explicit-only retries, accessible alert/focus
+styling and approval-only AI authorization are unchanged. Untouched retained
+tests reproduced **0 pass / 2 fail**, then passed **2/2** after the surgical fix.
+The full acceptance file passed **13/13**, existing real-coach regressions **2/2**,
+and a supplementary native focus check **1/1**. Scoped lint, sanitized direct
+TypeScript and owned-file whitespace passed. Exact commands, evidence and cleanup
+are in the newest tracker entry. No live services, environment-file reads,
+installs, build/typegen, commits or deployment. **Coordinator owns acceptance;
+independent narrow QA recheck requested, not release certification.**
+
+## 6 November 2026 — eight approved UI/UX changes; independent QA pending
+
+- Presentation **Save & request approval** explains private saving and separate
+  administrator publication, including truthful pending/success messages.
+- Coach connection failures focus an actionable notice, retain the exact draft
+  and history, release pending state and never retry automatically.
+- A first-focusable skip link moves keyboard focus into page content; the avatar
+  shortcut is named **Profile & settings**.
+- Teaching explains an empty published roster and links to the existing studio.
+- Dashboard prioritizes **Find a lesson** and prominent **Continue lesson** links;
+  creation, routes and version-specific progress/resume behavior are unchanged.
+- **Bookmark lesson / Remove bookmark** points to **Progress > Saved lessons**,
+  retaining the previous UI state on unconfirmed changes.
+- Formatting publishes real Fabric on/off/mixed states, preserves character
+  selection across native mouse/Tab/Enter, and retains rich saves and Undo/Redo.
+- Catalog uses compact subject/visibility text headers and exact filtered counts.
+
+New persistent eight-feature offline regressions **8/8** and the final coupled
+group **75/75** passed. Scoped ESLint, direct offline `tsc --noEmit --incremental
+false` and whitespace checks passed. Synthetic browser layouts were checked at
+320px, 768px and 1440px; screenshot paths, commands and intermediate failures are
+recorded in the newest tracker entry. No environment files/application credentials,
+connected DB/provider, installation, commit or deployment were used. Next
+typegen/build and connected e2e were intentionally not run; no measured contrast
+or release certification is claimed. **Coordinator-assigned independent QA is
+requested.** Latest approval-only AI policy and all historical entries remain intact.
+
+## 6 November 2026 — independent narrow follow-up: local QA-AI-01 verified
+
+The initial independent interview blocker below is **historical and now resolved
+in the bounded offline verification**: fresh race/recovery checks **23/23** and
+selected interview UI, failure, eligibility/admin/coach checks **22/22** passed.
+Pre-save authorization loss performs no finalize or reply release; pending lease
+recovery requires the original approved owner and an explicit retry. Post-finalize
+authorization loss suppresses the response, without rolling back a legitimate save.
+Coordinator retains acceptance ownership.
+
+Six new persistent cases in `tests/presentation-ai-ui.test.mjs` close the exact UI
+gaps at **1440px and 320px**: real text scope, consent FIRST, native typing without
+reconfirmation, enabled native click/Tab/Enter Generate, exactly one valid mocked
+generation and before/after Review; focused missing-instruction/consent/empty-new-
+slide errors make zero calls, followed by outside-modal target selection and
+keyboard recovery. **6/6** narrow and **14/14** focused AI regression checks passed,
+including prompt-first, duplicate/stale denial, Apply/Undo/Redo/manual Save/reopen
+and approved-minor action positives. Ten final-group screenshots were opened.
+Two test-authoring failures were corrected only in the owned test file; exact
+commands, iterations, screenshots and cleanup are in the newest tracker entry.
+
+Application files, retained interview tests, unrelated dirty work and migrations/
+`_ran` files are fingerprint-unchanged. Owned browsers/PGlite closed; no owned
+Node/Chromium remained. No environment-file reads/application environment loading,
+connected or live-provider execution, installation, commit, build, typecheck or deployment.
+**User-feature local acceptance evidence only, not production/live-provider or
+age/consent/legal certification.** Hosted atomicity, live provider availability/
+semantics and deployment/provider terms remain untested. Older blocked/pending
+entries below are preserved dated history, not the current bounded QA verdict.
+
+## 6 November 2026 — bounded QA-AI-01 repair; independent QA pending
+
+Interview turns now re-read trusted authentication, require the original owner
+and fresh administrator approval immediately after inference/parsing, before
+saving a reply. They repeat that check after asynchronous finalization, including
+uncertain saves, before releasing any saved row. Lost authentication returns
+`auth`; changed owner or revoked approval returns `denied`, without a row.
+Approval-only AI access and the separate **13+ account-age rules** remain intact.
+
+Pre-save denial leaves the original saved attempt pending with no reply and no
+cleanup write, automatic inference or additional quota. Return with the original
+approved account, reload, and explicitly retry that turn after its existing
+75-second lease. If authorization changes during a legitimately authorized save,
+no result row is released; the original owner must reload to confirm storage.
+
+Local evidence: unchanged retained RED **0/4 pass**, smallest repair **4/4 pass**,
+strengthened authorization/recovery checks **23/23 pass**, requested interview/UI/
+eligibility/action group **72/72 pass**; scoped lint, direct offline TypeScript
+and whitespace passed. One added-fixture failure was corrected without relaxing
+signup age validation. Exact commands/results/cleanup are in the new tracker entry.
+All prior work and migrations are preserved. **Coordinator owns acceptance;
+independent QA requested, not release certification.** No connected/provider
+execution or build/deploy; hosted races after the last server check remain
+non-atomic without a separately authorized database-policy change.
+
+## 6 November 2026 — independent bounded QA: acceptance blocked
+
+Current independent offline execution: **24/24** focused eligibility/admin/coach/
+presentation AI checks passed; selected interview/staged/import/path/free-provider
+checks reported **44 passes, 4 failures** (three interview authorization cases plus
+their failed parent test). This supersedes prior pass-only claims as current QA
+evidence; historical results remain below. Coordinator retains acceptance ownership.
+
+**Blocking defect:** if trusted approval is revoked, the session disappears, or a
+different approved owner signs in during an interview inference, the real action
+still returns success and persists/releases the provider reply. A narrow persistent
+RED regression is retained in `tests/interviews.test.mjs`; no product fix was made.
+Escalated to the coordinator for a bounded implementer. Approval-only AI access
+regardless of age remains the approved policy; no age restriction was restored.
+
+Mounted Generate recovery, stale-work denial, Apply success, actual canvas text,
+Undo/Redo and real in-memory PGlite manual Save/reopen passed. Eleven sanitized
+desktop/mobile screenshots were opened. Owned test lint and whitespace passed;
+no independent typecheck/build/full-suite claim. Protected source/test fingerprints
+and all 17 migration names/content are unchanged except the retained test addition.
+Browsers/PGlite closed; no owned offline runner/Playwright process remained.
+Exact commands, failures, screenshots and untested criteria are in the newest
+tracker entry. No connected execution, environment-file reads, real networking,
+installs, deployment or commits. **Not release certification.**
+
+## 6 November 2026 — approval-only AI access and Generate recovery
+
+**Latest explicit user approval supersedes every older adult-only/minor/unknown-age
+AI restriction and related historical QA expectation below.** External AI now
+requires authenticated, trusted administrator approval (`app_metadata.ai_access`
+must be boolean `true`), regardless of profile age or missing age. Editable
+metadata cannot grant access. Administrator grants still require explicit consent
+review; roles, target-account protection and revocation remain enforced. AI
+authorization no longer queries profiles. Signup, profile, onboarding and database
+**13–120 whole-number age rules and age bands remain unchanged**.
+
+In the mounted presentation editor, checking consent **before** typing no longer
+silently unchecks it. Idle **Generate suggestions** is clickable for validation;
+missing instruction, consent or teaching-text scope produces a focused, actionable
+error without sending anything. Scope, formatting-payload and selected-text changes
+explicitly ask for renewed consent. Pending Generate/Apply and save/upload/uncertain
+locks remain disabled with visible reasons; export locks remain checked by the
+editor's preparation/Apply guards. Empty/new/imported slides require adding or
+selecting text or choosing a text-containing slide: v1 cannot invent targets.
+Before/after review, atomic Apply, rich styles, Undo/Redo and manual Save remain.
+Coach replies also reject a changed signed-in owner before releasing pending output.
+
+**Unchanged:** provider-default policy (effective defaults/retention unknown; no
+ZDR guarantee), free-only catalog, quotas, request consent, minimized prompts,
+retention and saved-lesson/author/instructor/enrollment/version controls.
+**No new SQL, migration changes or dependencies.**
+
+Local offline evidence: **254/254 bounded tests**, direct TypeScript and clean
+scoped ESLint passed. Retained RED tests reproduced the consent-first defect and
+old age authorization; actual offline Chromium/React/Fabric checks cover both
+input orders, native Tab/Enter, 320px clicks, validation recovery and exactly one
+mocked generation per valid submission. Generated screenshots were opened.
+Exact changed files, commands, intermediate failures and cleanup are recorded in
+the newest tracker entry. Earlier passes remain historical evidence, not evidence
+for this changed policy. **Independent QA requested; not release certification.**
+No environment-file reads, real provider/network requests, connected tests,
+remote operations, installs, commits, deployment or full-suite/build execution.
+Live free-provider availability, hosted auth/quota races and legal/provider
+age/region/consent review remain unverified deployment considerations.
+
 ## 6 November 2026 — AI Slide Assistant v1 (local implementation)
+
+Historical implementation/QA record: adult-only AI statements and age-based
+acceptance below are superseded by the later 6 November decision above.
 
 ### Independent QA evidence — 6 November 2026
 
@@ -1038,7 +1226,7 @@ Beyond the approved private interview transcript policy, this 15 October scope d
 
 ### Existing implementation and limits
 
-- Administrators use `/admin/accounts` to search accounts by email, grant/revoke instructor rights, and approve/revoke external AI access for recorded adults. Administrator accounts cannot be demoted by this interface.
+- Administrators use `/admin/accounts` to search accounts by email, grant/revoke instructor rights, and approve/revoke external AI access regardless of profile age or missing age, after explicit administrator consent review. Administrator accounts cannot be demoted by this interface.
 - Instructors use `/teaching` to create, publish and edit their own lessons, select existing verified learners by email filter for enrollment, and view only their own published-lesson reports. Administrators retain global public-lesson control. Existing self-enrollment and private-draft isolation remain.
 - First dashboard entry sends incomplete accounts to `/onboarding`; later edits and `/diagnostic` are linked from `/profile`. Completion/background and the latest diagnostic summary are separate from the chosen `learning_level`. Current trusted instructors/admins receive instructor questions; reviewers and other accounts receive learner questions. No self-reported privilege grants, invented historical completion/ages, raw answer history or new diagnostic AI payloads.
 - The six-question local diagnostic uses draft rubric `draft-2026-10-v1`: 0–1 New, 2–3 Foundation, 4–5 Intermediate, 6 Advanced. Retaking never changes the chosen level; adoption/override is explicit. Owner pedagogical review is still required. Recovery/profile/export/deletion remain reachable when setup is incomplete or unavailable.
@@ -1233,6 +1421,11 @@ The supplied key authenticated successfully. Synthetic inference probes did **no
 With reasoning disabled, the then-latest Qwen probe still returned HTTP 429, and a temporary `liquid/lfm-2.5-2.6b:free` probe returned HTTP 404 under the same required settings. The temporary probe did not change the configured model. These statuses alone do not identify the exact quota or provider restriction.
 
 ### Current eligibility and data protection
+
+As explicitly approved on **6 November 2026**, external AI authorization depends
+only on authenticated trusted administrator approval, not profile age or profile
+lookup success. Signup/profile/onboarding age rules still apply. Historical
+adult-only statements elsewhere in this document are superseded, not current policy.
 
 Application limits are **5 new saved lesson starts** (including material imports) and **15 shared text-AI requests (coach plus interviews)** per account per UTC database day. Starting atomically claims quota even if later inference fails; resuming/replaying parts does not claim another start. Each stage instead has three bounded explicit attempts, and provider quotas still apply to every call. Failed coach/interview calls consume their shared text request. Quiz retries are never rate-limited by these counters. Provider-wide free quotas may be lower than aggregate user demand.
 

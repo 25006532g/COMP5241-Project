@@ -50,6 +50,7 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
   const [ack,setAck]=useState({id:lessonId,version});
   const [draftId,setDraftId]=useState("");
   const [pending,setPending]=useState(false),[uploading,setUploading]=useState(false),[uncertain,setUncertain]=useState(false);
+  const [saveIntent,setSaveIntent]=useState<"save"|"publish">("save");
   const [error,setError]=useState(""),[success,setSuccess]=useState("");
   const [saved,setSaved]=useState(JSON.stringify(history.value));
   const [preview,setPreview]=useState(false),[previewIndex,setPreviewIndex]=useState(0);
@@ -266,7 +267,7 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
     if((fontSize.current&&!fontSize.current.flush())||!canvas.current?.flush())return;
     const parsed=presentationAuthorSchema.safeParse(history.value);
     if(!parsed.success){setError(`${parsed.error.issues[0]?.path.join(".")}: ${parsed.error.issues[0]?.message}`);return;}
-    inFlight.current=true;setPending(true);onSaveLock?.(true);quietError.current="";setError("");setSuccess("");
+    inFlight.current=true;setSaveIntent(intent);setPending(true);onSaveLock?.(true);quietError.current="";setError("");setSuccess("");
     let dispatched=false;
     try{
       const {validateTextLayout}=await import("@/lib/presentation-fabric");
@@ -327,10 +328,13 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
   return <div className="presentation-editor" onKeyDown={keyboard}>
     <header className="presentation-document-bar">
       <label>Lesson title<input disabled={locked} value={draft.title} placeholder="Name your lesson" maxLength={120} onChange={e=>commit({...draft,title:e.target.value},"lesson-title")}/></label>
-      <span className="presentation-save-state">{uncertain?"Save needs checking":pending?"Saving…":saved===JSON.stringify(draft)?ack.id?"All changes saved":"Not saved yet":"Unsaved changes"} · {ack.id?`v${ack.version}`:"Private draft"}</span>
+      <div className="presentation-document-status">
+        <span className="presentation-save-state">{uncertain?"Save needs checking":pending?saveIntent==="publish"?"Saving privately & requesting approval…":"Saving…":saved===JSON.stringify(draft)?ack.id?"All changes saved":"Not saved yet":"Unsaved changes"} · {ack.id?`v${ack.version}`:"Private draft"}</span>
+        <p id="presentation-approval-note" className="presentation-approval-note">Save is private. Request approval for review; learners can see the draft only after an administrator publishes it.</p>
+      </div>
       <div className="presentation-toolbar presentation-save-actions">
-        <button type="button" className="primary-button" disabled={locked} onClick={()=>void save("save")}>{pending?"Saving…":"Save"}</button>
-        <button type="button" className="secondary-button" title="Save privately and request administrator review" disabled={locked} onClick={()=>void save("publish")}>Save and publish</button>
+        <button type="button" className="primary-button" disabled={locked} onClick={()=>void save("save")}>{pending&&saveIntent==="save"?"Saving…":"Save"}</button>
+        <button type="button" className="secondary-button" aria-label="Save & request approval" aria-describedby="presentation-approval-note" disabled={locked} onClick={()=>void save("publish")}>{pending&&saveIntent==="publish"?"Saving & requesting approval…":"Save & request approval"}</button>
       </div>
     </header>
     <div className="presentation-ribbon">
@@ -373,7 +377,7 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
         </button></li>)}</ol>
         </div>
       </details>
-      <main className="presentation-main" aria-label="Presentation editing area">
+      <section className="presentation-main" aria-label="Presentation editing area">
         <fieldset disabled={locked} className="presentation-toolbar presentation-slide-fields">
           <label>Slide title (accessible)<input value={slide.title} maxLength={100} onChange={e=>patchSlide({title:e.target.value},`slide-title:${slide.id}`)}/></label>
           <label>Background<input type="color" value={slide.background} onChange={e=>patchSlide({background:e.target.value})}/></label>
@@ -390,7 +394,7 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
           <ul>{slide.elements.map((e,i)=><li key={e.id}><label><input type="checkbox" checked={selection.includes(e.id)} disabled={locked} onChange={event=>select(event.target.checked?[...selection,e.id]:selection.filter(id=>id!==e.id))}/>
             Object {i+1}: {e.type==="text"?textOf(e)||"Empty text":e.type==="image"?`Image: ${e.alt}`:e.shape}</label></li>)}</ul>
         </details>
-      </main>
+      </section>
       <details ref={propertiesPanel} open className="presentation-properties"><summary>Object properties ({selected.length} selected)</summary>
         <fieldset disabled={locked||!primary} className="learning-form">
           {!primary&&<div className="presentation-empty"><strong>Make it yours</strong><p>Select an object to style it, or add text, an image or a shape above.</p><p>Prefer the keyboard? Open the object outline below the canvas.</p></div>}
@@ -416,7 +420,7 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
             </details>
             {primary.type==="text"&&<>
               <h3>Text style</h3>
-              <div className="presentation-toolbar">{(["bold","italic","underline"] as const).map(mark=><button type="button" key={mark} onMouseDown={e=>e.preventDefault()} onClick={()=>canvas.current?.toggle(mark)}>{mark}</button>)}</div>
+              <div className="presentation-toolbar">{(["bold","italic","underline"] as const).map(mark=><button type="button" key={mark} aria-label={mark} disabled={!textStyle} aria-pressed={textStyle?.[mark]??false} onMouseDown={e=>e.preventDefault()} onClick={()=>canvas.current?.toggle(mark)}>{mark} · {textStyle?.[mark]==="mixed"?"Mixed":textStyle?.[mark]?"On":"Off"}</button>)}</div>
               <label>Font<select value={textStyle?textStyle.font??"":style.font} onChange={e=>font({font:e.target.value as RunStyle["font"]})}>
                 {textStyle?.font===null&&<option value="" disabled>Mixed</option>}{PRESENTATION_FONTS.map(f=><option key={f}>{f}</option>)}</select></label>
               <FontSizeInput key={selection.join()} value={textStyle?textStyle.size:style.size} onApply={size=>font({size})} handle={fontSize}/>
@@ -466,7 +470,7 @@ export function PresentationLessonEditor({lessonId="",version=1,initial,initialL
         <label>Difficulty<select value={draft.difficulty} onChange={e=>commit({...draft,difficulty:e.target.value as PresentationAuthor["difficulty"]})}>{["new","foundation","intermediate","advanced"].map(v=><option key={v}>{v}</option>)}</select></label>
       </fieldset>
       <h3>Saving &amp; private images</h3>
-      <p>Save is private for every author role. Save and publish requests administrator review. Originals are not retained; sanitized private uploads are retained for undo for seven days, or while referenced by a saved lesson. Discard removes unused uploads now. Expired cleanup is retryable; administrators must schedule cleanup for abandoned accounts/drafts.</p>
+      <p>Save is private for every author role. Save &amp; request approval saves privately and requests administrator review, not immediate publication. Learners can see the lesson only after an administrator publishes it. Originals are not retained; sanitized private uploads are retained for undo for seven days, or while referenced by a saved lesson. Discard removes unused uploads now. Expired cleanup is retryable; administrators must schedule cleanup for abandoned accounts/drafts.</p>
       <div className="presentation-toolbar">
       <button type="button" disabled={locked} onClick={()=>void discard()}>Discard unsaved draft</button>
       <button type="button" disabled={locked} onClick={()=>void cleanExpiredPresentationUploads().then(r=>{setError(r.error??"");setSuccess(r.success??"");})

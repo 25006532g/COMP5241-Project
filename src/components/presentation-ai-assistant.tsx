@@ -2,8 +2,13 @@
 
 import {useEffect,useRef,useState} from "react";
 import {generatePresentationSuggestions} from "@/app/presentation/ai-actions";
-import {validateAiPatch,scopeTextboxes,type AiScope,type AiSnapshot,type AiResult} from "@/lib/presentation-ai";
+import {applyAiPatch,validateAiPatch,scopeTextboxes,type AiScope,type AiSnapshot,type AiResult} from "@/lib/presentation-ai";
 import {textOf,type Presentation} from "@/lib/presentation";
+
+function selectionPayload(doc:Presentation,scope:AiScope,formatting:boolean){
+  return JSON.stringify(scopeTextboxes(doc,scope).map(({slideId,element})=>({slideId,id:element.id,text:textOf(element),
+    ...(formatting?{align:element.align,sizes:element.paragraphs.map(p=>p.runs.map(r=>r.size))}:{})})));
+}
 
 export function PresentationAiAssistant({document:doc,slideId,textboxId,locked,prepare,apply}:{
   document:Presentation;slideId:string;textboxId?:string;locked:boolean;
@@ -15,18 +20,37 @@ export function PresentationAiAssistant({document:doc,slideId,textboxId,locked,p
   const [busy,setBusy]=useState(false),[applying,setApplying]=useState(false),[error,setError]=useState(""),[message,setMessage]=useState("");
   const [suggestion,setSuggestion]=useState<{snapshot:AiSnapshot;result:Extract<AiResult,{patch:unknown}>}|null>(null);
   const epoch=useRef(0),pending=useRef(false),applyPending=useRef(false),live=useRef(true);
+  const appliedPayload=useRef<string|null>(null);
   const notice=useRef<HTMLParagraphElement>(null),results=useRef<HTMLElement>(null);
   useEffect(()=>{live.current=true;return()=>{live.current=false;};},[]);
   useEffect(()=>{if(error||message)notice.current?.focus();else if(suggestion)results.current?.focus();},[error,message,suggestion]);
   function invalidate(resetConsent=true){
     epoch.current++;setSuggestion(null);setError("");setMessage("");
-    if(resetConsent)setConsent(false);
+    if(resetConsent){setConsent(false);setMessage("Review the changed selection or formatting payload and confirm consent again.");}
   }
-  let count=0,scopeError="";
-  try{count=scopeTextboxes(doc,scope).length;}catch(e){scopeError=e instanceof Error?e.message:"Select teaching text.";}
+  const noText="Add or select teaching text, or choose a text-containing slide. V1 cannot invent targets on empty imported or new slides.";
+  let count=0,scopeError="",payload="";
+  try{
+    const boxes=scopeTextboxes(doc,scope);count=boxes.length;
+    payload=selectionPayload(doc,scope,formatting);
+    if(!boxes.some(({element})=>textOf(element).trim()))scopeError=noText;
+  }catch{scopeError=noText;}
+  const sharedPayload=useRef(payload);
+  useEffect(()=>{
+    if(sharedPayload.current===payload)return;
+    sharedPayload.current=payload;
+    // Only the exact expected atomic Apply payload may preserve its success
+    // notice. Manual edits/undo during authorization still invalidate the epoch.
+    if(appliedPayload.current===payload){appliedPayload.current=null;return;}
+    epoch.current++;setSuggestion(null);setConsent(false);setError("");
+    setMessage("Review the changed selection or formatting payload and confirm consent again.");
+  },[payload]);
   async function generate(){
     if(pending.current||applyPending.current||locked)return;
     invalidate(false);
+    if(!instruction.trim()){setError("Enter an instruction describing how to change the selected teaching text.");return;}
+    if(scopeError){setError(scopeError);return;}
+    if(!consent){setError("Confirm consent to sending the selected teaching text to external AI, then Generate again.");return;}
     let snapshot:AiSnapshot;
     try{snapshot=prepare(scope,instruction,formatting,consent);}
     catch(e){setError(e instanceof Error?e.message:"Invalid selection.");return;}
@@ -46,9 +70,10 @@ export function PresentationAiAssistant({document:doc,slideId,textboxId,locked,p
     const current=epoch.current;applyPending.current=true;setApplying(true);setError("");setMessage("");
     const isCurrent=()=>live.current&&epoch.current===current;
     try{
+      appliedPayload.current=selectionPayload(applyAiPatch(doc,suggestion.snapshot.request,suggestion.result.patch),scope,formatting);
       await apply(suggestion.snapshot,suggestion.result,isCurrent);
       if(isCurrent()){setSuggestion(null);setConsent(false);setMessage("Suggestions applied as one undoable edit. Review the canvas and Save manually.");}
-    }catch(e){if(isCurrent())setError(e instanceof Error?e.message:"Suggestions were not applied.");}
+    }catch(e){appliedPayload.current=null;if(isCurrent())setError(e instanceof Error?e.message:"Suggestions were not applied.");}
     finally{applyPending.current=false;if(live.current)setApplying(false);}
   }
   // Display from the frozen reference, not a newer draft. Each run and all
@@ -67,13 +92,14 @@ export function PresentationAiAssistant({document:doc,slideId,textboxId,locked,p
     </fieldset>}
     <p>{scopeError||`${count} textbox${count===1?"":"es"} selected. Limit: 20,000 text characters, 100 textboxes, 2,000 runs and 30 slides. Oversized selections reject; nothing is clipped or batched.`}</p>
     <div><label htmlFor="presentation-ai-instruction">Instruction</label><textarea id="presentation-ai-instruction" rows={4} maxLength={2000} value={instruction} placeholder="Simplify this SDLC explanation for beginners and add a small classroom example."
-      onChange={e=>{invalidate();setInstruction(e.target.value);}}/></div>
+      onChange={e=>{invalidate(false);setInstruction(e.target.value);}}/></div>
     <label><input type="checkbox" checked={formatting} onChange={e=>{invalidate();setFormatting(e.target.checked);}}/>Allow simple font-size and alignment suggestions</label>
     <p>Generate sends your instruction, only the selected teaching text and stable IDs to OpenRouter; font sizes/alignment are included only if allowed. Quiz/answer keys, accounts, images, originals, slide/lesson titles and unrelated slides are excluded. Prompts/results are not saved by FORGE. Provider defaults/retention are unknown; zero-data-retention is not guaranteed. Avoid personal or confidential information.</p>
     <label><input type="checkbox" checked={consent} onChange={e=>{invalidate(false);setConsent(e.target.checked);}}/>I consent to sending this selected text to external AI for this request.</label>
-    <p>Requires recorded age 18+ and administrator-approved AI access. 15 requests/day shared with coach and interview. Discard/Close only ignores local results; it does not cancel an upstream request or refund quota.</p>
+    <p>Requires administrator-approved AI access, regardless of profile age or missing age. 15 requests/day shared with coach and interview. Discard/Close only ignores local results; it does not cancel an upstream request or refund quota.</p>
+    <p id="presentation-ai-state" aria-live="polite">{locked?"AI edits are locked during save, export, upload or an uncertain save. Finish the pending operation; if Save needs checking, reconcile Your lessons before retrying.":applying?"Checking access and applying suggestions. Please wait.":busy?"Generating suggestions. Please wait; do not submit again.":"Generate validates your instruction, selected teaching text and consent before sending. No text? Add/select text or choose a text-containing slide."}</p>
     <div className="presentation-toolbar">
-      <button type="button" className="primary-button" disabled={locked||busy||applying||!consent||!instruction.trim()||Boolean(scopeError)} onClick={()=>void generate()}>{busy?"Generating…":"Generate suggestions"}</button>
+      <button type="button" className="primary-button" aria-describedby="presentation-ai-state" disabled={locked||busy||applying} onClick={()=>void generate()}>{busy?"Generating…":"Generate suggestions"}</button>
       <button type="button" onClick={()=>{invalidate();setMessage("Suggestions discarded locally. Your presentation was not changed.");}}>Discard</button>
     </div>
     {suggestion&&<section ref={results} tabIndex={-1} aria-label="AI suggestions" className="presentation-ai-results">

@@ -308,6 +308,19 @@ h1, h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; }
 
 /* Learner portal */
 .portal-shell { min-height: 100vh; display: flex; background: var(--paper); }
+.portal-skip { position: fixed; top: 8px; left: 8px; z-index: 50; padding: 12px; background: var(--surface); color: var(--ink); transform: translateY(-150%); }
+.portal-skip:focus { transform: translateY(0); }
+#page-content { scroll-margin-top: 76px; }
+#page-content:focus-visible { outline: 3px solid #b14529; outline-offset: -3px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.dashboard-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.dashboard-actions a { margin: 0; text-decoration: none; }
+.lesson-coach .auth-submit, .catalog-filters .auth-submit { padding-inline: 14px; }
+.lesson-coach button svg, .catalog-filters button svg { flex-shrink: 0; }
+.dashboard-continue { padding: 12px 16px; border-radius: 4px; background: var(--ink); color: white; }
+.catalog-subject { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 16px 19px; border-bottom: 1px solid var(--line); background: var(--green-pale); color: var(--ink); }
+.catalog-subject strong { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 13px; }
+.catalog-subject span { font-size: 11px; font-weight: 700; }
 .portal-sidebar { position: fixed; inset: 0 auto 0 0; z-index: 30; width: 242px; display: flex; flex-direction: column; padding: 24px 18px; background: var(--ink); color: white; }
 .portal-brand { display: inline-flex; align-items: center; gap: 10px; color: white; text-decoration: none; }
 .portal-close, .portal-menu { display: none; border: 0; background: transparent; }
@@ -323,6 +336,8 @@ h1, h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; }
 .portal-topbar { height: 66px; position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: flex-end; gap: 18px; padding: 0 35px; border-bottom: 1px solid var(--line); background: rgba(245,243,237,.95); backdrop-filter: blur(12px); }
 .catalog-shortcut { color: var(--ink); font-size: 11px; font-weight: 800; text-decoration: none; }.portal-avatar { width: 33px; height: 33px; text-decoration: none; }
 .portal-page { width: min(1180px, 100%); margin: auto; padding: 45px 40px 75px; }
+.game-frame { overflow: hidden; border: 1px solid var(--line); background: #080f1c; }
+.game-frame iframe { display: block; width: 100%; min-height: 900px; border: 0; }
 .portal-heading { display: flex; align-items: end; justify-content: space-between; gap: 25px; margin-bottom: 30px; }
 .portal-heading .primary-button { width: auto; margin: 0; flex: 0 0 auto; }
 .portal-heading h1, .course-banner h1, .lesson-article h1, .danger-page h1 { margin-bottom: 8px; font-size: clamp(34px, 4.5vw, 50px); line-height: 1.05; }
@@ -396,6 +411,10 @@ h1, h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; }
 .presentation-document-bar > label { flex: 1; font-weight: 700; font-size: 12px; }
 .presentation-editor .presentation-document-bar > label input { margin-top: 5px; font-size: 16px; font-weight: 600; }
 .presentation-save-state { font-size: 11px; color: var(--muted); align-self: center; }
+.presentation-document-status { max-width: 270px; align-self: center; }
+.presentation-approval-note { margin: 4px 0 0; color: var(--ink); font-size: 11px; line-height: 1.4; }
+.presentation-editor button[aria-pressed="true"] { background: var(--green-pale); border-color: var(--green); }
+.presentation-editor button[aria-pressed="mixed"] { border-style: dashed; border-color: var(--ink); }
 .presentation-editor .presentation-metadata { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .presentation-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .presentation-editor button, .presentation-editor summary, .presentation-editor .presentation-upload {
@@ -406,8 +425,8 @@ h1, h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; }
 .presentation-editor .primary-button:hover:not(:disabled) { background: #174a3a; }
 .presentation-editor .secondary-button { background: #e9f0e9; color: #174a3a; border-color: #abc2b3; }
 .presentation-editor .presentation-save-actions button { margin: 0; min-height: 40px; }
-.presentation-ribbon { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #eeeee6; }
-.presentation-ribbon > fieldset { padding-right: 16px; border-right: 1px solid #cbd2c8; }
+.presentation-ribbon { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #eeeee6; }
+.presentation-ribbon > fieldset { padding-right: 8px; border-right: 1px solid #cbd2c8; }
 .presentation-ribbon .presentation-utilities { margin-left: auto; }
 .presentation-shapes { position: relative; }
 .presentation-shapes > div { position: absolute; top: calc(100% + 6px); left: 0; z-index: 15; width: 170px; padding: 8px; display: grid; gap: 6px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); box-shadow: 0 8px 24px #17201d22; }

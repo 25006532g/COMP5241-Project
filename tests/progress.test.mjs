@@ -400,9 +400,14 @@ test("real progress actions and helpers with additive migration (offline PGlite)
     });
     await context.test("actual overview and history retain versions, unknown legacy and inaccessible lesson boundaries", async () => {
       h.state.user = { id: h.owner, app_metadata: {} };
-      assert.match(renderToStaticMarkup(await dashboardRoute()), /Version 2 · Reviewed · Continue/);
+      const reviewedDashboard = renderToStaticMarkup(await dashboardRoute());
+      assert.match(reviewedDashboard, /Version 2 · Reviewed<\/small>/);
+      assert.match(reviewedDashboard, /class="dashboard-continue">Continue lesson/);
+      assert.match(reviewedDashboard, new RegExp(`href="/courses/${h.lesson}/lessons/1"`));
       await h.actions.attend(h.lesson, 2);
-      assert.match(renderToStaticMarkup(await dashboardRoute()), /Version 2 · Attended · Continue/);
+      const attendedDashboard = renderToStaticMarkup(await dashboardRoute());
+      assert.match(attendedDashboard, /Version 2 · Attended<\/small>/);
+      assert.match(attendedDashboard, /class="dashboard-continue">Continue lesson/);
       await h.actions.submitQuiz(h.lesson, 2, [0, 0, 0, 0, 0, 0, 1, 1, 1, 1]);
       await h.actions.submitQuiz(h.lesson, 2, [0, 0, 0, 0, 0, 1, 1, 1, 1, 1]);
       const legacy = randomUUID();
@@ -419,7 +424,9 @@ test("real progress actions and helpers with additive migration (offline PGlite)
       await h.db.query("update forge_lessons set version=3 where id=$1", [h.lesson]);
       const dashboard = renderToStaticMarkup(await dashboardRoute());
       assert.match(dashboard, /passed \(any version\)/);
-      assert.match(dashboard, /Version 3 · Continue/);
+      assert.match(dashboard, /Version 3 · Not yet reviewed<\/small>/);
+      assert.match(dashboard, /class="dashboard-continue">Continue lesson/);
+      assert.doesNotMatch(dashboard, /Version 3 · (Reviewed|Attended|Passed)/);
       await h.db.query("update forge_lessons set version=2 where id=$1", [h.lesson]);
       // Static rendering uses the actual route and real evidence component; shell,
       // metadata and framework navigation are the only presentation adapters.

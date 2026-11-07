@@ -242,23 +242,21 @@ try {
   assert.equal(deniedGrant.status(), 200, "Expected handled server-action denial");
   assert.ok((await deniedGrant.text()).includes("Administrator access required."), "Server action must reject non-admin actor");
   pass();
-  step("adult AI approval is conditional on recorded age and explicit confirmation");
-  const ageProbe = await database.from("profiles").select("age").eq("id", owner.id).maybeSingle();
+  step("administrator AI approval requires explicit consent review, not recorded age");
   const ageRow = await accountRow(admin, owner);
   await ageRow.locator('input[name="aiAccess"]').check();
+  await ageRow.locator('input[name="confirmAi"]').uncheck();
+  await ageRow.getByRole("button", { name: "Save permissions", exact: true }).click();
+  await expect(ageRow.getByRole("alert")).toHaveText("Confirm administrator consent review before approving external AI access.");
   await ageRow.locator('input[name="confirmAi"]').check();
   await ageRow.getByRole("button", { name: "Save permissions", exact: true }).click();
-  if (ageProbe.error || !ageProbe.data?.age) {
-    await expect(ageRow.getByRole("alert")).toHaveText("AI access requires a recorded age of 18 or older. Missing ages and minors cannot be approved.");
-  } else {
-    await success(admin.page, "Account permissions saved.");
-    assert.equal(checked(await database.auth.admin.getUserById(owner.id), "Verify adult grant").user.app_metadata.ai_access, true);
-    await ageRow.locator('input[name="aiAccess"]').uncheck();
-    await ageRow.getByRole("button", { name: "Save permissions", exact: true }).click();
-    await success(admin.page, "Account permissions saved.");
-  }
+  await success(admin.page, "Account permissions saved.");
+  assert.equal(checked(await database.auth.admin.getUserById(owner.id), "Verify trusted grant").user.app_metadata.ai_access, true);
+  await ageRow.locator('input[name="aiAccess"]').uncheck();
+  await ageRow.getByRole("button", { name: "Save permissions", exact: true }).click();
+  await success(admin.page, "Account permissions saved.");
   assert.equal(checked(await database.auth.admin.getUserById(owner.id), "Verify AI remains disabled").user.app_metadata.ai_access, false);
-  await screenshot(admin.page, "missing-age-approval-denied");
+  await screenshot(admin.page, "administrator-ai-approval-revoked");
   pass();
   step("instructor edits and publishes own private lesson through studio");
   await editor(owner.page, own.id);
