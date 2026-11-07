@@ -94,7 +94,7 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
   const feedbackRef = useRef<HTMLElement>(null);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const speakTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const keepAlive = useRef<ReturnType<typeof setInterval> | null>(null);
+  const keepAlive = useRef<number | null>(null);
   const micOn = useRef(false);
   const [hearing, setHearing] = useState(false);
   const [hearingSince, setHearingSince] = useState<number | null>(null);
