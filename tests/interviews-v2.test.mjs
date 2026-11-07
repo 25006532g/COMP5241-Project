@@ -26,7 +26,7 @@ test("v2 question routing, word count and bank schema", () => {
   const ids = Array.from({ length: 12 }, (_, index) => `q${index}`);
   const drawn = v2.drawPrimary(ids, () => 0.2);
   assert.ok(drawn);
-  assert.ok(drawn.length >= 7 && drawn.length <= 10);
+  assert.equal(drawn.length, 7);
   assert.equal(new Set(drawn).size, drawn.length);
   const follow = "follow";
   assert.deepEqual(v2.chooseNext({ presentedAfter: 2, relatedIds: [follow], askedIds: ["current"], plannedRemaining: ["next"], keywordMatched: true }), { type: "ask", id: follow, reason: "keyword" });
@@ -40,8 +40,12 @@ test("v2 question routing, word count and bank schema", () => {
       { id: "tree", prompt: "When is a balanced tree better than a plain one?", keywords: ["avl", "rotation"] },
     ],
   }), { type: "ask", id: "rate", reason: "keyword" });
-  assert.equal(v2.bridgeLead("I would use a token bucket so bursts stay small.", ["bucket"]), "Since you mentioned token bucket, ");
-  assert.match(v2.bridgeLead("I have been building rate limiters for the API.", ["building"]) ?? "", /^As you said you have been /);
+  const tokenLead = v2.bridgeLead("I would use a token bucket so bursts stay small.", ["bucket"], () => 0);
+  const otherLead = v2.bridgeLead("I would use a token bucket so bursts stay small.", ["bucket"], () => 0.9);
+  assert.match(tokenLead ?? "", /token bucket/i);
+  assert.doesNotMatch(tokenLead ?? "", /^Since you mentioned/i);
+  assert.notEqual(tokenLead, otherLead);
+  assert.match(otherLead ?? "", /token bucket/i);
   const partial = v2.chooseNext({
     presentedAfter: 2, relatedIds: ["cache", "tree"], askedIds: ["current"], plannedRemaining: ["planned"], keywordMatched: false,
     answer: "The read path used a cache.",
@@ -59,13 +63,42 @@ test("v2 question routing, word count and bank schema", () => {
   });
   assert.equal(missed.type, "ai");
   assert.deepEqual(missed.candidates, ["cache"]);
+  assert.deepEqual(v2.chooseNext({
+    presentedAfter: 2, relatedIds: ["graph-b", "graph-a"], askedIds: ["current"], plannedRemaining: ["planned"], keywordMatched: true,
+    answer: "I mentioned an index on the table.",
+    related: [
+      { id: "graph-a", prompt: "When is a query language better?", keywords: ["graphql"] },
+      { id: "graph-b", prompt: "How do bundlers split code?", keywords: ["webpack"] },
+    ],
+  }), { type: "ask", id: "graph-b", reason: "keyword" });
+  assert.deepEqual(v2.chooseNext({
+    presentedAfter: 2, relatedIds: ["second", "first"], askedIds: ["current"], plannedRemaining: ["planned"], keywordMatched: true,
+    answer: "I would use a cache for repeated reads.",
+    related: [
+      { id: "first", prompt: "How does caching work there?", keywords: ["cache"] },
+      { id: "second", prompt: "How does caching work here?", keywords: ["cache"] },
+    ],
+  }), { type: "ask", id: "second", reason: "keyword" });
   assert.deepEqual(v2.chooseAfterSkip({ presentedAfter: 2, askedIds: ["current"], plannedRemaining: ["next"] }), { type: "ask", id: "next", reason: "planned" });
   assert.equal(v2.chooseReplacement({ currentId: "current", relatedIds: ["rel", "asked"], askedIds: ["current", "asked"], poolIds: ["current", "rel", "asked", "other"], random: () => 0 }), "rel");
   assert.equal(v2.chooseReplacement({ currentId: "current", relatedIds: [], askedIds: ["current"], poolIds: ["current", "a", "b"], random: () => 0 }), "a");
   assert.equal(v2.chooseReplacement({ currentId: "only", relatedIds: [], askedIds: ["only"], poolIds: ["only"], random: () => 0 }), null);
   assert.equal(v2.localFeedback("Short", "Use an index", ["index"]).band, "missed");
+  assert.match(v2.localFeedback("Short", "Use an index on foreign keys for joins", ["index"]).comment, /index|suggested answer/i);
+  const feedbackPartial = v2.localFeedback(
+    "I talk about API performance with users when systems grow larger over time across several teams and services during busy product launches where latency problems appear under heavy traffic patterns",
+    "Prefer an index for join lookups; caching helps reads but can stale writes",
+    ["index", "cache"],
+  );
+  assert.equal(feedbackPartial.band, "partial");
+  assert.match(feedbackPartial.comment, /index|cache|suggested/i);
+  assert.notEqual(feedbackPartial.comment, v2.localFeedback("Short", "Use an index", ["index"]).comment);
   assert.equal(v2.introBubble, "First, please introduce yourself in about one minute.");
-  assert.equal(v2.chooseNext({ presentedAfter: 11, relatedIds: [follow], askedIds: [], plannedRemaining: ["next"], keywordMatched: true }).type, "rate");
+  assert.match(v2.v2IntroStrategies.software_engineer, /Present → Past → Future/);
+  assert.match(v2.v2IntroStrategies.software_engineer, /Greeting & name/);
+  assert.ok(v2.v2IntroStrategies.software_engineer.length <= 2000);
+  assert.equal(v2.chooseNext({ presentedAfter: v2.sessionItemCap - 1, relatedIds: [follow], askedIds: [], plannedRemaining: ["next"], keywordMatched: true }).type, "ask");
+  assert.equal(v2.chooseNext({ presentedAfter: v2.sessionItemCap, relatedIds: [follow], askedIds: [], plannedRemaining: ["next"], keywordMatched: true }).type, "rate");
   assert.equal(v2.importFileSchema.safeParse({ profile: "frontend_engineer", questions: [{ key: "a", kind: "primary", prompt: "Q", sampleAnswer: "A", keywords: [], relatedKeys: ["missing"] }] }).success, false);
 });
 
@@ -172,6 +205,17 @@ test("v2 migration, bank, session and rating stay off the original interview tab
   const filler = Array.from({ length: 40 }, (_, index) => ({ key: `da-${index}`, kind: "primary", prompt: `Pad ${index}`, sampleAnswer: "Pad answer", keywords: [], relatedKeys: [] }));
   assert.equal((await h.actions.importQuestions({ profile: "data_analyst", questions: filler })).code, "ok");
   assert.equal((await h.actions.importQuestions({ profile: "data_analyst", questions: [{ key: "da-extra", kind: "primary", prompt: "Extra", sampleAnswer: "Extra answer", keywords: [], relatedKeys: [] }] })).code, "limit");
+  const pad = (await db.query("select id from forge_v2_questions where prompt = 'Pad 0'")).rows[0];
+  assert.equal((await h.actions.saveQuestion({
+    id: pad.id, profileId: "data_analyst", prompt: "Pad 0 edited", sampleAnswer: "Pad answer",
+    keywords: [], relatedIds: [], kind: "primary", active: true, sortOrder: 1,
+  })).code, "ok");
+  assert.equal((await db.query("select prompt from forge_v2_questions where id = $1", [pad.id])).rows[0].prompt, "Pad 0 edited");
+  h.state.user.app_metadata.role = "learner";
+  assert.equal((await h.actions.deleteQuestion({ id: pad.id })).code, "denied");
+  h.state.user.app_metadata.role = "instructor";
+  assert.equal((await h.actions.deleteQuestion({ id: pad.id })).code, "ok");
+  assert.equal((await db.query("select count(*)::int as n from forge_v2_questions where id = $1", [pad.id])).rows[0].n, 0);
   h.state.user.app_metadata.role = "learner";
   const started = await h.actions.startSession({ profileId: "frontend_engineer" });
   assert.equal(started.code, "ok");
@@ -195,23 +239,25 @@ test("v2 migration, bank, session and rating stay off the original interview tab
   assert.equal(intro.view.turns[0].prompt, v2.introBubble);
   assert.match(intro.view.bubble, /Primary question/);
   const before = h.payloads.length;
+  h.state.provider = async () => JSON.stringify({ lead: "Adding an index is why I want to know how the lookup changes." });
   const keyword = await h.actions.submitAnswer({ id: intro.view.session.id, revision: intro.view.session.revision, text: "I would add an index." });
   assert.equal(keyword.code, "ok");
-  assert.equal(h.payloads.length, before);
-  assert.equal(keyword.view.bubble, "Since you mentioned add an index, How does the index change the lookup?");
+  assert.equal(h.payloads.length, before + 1);
+  assert.equal(keyword.view.bubble, "Adding an index is why I want to know how the lookup changes. How does the index change the lookup?");
   assert.equal(keyword.view.followUp, "keyword");
   h.state.provider = async () => JSON.stringify({ questionId: (await db.query("select id from forge_v2_questions where prompt=$1", ["When would you skip an index?"])).rows[0].id });
   const related = await h.actions.submitAnswer({ id: keyword.view.session.id, revision: keyword.view.session.revision, text: "It avoids scanning every row." });
   assert.equal(related.code, "ok");
   assert.match(related.view.bubble, /When would you skip an index\?$/);
+  assert.doesNotMatch(related.view.bubble, /^Since you mentioned/i);
   assert.equal(related.view.followUp, "ai");
-  assert.equal(h.payloads.length, before + 1);
+  assert.equal(h.payloads.length, before + 3);
   const turnsBefore = related.view.turns.length;
   const changed = await h.actions.changeQuestion({ id: related.view.session.id, revision: related.view.session.revision });
   assert.equal(changed.code, "ok");
   assert.notEqual(changed.view.bubble, related.view.bubble);
   assert.equal(changed.view.turns.length, turnsBefore);
-  assert.equal(h.payloads.length, before + 1);
+  assert.equal(h.payloads.length, before + 3);
   h.state.provider = async messages => JSON.stringify({
     summary: "Keep the examples concrete.",
     items: JSON.parse(messages.at(-1).content).items.map(item => ({ turnId: item.turnId, band: "partial", comment: "Name the trade-off." })),
@@ -222,6 +268,10 @@ test("v2 migration, bank, session and rating stay off the original interview tab
   assert.equal(finished.view.summary, "Keep the examples concrete.");
   assert.ok(finished.view.turns.some(turn => turn.band === "partial"));
   assert.equal((await db.query("select count(*)::int as n from forge_interviews where owner_id=$1", [owner])).rows[0].n, 0);
+  const removed = await h.actions.deleteSession({ id: finished.view.session.id });
+  assert.equal(removed.code, "ok");
+  assert.equal((await db.query("select count(*)::int as n from forge_v2_sessions where id=$1", [finished.view.session.id])).rows[0].n, 0);
+  assert.equal((await h.actions.deleteSession({ id: finished.view.session.id })).code, "missing");
   await db.query("delete from auth.users where id=$1", [owner]);
   assert.equal((await db.query("select count(*)::int as n from forge_v2_sessions")).rows[0].n, 0);
 });

@@ -119,6 +119,10 @@ test("real curriculum routes and components: combined filters, legacy, player, p
       if (name === "@/components/learner-shell") return { LearnerShell: ({ children }) => load("react").createElement("main", {}, children) };
       if (name === "@/components/learner-import" || name === "@/components/lesson-coach") return new Proxy({}, { get: () => () => null });
       if (name === "@/app/learning/generation-actions") return generationActions;
+      if (name === "@/app/presentation/ai-actions") return {
+        generatePresentationSuggestions: async () => ({ error: "Synthetic unavailable service. Input is retained." }),
+        authorizePresentationAiApply: async () => ({ error: "Synthetic unavailable service. Input is retained." }),
+      };
       if (name.endsWith("/actions") || name === "./actions") return actions;
       if (name === "next/navigation") return { useRouter: () => ({refresh(){}}), notFound() { throw new Error("Not found"); }, redirect(path) { throw new Error(`Redirect ${path}`); } };
       if (name === "next/image") return { __esModule: true, default: () => null };

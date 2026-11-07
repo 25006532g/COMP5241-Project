@@ -324,6 +324,7 @@ h1, h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; }
 .catalog-shortcut { color: var(--ink); font-size: 11px; font-weight: 800; text-decoration: none; }.portal-avatar { width: 33px; height: 33px; text-decoration: none; }
 .portal-page { width: min(1180px, 100%); margin: auto; padding: 45px 40px 75px; }
 .portal-heading { display: flex; align-items: end; justify-content: space-between; gap: 25px; margin-bottom: 30px; }
+.portal-heading .primary-button { width: auto; margin: 0; flex: 0 0 auto; }
 .portal-heading h1, .course-banner h1, .lesson-article h1, .danger-page h1 { margin-bottom: 8px; font-size: clamp(34px, 4.5vw, 50px); line-height: 1.05; }
 .portal-heading p, .course-banner p { margin: 0; color: var(--muted); font-size: 12px; }
 .filter-button { display: flex; align-items: center; gap: 7px; padding: 10px 13px; border: 1px solid var(--ink); border-radius: 4px; background: transparent; font-size: 11px; font-weight: 800; }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { changeQuestion, endSession, skipIntro, submitAnswer, submitIntro } from "@/app/interviews-v2/actions";
 import { InterviewV2Dictation } from "@/components/interview-v2-dictation";
-import { sessionItemCap, v2Notices, wordCount, type V2Code, type V2View } from "@/lib/interviews-v2";
+import { sessionQuestionCap, v2Notices, wordCount, type V2Code, type V2View } from "@/lib/interviews-v2";
 import styles from "./interview-v2.module.css";
 
 type Look = "male" | "female";
@@ -51,7 +51,7 @@ function TurnList({ turns }: { turns: V2View["turns"] }) {
     <p className={styles.prompt}>{turn.prompt}</p>
     {turn.skipped ? <p className={styles.skipped}>Skipped</p> : <p className={styles.answer}>{turn.studentText}</p>}
     {turn.comment && <p className={styles.metaLine}>{turn.comment}</p>}
-    {turn.sampleAnswer && <p className={styles.sample}>Suggested answer: {turn.sampleAnswer}</p>}
+    {turn.sampleAnswer && <p className={styles.sample}>{turn.kind === "intro" ? "Suggested intro strategy:" : "Suggested answer:"} {turn.sampleAnswer}</p>}
   </li>)}</ul>;
 }
 
@@ -86,8 +86,9 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
   const asking = view.canAnswer && view.session.state === "asking";
   const intro = view.canAnswer && view.session.state === "intro";
   const complete = view.session.state === "complete";
-  const cap = sessionItemCap || 11;
-  const progress = Math.min(100, Math.round((view.session.presented / cap) * 100));
+  const cap = sessionQuestionCap || 7;
+  const shown = Math.min(cap, view.session.presented);
+  const progress = Math.min(100, Math.round((shown / cap) * 100));
   const wordTone = words > 130 ? "over" : words >= 110 ? "near" : "ok";
 
   function stopSpeech() {
@@ -223,7 +224,7 @@ export function InterviewV2Room({ initial }: { initial: V2View }) {
         </div>
       </fieldset>
       {view.session.state !== "intro" && <div>
-        <p className={styles.progressLabel}>{view.session.presented} / {cap}</p>
+        <p className={styles.progressLabel}>{shown} / {cap}</p>
         <div className={styles.track} aria-hidden="true"><span style={{ width: `${progress}%` }} /></div>
       </div>}
     </header>

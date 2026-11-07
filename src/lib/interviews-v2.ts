@@ -12,8 +12,71 @@ export const profileIdSchema = z.enum(Object.keys(v2Profiles) as [keyof typeof v
 export type ProfileId = z.infer<typeof profileIdSchema>;
 export const introBubble = "First, please introduce yourself in about one minute.";
 export const introWordTarget = 130;
-export const sessionItemCap = 11;
+/** Questions after the introduction. The intro turn is extra. */
+export const sessionQuestionCap = 7;
+export const sessionItemCap = sessionQuestionCap + 1;
 export const v2DailyAiLimit = 20;
+/** Keywords used when AI rating is unavailable for the self-intro. */
+export const introStrategyKeywords = [
+  "name", "role", "studying", "experience", "project", "result", "impact",
+  "strength", "interested", "contribute", "because", "team",
+] as const;
+
+function introStrategyBody(focus: string, pastCue: string, futureCue: string) {
+  return [
+    "Suggested one-minute self-intro strategy (Present → Past → Future). Use your real facts; do not invent metrics.",
+    "",
+    "1. Present — Identity & current focus",
+    "• Greeting & name: \"Good morning/afternoon, I am [Name].\"",
+    "• Current role/status: your title, company, or major field of study.",
+    `• Core hook: one sentence on your primary expertise or day-to-day work (${focus}).`,
+    "",
+    "2. Past — Credibility & quantifiable impact",
+    `• Proven results: one concrete outcome with a number when you can (${pastCue}).`,
+    "• Key strengths: the capabilities you used to get that result.",
+    "",
+    "3. Future — Alignment & the pivot",
+    `• The match: genuine interest in this role/programme (${futureCue}).`,
+    "• Value proposition: how your background helps their needs.",
+    "• Closing: hand the conversation back (for example, \"Happy to go deeper on any of that.\").",
+    "",
+    "Aim for about one minute (~100–130 words) covering all three parts.",
+  ].join("\n");
+}
+
+/** Canonical intro strategy text shown after a session and used when rating the intro. */
+export const v2IntroStrategies: Record<ProfileId, string> = {
+  cs_degree: introStrategyBody(
+    "courses, labs, or computing interests you focus on now",
+    "a course project, hackathon, or assignment result",
+    "why this degree or programme fits what you want to learn next",
+  ),
+  cs_master: introStrategyBody(
+    "your preparation and the graduate topic you are pursuing",
+    "an undergrad or industry project with a measurable outcome",
+    "why master's study and this research or course direction",
+  ),
+  software_engineer: introStrategyBody(
+    "the product area or stack you work in most",
+    "shipping a feature, fixing reliability, or cutting delivery time",
+    "the kind of engineering problems you want on this team",
+  ),
+  frontend_engineer: introStrategyBody(
+    "UI, accessibility, or client performance work you own day to day",
+    "improving UX metrics, load time, or design-system adoption",
+    "the frontend craft and product experience you want to grow here",
+  ),
+  backend_engineer: introStrategyBody(
+    "APIs, data, or services you design and operate",
+    "latency, throughput, reliability, or cost improvements",
+    "the systems and scale challenges you want to take on here",
+  ),
+  data_analyst: introStrategyBody(
+    "the data domains, tools, or stakeholders you support",
+    "a dashboard, model, or analysis that changed a decision",
+    "the questions and decisions you want to help this team answer",
+  ),
+};
 
 export const v2Notices = {
   ok: "Saved.",
@@ -29,6 +92,7 @@ export const v2Notices = {
   empty: "Nothing was sent, so there is nothing to rate.",
   unrated: "The session is saved. AI rating was unavailable, so no score was invented.",
   noAlternate: "There is no other question to switch to.",
+  inUse: "This question is open in a live interview. End that session before removing it.",
 } as const;
 export type V2Code = keyof typeof v2Notices;
 
@@ -65,8 +129,8 @@ export const ratingSchema = z.object({
   items: z.array(z.object({
     turnId: z.uuid(),
     band: z.enum(["strong", "partial", "missed"]),
-    comment: z.string().trim().min(1).max(400),
-  }).strict()).max(11),
+    comment: z.string().trim().min(1).max(800),
+  }).strict()).max(sessionItemCap),
 }).strict();
 
 export function wordCount(text: string) {
@@ -117,7 +181,7 @@ export function topicScore(answer: string, question: { prompt: string; keywords:
 
 const bridgeFiller = new Set("and also rely on the a an to for of so with when that this would use using into from your just really very about been doing have has was were".split(" "));
 
-export function bridgeLead(answer: string, focus: readonly string[]) {
+export function bridgePhrase(answer: string, focus: readonly string[]) {
   const text = answer.replace(/\s+/g, " ").trim();
   const words = text.split(" ").filter(Boolean);
   if (words.length < 3) return null;
@@ -141,10 +205,23 @@ export function bridgeLead(answer: string, focus: readonly string[]) {
   const slice = at >= 0 ? words.slice(start, at + span) : words.slice(0, 8);
   const phrase = slice.join(" ").replace(/^(i would|i'd|i have|i've|we would|we)\s+/i, "").replace(/[.!?,;:]+$/g, "").trim();
   if (phrase.length < 4) return null;
-  const clipped = phrase.length > 72 ? phrase.slice(0, 69).replace(/\s+\S*$/, "") : phrase;
-  return /\b(doing|building|using|working|writing|designing|been)\b/i.test(clipped)
-    ? `As you said you have been ${clipped}, `
-    : `Since you mentioned ${clipped}, `;
+  return phrase.length > 72 ? phrase.slice(0, 69).replace(/\s+\S*$/, "") : phrase;
+}
+
+const bridgeOpenings = [
+  (phrase: string) => `You brought up ${phrase}. That is why I want to ask this next. `,
+  (phrase: string) => `What you said about ${phrase} changes how I would probe this. `,
+  (phrase: string) => `${phrase.charAt(0).toUpperCase()}${phrase.slice(1)} stood out, so I am following that thread. `,
+  (phrase: string) => `I am staying with ${phrase}, because it shows a choice worth testing. `,
+  (phrase: string) => `Hearing ${phrase} makes me want the reasoning behind it. `,
+  (phrase: string) => `That point on ${phrase} is the link to the question I have next. `,
+];
+
+export function bridgeLead(answer: string, focus: readonly string[], random: () => number = Math.random) {
+  const phrase = bridgePhrase(answer, focus);
+  if (!phrase) return null;
+  const index = Math.min(bridgeOpenings.length - 1, Math.floor(Math.abs(random()) * bridgeOpenings.length));
+  return bridgeOpenings[index](phrase);
 }
 
 export function drawPrimary(ids: readonly string[], random: () => number = Math.random) {
@@ -155,8 +232,7 @@ export function drawPrimary(ids: readonly string[], random: () => number = Math.
     const swap = Math.floor(random() * (index + 1));
     [copy[index], copy[swap]] = [copy[swap], copy[index]];
   }
-  const count = 7 + Math.floor(random() * (Math.min(10, copy.length) - 7 + 1));
-  return copy.slice(0, count);
+  return copy.slice(0, sessionQuestionCap);
 }
 
 export type Advance =
@@ -177,8 +253,10 @@ export function chooseNext(input: {
   const freshIds = input.relatedIds.filter(id => !input.askedIds.includes(id));
   const detailed = (input.related ?? []).filter(question => !input.askedIds.includes(question.id) && (freshIds.length === 0 || freshIds.includes(question.id)));
   if (input.answer && detailed.length) {
+    const bankOrder = new Map(input.relatedIds.map((id, index) => [id, index]));
     const ranked = detailed.map(question => ({ id: question.id, score: topicScore(input.answer ?? "", question) }))
-      .sort((left, right) => right.score - left.score || left.id.localeCompare(right.id));
+      .sort((left, right) => right.score - left.score
+        || (bankOrder.get(left.id) ?? input.relatedIds.length) - (bankOrder.get(right.id) ?? input.relatedIds.length));
     const best = ranked[0];
     if (best && best.score >= 2) return { type: "ask", id: best.id, reason: "keyword" };
     if (input.keywordMatched && best) return { type: "ask", id: best.id, reason: "keyword" };
@@ -218,19 +296,49 @@ export function chooseReplacement(input: {
 export function localFeedback(answer: string, sample: string, keywords: readonly string[]) {
   const tokens = (value: string) => value.toLocaleLowerCase().split(/[^\p{L}\p{N}]+/u).filter(word => word.length > 3);
   const answerWords = tokens(answer);
-  const sampleWords = new Set(tokens(sample));
+  const sampleTokens = tokens(sample);
+  const sampleWords = new Set(sampleTokens);
+  const answerSet = new Set(answerWords);
   const overlap = answerWords.filter(word => sampleWords.has(word)).length;
   const hit = keywords.length > 0 && keywordHit(answer, keywords);
+  const covered = keywords.filter(keyword => keywordHit(answer, [keyword]));
+  const missingKeywords = keywords.filter(keyword => !keywordHit(answer, [keyword]));
+  const missingSample = [...new Set(sampleTokens.filter(word => !answerSet.has(word)))].slice(0, 5);
+  const clip = (text: string, max = 780) => text.length <= max ? text : `${text.slice(0, max - 1).trimEnd()}…`;
+  const list = (parts: string[]) => parts.slice(0, 4).join(", ");
+  const sampleHint = missingKeywords.length
+    ? `Compared with the suggested answer, add ${list(missingKeywords)}.`
+    : missingSample.length
+      ? `Compared with the suggested answer, bring in ideas around ${list(missingSample)}.`
+      : "Compared with the suggested answer, spell out the key trade-off or example in your own words.";
+  const strength = covered.length
+    ? `You already touched ${list(covered)}.`
+    : overlap >= 2
+      ? "You matched some wording from the suggested answer."
+      : "Little of the suggested answer's core wording appears yet.";
+
   if (answerWords.length < 8) {
-    return { band: "missed" as const, comment: "This answer is too short to show the idea. Expand it using the suggested answer as a guide." };
+    return {
+      band: "missed" as const,
+      comment: clip(`This answer is too short to show the idea. ${sampleHint} Explain those points briefly so a reviewer can see your reasoning.`),
+    };
   }
   if ((hit && overlap >= 1) || overlap >= 3) {
-    return { band: "strong" as const, comment: "The answer covers the main idea. Check the suggested answer for any point you skipped." };
+    return {
+      band: "strong" as const,
+      comment: clip(`${strength} That lines up with the suggested answer. ${missingKeywords.length || missingSample.length ? `${sampleHint} ` : ""}Say why it matters for this question so the answer stays complete under follow-up.`),
+    };
   }
   if (hit || overlap >= 1 || answerWords.length >= 25) {
-    return { band: "partial" as const, comment: "Part of the expected point is there. The suggested answer shows what to add." };
+    return {
+      band: "partial" as const,
+      comment: clip(`${strength} ${sampleHint} Those points are in the suggested answer because they show you understand the trade-off, not only the label. Rewrite one sentence that links your point to them.`),
+    };
   }
-  return { band: "missed" as const, comment: "This does not cover the expected point yet. Read the suggested answer and explain it in your own words." };
+  return {
+    band: "missed" as const,
+    comment: clip(`${strength} ${sampleHint} Start from the suggested answer's main claim, then restate it with a short example of your own.`),
+  };
 }
 
 export function chooseAfterSkip(input: { presentedAfter: number; askedIds: readonly string[]; plannedRemaining: readonly string[] }): Advance {

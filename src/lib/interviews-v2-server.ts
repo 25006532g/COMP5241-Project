@@ -5,9 +5,9 @@ import { z } from "zod";
 import { database, currentUser } from "@/lib/learning-server";
 import { requireAiAccess } from "@/lib/ai-eligibility-server";
 import { isAdmin, isInstructor } from "@/lib/permissions";
-import { pickRelatedQuestion, rateAnswers } from "@/lib/interviews-v2-ai";
+import { pickRelatedQuestion, rateAnswers, writeFollowUpLead } from "@/lib/interviews-v2-ai";
 import {
-  applyAiPick, bridgeLead, chooseAfterSkip, chooseNext, chooseReplacement, drawPrimary, importFileSchema, introBubble, keywordHit, localFeedback, profileIdSchema, topicScore, v2Profiles,
+  applyAiPick, bridgeLead, bridgePhrase, chooseAfterSkip, chooseNext, chooseReplacement, drawPrimary, importFileSchema, introBubble, introStrategyKeywords, keywordHit, localFeedback, profileIdSchema, topicScore, v2IntroStrategies, v2Profiles,
   type ProfileId, type V2Code, type V2TurnView, type V2View,
 } from "@/lib/interviews-v2";
 
@@ -15,6 +15,7 @@ export type V2Result = { code: V2Code; view?: V2View };
 type SessionRow = {
   id: string; owner_id: string; profile_id: ProfileId; state: V2View["session"]["state"]; revision: number;
   planned_ids: string[]; asked_ids: string[]; current_question_id: string | null; current_reason: "keyword" | "ai" | "none" | null;
+  bridge_lead: string | null;
 };
 type QuestionRow = { id: string; profile_id: string; prompt: string; sample_answer: string; keywords: string[]; related_ids: string[]; kind: "primary" | "followup"; active: boolean; sort_order: number };
 type TurnRow = { id: string; session_id: string; position: number; kind: "intro" | "question"; question_id: string | null; prompt: string; student_text: string | null; skipped: boolean; match_reason: V2TurnView["matchReason"] };
@@ -42,7 +43,7 @@ async function rpc(name: string, args: Record<string, unknown>) {
   }
   if (error || !payload || typeof payload !== "object" || typeof (payload as { code?: unknown }).code !== "string") return { code: "unavailable" as const, session: null as SessionRow | null };
   const row = payload as { code: string; session?: SessionRow };
-  if (row.code === "ok" || row.code === "limit" || row.code === "invalid" || row.code === "missing" || row.code === "conflict" || row.code === "bank") {
+  if (row.code === "ok" || row.code === "limit" || row.code === "invalid" || row.code === "missing" || row.code === "conflict" || row.code === "bank" || row.code === "inUse") {
     return { code: row.code as V2Code, session: row.session ? asSession(row.session) : null };
   }
   return { code: "unavailable" as const, session: null };
@@ -79,14 +80,19 @@ export async function loadView(id: string, user: User): Promise<V2View | null> {
   const summary = summaryRow?.comment ?? null;
   const followUp = session.state === "asking" && (session.current_reason === "keyword" || session.current_reason === "ai") ? session.current_reason : null;
   const previous = [...turns].reverse().find(turn => !turn.skipped && turn.student_text);
-  const lead = followUp && previous?.student_text ? bridgeLead(previous.student_text, current?.keywords ?? []) : null;
+  const storedLead = followUp && session.bridge_lead?.trim() ? `${session.bridge_lead.trim()} ` : null;
+  const lead = storedLead ?? (followUp && previous?.student_text ? bridgeLead(previous.student_text, current?.keywords ?? []) : null);
   const answered = turns.some(turn => !turn.skipped && turn.student_text);
   const ratingState: V2View["ratingState"] = session.state !== "complete" ? "pending" : summary ? "ready" : answered ? "unavailable" : "empty";
   const showSamples = session.state === "complete";
   let introSample: string | null = null;
   if (showSamples) {
     const rubric = await database().from("forge_v2_profiles").select("intro_rubric").eq("id", session.profile_id).maybeSingle();
-    if (!rubric.error && typeof rubric.data?.intro_rubric === "string") introSample = rubric.data.intro_rubric;
+    if (!rubric.error && typeof rubric.data?.intro_rubric === "string" && rubric.data.intro_rubric.trim()) {
+      introSample = rubric.data.intro_rubric;
+    } else {
+      introSample = v2IntroStrategies[session.profile_id as ProfileId] ?? null;
+    }
   }
   return {
     session: {
@@ -126,7 +132,9 @@ async function finishRating(id: string, user: User, revision: number) {
     const rated = await rateAnswers(rateable.map(turn => ({
       turnId: turn.id,
       prompt: turn.prompt,
-      sampleAnswer: turn.kind === "intro" ? String(profile.data?.intro_rubric ?? "Introduction") : questions.get(turn.question_id ?? "")?.sample_answer ?? "No sample answer",
+      sampleAnswer: turn.kind === "intro"
+        ? String(profile.data?.intro_rubric || v2IntroStrategies[session.profile_id as ProfileId] || "Introduction")
+        : questions.get(turn.question_id ?? "")?.sample_answer ?? "No sample answer",
       answer: turn.student_text ?? "",
     })));
     const ids = new Set(rateable.map(turn => turn.id));
@@ -140,12 +148,18 @@ async function finishRating(id: string, user: User, revision: number) {
     try {
       const items = rateable.map(turn => {
         const question = turn.question_id ? questions.get(turn.question_id) : undefined;
-        const sample = turn.kind === "intro" ? String(profile.data?.intro_rubric ?? "Introduction") : question?.sample_answer ?? "No sample answer";
-        const judged = localFeedback(turn.student_text ?? "", sample, question?.keywords ?? []);
+        const sample = turn.kind === "intro"
+          ? String(profile.data?.intro_rubric || v2IntroStrategies[session.profile_id as ProfileId] || "Introduction")
+          : question?.sample_answer ?? "No sample answer";
+        const judged = localFeedback(
+          turn.student_text ?? "",
+          sample,
+          turn.kind === "intro" ? introStrategyKeywords : question?.keywords ?? [],
+        );
         return { turnId: turn.id, band: judged.band, comment: judged.comment };
       });
       const stored = await rpc("forge_v2_store_ratings", {
-        p_owner: session.owner_id, p_id: id, p_revision: revision, p_summary: "Feedback compared your answers with the suggested answers. Use it as practice guidance, not a grade.",
+        p_owner: session.owner_id, p_id: id, p_revision: revision, p_summary: "Offline feedback compared each answer with its suggested answer and called out missing ideas. Use it as practice guidance, not a grade.",
         p_items: items,
       });
       if (stored.code !== "ok") throw new Error("fallback was not saved");
@@ -264,7 +278,10 @@ export async function submitAnswer(input: unknown, skipped = false): Promise<V2R
   const current = (await questionMap([owned.session.current_question_id])).get(owned.session.current_question_id);
   const asked = owned.session.asked_ids ?? [];
   const plannedRemaining = owned.session.planned_ids.filter(id => !asked.includes(id));
-  const relatedRows = [...(await questionMap(current?.related_ids ?? [])).values()].filter(row => row.active && row.profile_id === owned.session?.profile_id);
+  const relatedById = await questionMap(current?.related_ids ?? []);
+  const relatedRows = (current?.related_ids ?? [])
+    .map(id => relatedById.get(id))
+    .filter((row): row is QuestionRow => Boolean(row?.active && row.profile_id === owned.session?.profile_id));
   const relatedIds = relatedRows.map(row => row.id);
   const presentedAfter = owned.turns.length + 1;
   const answerText = parsed.data.text ?? "";
@@ -276,28 +293,52 @@ export async function submitAnswer(input: unknown, skipped = false): Promise<V2R
       answer: answerText,
       related: relatedRows.map(row => ({ id: row.id, prompt: row.prompt, keywords: row.keywords ?? [] })),
     });
+  let claimedAi = false;
   if (!skipped && current && next.type === "ai") {
     const candidates = next.candidates;
     const fallback = relatedRows
       .filter(row => candidates.includes(row.id))
-      .map(row => ({ id: row.id, score: topicScore(answerText, { prompt: row.prompt, keywords: row.keywords ?? [] }) }))
-      .sort((left, right) => right.score - left.score || left.id.localeCompare(right.id))
+      .map((row, index) => ({ id: row.id, index, score: topicScore(answerText, { prompt: row.prompt, keywords: row.keywords ?? [] }) }))
+      .sort((left, right) => right.score - left.score || left.index - right.index)
       .find(row => row.score >= 1)?.id ?? null;
     let pick: string | null = null;
     try {
       await requireAiAccess(user);
       const { data: claimed, error } = await database().rpc("forge_v2_claim_ai", { p_owner: user.id });
       if (!error && claimed === true) {
+        claimedAi = true;
         pick = await pickRelatedQuestion(current.prompt, answerText, relatedRows.filter(row => candidates.includes(row.id)).map(row => ({ id: row.id, prompt: row.prompt })));
       }
     } catch { pick = null; }
     next = applyAiPick(pick, next, asked, plannedRemaining, fallback);
+  }
+  let bridge: string | null = null;
+  if (!skipped && next.type === "ask" && (next.reason === "keyword" || next.reason === "ai")) {
+    const upcoming = (await questionMap([next.id])).get(next.id);
+    const focus = upcoming?.keywords?.length ? upcoming.keywords : current?.keywords ?? [];
+    const unit = [...answerText].reduce((hash, char) => (hash * 33 + char.charCodeAt(0)) >>> 0, 7) / 0xffffffff;
+    bridge = bridgeLead(answerText, focus, () => unit);
+    const phrase = bridgePhrase(answerText, focus);
+    if (phrase && upcoming?.prompt) {
+      try {
+        await requireAiAccess(user);
+        if (!claimedAi) {
+          const { data: claimed, error } = await database().rpc("forge_v2_claim_ai", { p_owner: user.id });
+          claimedAi = !error && claimed === true;
+        }
+        if (claimedAi) {
+          const written = await writeFollowUpLead({ phrase, answer: answerText, nextPrompt: upcoming.prompt });
+          if (written) bridge = written;
+        }
+      } catch { /* keep the varied local lead */ }
+    }
   }
   const saved = await rpc("forge_v2_save_answer", {
     p_owner: user.id, p_id: parsed.data.id, p_revision: parsed.data.revision,
     p_text: skipped ? null : parsed.data.text, p_skipped: skipped,
     p_next: next.type === "ask" ? next.id : null,
     p_next_reason: next.type === "ask" ? (next.reason === "planned" ? "none" : next.reason) : null,
+    p_lead: bridge,
   });
   if (saved.code !== "ok") return { code: saved.code };
   if (next.type !== "ask" && saved.session) await finishRating(parsed.data.id, user, saved.session.revision);
@@ -330,6 +371,15 @@ async function requireStaff() {
   return { user, code: "ok" as const };
 }
 
+export async function deleteQuestion(input: unknown): Promise<V2Result> {
+  const parsed = z.object({ id: z.uuid() }).safeParse(input);
+  if (!parsed.success) return { code: "invalid" };
+  const access = await requireStaff();
+  if (access.code !== "ok") return { code: access.code };
+  const removed = await rpc("forge_v2_delete_question", { p_id: parsed.data.id });
+  return { code: removed.code };
+}
+
 export async function saveQuestion(input: unknown): Promise<V2Result> {
   const parsed = questionWrite.safeParse(input);
   if (!parsed.success) return { code: "invalid" };
@@ -359,6 +409,15 @@ export async function saveRubric(input: unknown): Promise<V2Result> {
   if (access.code !== "ok") return { code: access.code };
   const saved = await rpc("forge_v2_save_rubric", { p_profile: parsed.data.profileId, p_rubric: parsed.data.rubric });
   return { code: saved.code };
+}
+
+export async function deleteSession(input: unknown): Promise<V2Result> {
+  const parsed = z.object({ id: z.uuid() }).safeParse(input);
+  if (!parsed.success) return { code: "invalid" };
+  const user = await actor();
+  if (!user) return { code: "auth" };
+  const removed = await rpc("forge_v2_delete_session", { p_owner: user.id, p_id: parsed.data.id });
+  return { code: removed.code };
 }
 
 export async function listMine() {

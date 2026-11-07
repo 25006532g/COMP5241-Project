@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { startSession } from "@/app/interviews-v2/actions";
+import { deleteSession, startSession } from "@/app/interviews-v2/actions";
 import { v2Notices, v2Profiles, type ProfileId, type V2Code } from "@/lib/interviews-v2";
 import styles from "./interview-v2.module.css";
 
@@ -24,6 +24,7 @@ export function InterviewV2Lobby({ sessions, staff = false }: {
   const [notice, setNotice] = useState<V2Code | null>(null);
   const [busy, setBusy] = useState(false);
   const [voice, setVoice] = useState(true);
+  const [hidden, setHidden] = useState<string[]>([]);
   useEffect(() => {
     try {
       const stored = sessionStorage.getItem("forge-v2-voice");
@@ -63,14 +64,27 @@ export function InterviewV2Lobby({ sessions, staff = false }: {
     </form>
     <section className={styles.panel} aria-labelledby="v2-sessions-heading">
       <h2 id="v2-sessions-heading">Your sessions</h2>
-      {sessions.length === 0 && <p className={styles.empty}>No simulator v2 sessions yet.</p>}
-      <ul className={styles.sessions}>{sessions.map(session => <li key={session.id}>
+      {sessions.filter(session => !hidden.includes(session.id)).length === 0 && <p className={styles.empty}>No simulator v2 sessions yet.</p>}
+      <ul className={styles.sessions}>{sessions.filter(session => !hidden.includes(session.id)).map(session => <li className={styles.sessionItem} key={session.id}>
         <Link className={styles.sessionLink} href={`/interviews-v2/${session.id}`}>
           <span className={styles.sessionCopy}>
             <strong>{v2Profiles[session.profile_id].label}</strong>
             <span>{stateLabel(session.state)} · {String(session.created_at).slice(0, 10)}</span>
           </span>
         </Link>
+        <button type="button" className={styles.sessionDelete} disabled={busy} onClick={async () => {
+          if (!window.confirm("Delete this session? Its answers and feedback will be removed.")) return;
+          setBusy(true);
+          try {
+            const result = await deleteSession({ id: session.id });
+            setNotice(result.code === "ok" ? null : result.code);
+            if (result.code === "ok") {
+              setHidden(current => [...current, session.id]);
+              router.refresh();
+            }
+          } catch { setNotice("unavailable"); }
+          finally { setBusy(false); }
+        }}>Delete</button>
       </li>)}</ul>
     </section>
   </div>;

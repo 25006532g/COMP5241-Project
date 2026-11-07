@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { importQuestions, saveQuestion, saveRubric } from "@/app/interviews-v2/actions";
+import { deleteQuestion, importQuestions, saveQuestion, saveRubric } from "@/app/interviews-v2/actions";
 import { v2Notices, v2Profiles, type ProfileId, type V2Code } from "@/lib/interviews-v2";
 import styles from "./interview-v2.module.css";
 
@@ -17,6 +17,7 @@ export function InterviewV2Bank({ questions, sessions, rubrics }: {
   const [profileId, setProfileId] = useState<ProfileId>("frontend_engineer");
   const [notice, setNotice] = useState<V2Code | null>(null);
   const [jsonText, setJsonText] = useState("");
+  const [editing, setEditing] = useState<Question | null>(null);
   const mine = questions.filter(question => question.profile_id === profileId);
   const activeCount = mine.filter(question => question.active).length;
   const rubric = rubrics.find(row => row.id === profileId)?.intro_rubric ?? "";
@@ -35,36 +36,47 @@ export function InterviewV2Bank({ questions, sessions, rubrics }: {
       <div className={styles.meter} aria-hidden="true"><span style={{ width: `${Math.min(100, (activeCount / 40) * 100)}%` }} /></div>
     </section>
     <div className={styles.bankGrid}>
-      <form className={`${styles.panel} ${styles.bank}`} onSubmit={async event => {
+      <form key={editing?.id ?? "new"} className={`${styles.panel} ${styles.bank}`} onSubmit={async event => {
         event.preventDefault();
         const form = new FormData(event.currentTarget);
         const keywords = String(form.get("keywords") ?? "").split(",").map(item => item.trim()).filter(Boolean);
         const relatedIds = form.getAll("related").map(String);
-        await report(await saveQuestion({
-          id: crypto.randomUUID(), profileId, prompt: String(form.get("prompt") ?? ""), sampleAnswer: String(form.get("sample") ?? ""),
-          keywords, relatedIds, kind: String(form.get("kind") ?? "primary"), active: true, sortOrder: mine.length,
-        }));
-        event.currentTarget.reset();
+        const result = await saveQuestion({
+          id: editing?.id ?? crypto.randomUUID(), profileId, prompt: String(form.get("prompt") ?? ""), sampleAnswer: String(form.get("sample") ?? ""),
+          keywords, relatedIds, kind: String(form.get("kind") ?? "primary"),
+          active: editing ? form.get("active") === "on" : true,
+          sortOrder: editing?.sort_order ?? mine.length,
+        });
+        await report(result);
+        if (result.code === "ok") {
+          setEditing(null);
+          if (!editing) event.currentTarget.reset();
+        }
       }}>
-        <h2>Add a question</h2>
-        <label className={styles.field}>Prompt<textarea name="prompt" required minLength={1} maxLength={2000} rows={3} /></label>
-        <label className={styles.field}>Suggested answer<textarea name="sample" required minLength={1} maxLength={4000} rows={3} /></label>
-        <label className={styles.field}>Keywords, comma separated<input name="keywords" /></label>
+        <h2>{editing ? "Edit question" : "Add a question"}</h2>
+        <label className={styles.field}>Prompt<textarea name="prompt" required minLength={1} maxLength={2000} rows={3} defaultValue={editing?.prompt ?? ""} /></label>
+        <label className={styles.field}>Suggested answer<textarea name="sample" required minLength={1} maxLength={4000} rows={3} defaultValue={editing?.sample_answer ?? ""} /></label>
+        <label className={styles.field}>Keywords, comma separated<input name="keywords" defaultValue={(editing?.keywords ?? []).join(", ")} /></label>
         <label className={styles.field}>Related questions
-          <select name="related" multiple size={4}>{mine.map(question => <option key={question.id} value={question.id}>{question.prompt.slice(0, 80)}</option>)}</select>
+          <select name="related" multiple size={4} defaultValue={editing?.related_ids ?? []}>{mine.filter(question => question.id !== editing?.id).map(question => <option key={question.id} value={question.id}>{question.prompt.slice(0, 80)}</option>)}</select>
           <span className={styles.hint}>Hold Ctrl or Command to choose more than one.</span>
         </label>
-        <label className={styles.field}>Kind<select name="kind" defaultValue="primary"><option value="primary">Primary</option><option value="followup">Follow-up only</option></select></label>
-        <button className="primary-button">Save</button>
+        <label className={styles.field}>Kind<select name="kind" defaultValue={editing?.kind ?? "primary"}><option value="primary">Primary</option><option value="followup">Follow-up only</option></select></label>
+        {editing && <label className={styles.optin}><input type="checkbox" name="active" defaultChecked={editing.active} /> Active in new interviews</label>}
+        <div className={styles.questionActions}>
+          <button className="primary-button">{editing ? "Save changes" : "Save"}</button>
+          {editing && <button type="button" onClick={() => setEditing(null)}>Cancel</button>}
+        </div>
       </form>
       <div className={styles.stack}>
         <form className={`${styles.panel} ${styles.bank}`} onSubmit={async event => {
           event.preventDefault();
           await report(await saveRubric({ profileId, rubric: String(new FormData(event.currentTarget).get("rubric") ?? "") }));
         }}>
-          <h2>Introduction rubric</h2>
-          <label className={styles.field}>Rubric<textarea name="rubric" required defaultValue={rubric} maxLength={2000} rows={4} /></label>
-          <button className="primary-button">Save rubric</button>
+          <h2>Introduction strategy</h2>
+          <p className={styles.hint}>Shown after a session as the suggested self-intro structure (Present → Past → Future). Also used when rating the introduction.</p>
+          <label className={styles.field}>Strategy<textarea name="rubric" required defaultValue={rubric} maxLength={2000} rows={12} /></label>
+          <button className="primary-button">Save strategy</button>
         </form>
         <form className={`${styles.panel} ${styles.bank}`} onSubmit={async event => {
           event.preventDefault();
@@ -90,6 +102,15 @@ export function InterviewV2Bank({ questions, sessions, rubrics }: {
           <span className={styles.badgeMuted}>{question.kind === "primary" ? "Primary" : "Follow-up"}</span>
         </div>
         <p>{question.prompt}</p>
+        <div className={styles.questionActions}>
+          <button type="button" onClick={() => { setEditing(question); setProfileId(question.profile_id as ProfileId); }}>Edit</button>
+          <button type="button" className={styles.sessionDelete} onClick={async () => {
+            if (!window.confirm("Remove this question from the bank? Past answers keep their saved text.")) return;
+            const result = await deleteQuestion({ id: question.id });
+            await report(result);
+            if (result.code === "ok" && editing?.id === question.id) setEditing(null);
+          }}>Remove</button>
+        </div>
       </li>)}</ul>
     </section>
     <section className={styles.panel} aria-labelledby="v2-learner-sessions">

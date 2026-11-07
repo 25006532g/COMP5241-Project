@@ -73,6 +73,10 @@ test("mounted author/upload/player: same-tick guard, versions, uncertainty, styl
           if (name === "fabric") return fabric;
           if (name === "./presentation-editor"||name === "@/components/presentation-editor") return load("editor");
           if (name === "@/app/presentation/actions") return new Proxy({},{get:()=>async()=>({error:"Image actions are covered by presentation-assets.test.mjs"})});
+          if (name === "@/app/presentation/ai-actions") return {
+            generatePresentationSuggestions: async () => ({ error: "AI actions are covered by presentation tests." }),
+            authorizePresentationAiApply: async () => ({ error: "AI actions are covered by presentation tests." }),
+          };
           if (name === "@/components/create-lesson") return load("author");
           if (name === "@/components/learning-controls") return load("player");
           if (name === "@/components/learner-shell") return {LearnerShell:({children})=>load("react").createElement("main",{},children)};
